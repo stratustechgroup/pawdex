@@ -1,9 +1,5 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 import { requireSession } from "@/lib/auth/household";
-
-import { SignOutButton } from "./sign-out-button";
+import { TopNavClient } from "./top-nav-client";
 
 export default async function AppLayout({
   children,
@@ -12,41 +8,28 @@ export default async function AppLayout({
 }) {
   const session = await requireSession();
 
+  const userInitials = (() => {
+    const seed = (session.email ?? "?").split("@")[0] ?? "?";
+    const parts = seed.split(/[._-]/).filter(Boolean);
+    const first = parts[0]?.charAt(0) ?? "?";
+    const last = parts[1]?.charAt(0) ?? "";
+    return (first + last).toUpperCase() || "AO";
+  })();
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-lg font-semibold tracking-tight">
-              Puppy
-            </Link>
-            <nav className="hidden gap-4 text-sm md:flex">
-              <Link
-                href="/"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/settings"
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Settings
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {session.householdName}
-            </span>
-            <Button asChild variant="default" size="sm">
-              <Link href="/pets/new">Add pet</Link>
-            </Button>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
-      <main className="flex-1">{children}</main>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        background: "var(--pw-bg)",
+      }}
+    >
+      <TopNavClient
+        householdName={session.householdName}
+        userInitials={userInitials}
+      />
+      <main style={{ flex: 1 }}>{children}</main>
     </div>
   );
 }

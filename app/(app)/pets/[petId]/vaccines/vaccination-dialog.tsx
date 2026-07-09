@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,10 +31,21 @@ import {
   vaccinationFormToPayload,
   type VaccinationFormValues,
 } from "@/lib/schemas/vaccination";
+import {
+  computeExpiryFromFamily,
+  getCatalogEntry,
+  inferFamilyFromType,
+} from "@/lib/clinical/vaccine-catalog";
 
 import { createVaccination } from "./actions";
 
-export function VaccinationDialog({ petId }: { petId: string }) {
+export function VaccinationDialog({
+  petId,
+  petDob,
+}: {
+  petId: string;
+  petDob?: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -53,6 +64,27 @@ export function VaccinationDialog({ petId }: { petId: string }) {
       notes: "",
     },
   });
+
+  // Watch the two inputs that drive the catalog hint. When the user types a
+  // recognizable vaccine name + picks an administered date but leaves "Expires"
+  // blank, we offer a one-click default.
+  const vaccineType = form.watch("vaccine_type");
+  const administeredOn = form.watch("administered_on");
+  const expiresOn = form.watch("expires_on");
+  const suggested = useMemo(() => {
+    if (expiresOn.trim()) return null;
+    if (!administeredOn) return null;
+    const family = inferFamilyFromType(vaccineType);
+    if (!family) return null;
+    const computed = computeExpiryFromFamily({
+      family,
+      administered_on: administeredOn,
+      pet_date_of_birth: petDob ?? null,
+    });
+    if (!computed) return null;
+    const entry = getCatalogEntry(family);
+    return { family, computed, label: entry?.label ?? family };
+  }, [vaccineType, administeredOn, expiresOn, petDob]);
 
   function onSubmit(values: VaccinationFormValues) {
     startTransition(async () => {
@@ -131,6 +163,67 @@ export function VaccinationDialog({ petId }: { petId: string }) {
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
+                    {suggested && (
+                      <div
+                        style={{
+                          marginTop: 6,
+                          display: "flex",
+                          flexWrap: "wrap",
+                          alignItems: "center",
+                          gap: 6,
+                          font: "400 11.5px var(--font-inter)",
+                          color: "var(--pw-text-muted)",
+                        }}
+                      >
+                        <span>
+                          Catalog default:{" "}
+                          <span
+                            className="tnum"
+                            style={{ color: "var(--pw-text)", fontWeight: 500 }}
+                          >
+                            {suggested.computed.expires_on}
+                          </span>{" "}
+                          ({suggested.computed.duration_months} mo
+                          {suggested.computed.is_first_dose ? ", first dose" : ""})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            form.setValue(
+                              "expires_on",
+                              suggested.computed.expires_on,
+                              { shouldDirty: true, shouldValidate: true },
+                            )
+                          }
+                          style={{
+                            padding: "2px 8px",
+                            borderRadius: 4,
+                            border: "1px solid var(--pw-border-strong)",
+                            background: "var(--pw-surface)",
+                            color: "var(--pw-text)",
+                            font: "500 11px var(--font-inter)",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Use this
+                        </button>
+                        {suggested.computed.legally_sensitive && (
+                          <span
+                            title="State law controls — verify against your jurisdiction before relying on this expiry."
+                            style={{
+                              padding: "1px 6px",
+                              borderRadius: 3,
+                              background: "var(--pw-status-due-bg)",
+                              color: "var(--pw-status-due-fg)",
+                              font: "600 9.5px var(--font-jetbrains)",
+                              letterSpacing: "0.06em",
+                            }}
+                          >
+                            VERIFY STATE LAW
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { bootstrapHousehold } from "@/lib/auth/bootstrap";
 
-export const metadata = { title: "Welcome — Puppy" };
+export const metadata = { title: "Welcome — Pawdex" };
 
 export default async function OnboardingPage() {
   const supabase = await createClient();

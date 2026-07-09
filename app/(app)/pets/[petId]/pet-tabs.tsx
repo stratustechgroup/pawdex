@@ -3,46 +3,56 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { cn } from "@/lib/utils";
-
+// NOTE: "Risk" tab intentionally removed pending an editorial process for
+// veterinary medical claims. The /breed-risk route + lib/clinical/breed-risk.ts
+// remain in the repo — re-enable by restoring this entry once we have:
+//  (1) reviewer-gated content workflow, (2) ≥70 breeds × ≥10 conditions
+//  matrix, (3) per-claim source citations, (4) liability framing reviewed
+//  by counsel. See README "Phase 6.37 — Breed risk pulled".
 const TABS = [
   { label: "Overview", href: "" },
   { label: "Vaccines", href: "/vaccines" },
   { label: "Medical", href: "/medical" },
+  { label: "Labs", href: "/labs" },
   { label: "Medications", href: "/medications" },
   { label: "Weight", href: "/weight" },
-];
+  { label: "QoL", href: "/quality-of-life" },
+  { label: "Documents", href: "/documents" },
+] as const;
 
-export function PetTabs({ petId }: { petId: string }) {
+export function PetTabs({
+  petId,
+  counts,
+}: {
+  petId: string;
+  counts: Partial<Record<(typeof TABS)[number]["label"], number>>;
+}) {
   const pathname = usePathname();
   const base = `/pets/${petId}`;
 
   return (
-    <nav className="border-b border-border">
-      <ul className="-mb-px flex gap-1 overflow-x-auto">
-        {TABS.map((t) => {
-          const href = `${base}${t.href}`;
-          const isActive =
-            t.href === ""
-              ? pathname === base
-              : pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <li key={t.label}>
-              <Link
-                href={href}
-                className={cn(
-                  "inline-flex shrink-0 items-center border-b-2 px-3 py-2 text-sm transition-colors",
-                  isActive
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+    <nav className="pet-tabs" aria-label="Pet sections">
+      {TABS.map((t) => {
+        const href = `${base}${t.href}`;
+        const isActive =
+          t.href === ""
+            ? pathname === base
+            : pathname === href || pathname.startsWith(`${href}/`);
+        const count = counts[t.label];
+        return (
+          <Link
+            key={t.label}
+            href={href}
+            aria-current={isActive ? "page" : undefined}
+            className="pet-tab"
+          >
+            {t.label}
+            {count !== undefined && count > 0 && (
+              <span className="tab-count">{count}</span>
+            )}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
