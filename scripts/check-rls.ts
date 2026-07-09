@@ -1,20 +1,16 @@
- 
 /**
  * RLS smoke test — proves that the anon role cannot read across households.
+ * Updated for Phase 6: covers every household-scoped table.
  *
  * Setup:
  *   1. Apply all migrations to your Supabase project.
- *   2. Create two test users via the Supabase dashboard or auth.
- *   3. Set env vars below (NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
- *      and NEXT_PUBLIC_SUPABASE_ANON_KEY).
+ *   2. Optional: create a test user + set RLS_TEST_USER_A_EMAIL +
+ *      RLS_TEST_USER_A_PASSWORD to also exercise the authenticated path.
+ *   3. Set NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY +
+ *      SUPABASE_SERVICE_ROLE_KEY in your env.
  *   4. Run: pnpm tsx scripts/check-rls.ts
  *
- * It will:
- *   - Use the service role to provision two households with one pet each.
- *   - Use the anon key (no auth) to attempt to read pets — expects 0 rows.
- *   - Sign in as user A and confirm they see only household A.
- *
- * Exit code 0 = passed, 1 = failed.
+ * Exit code 0 = all tables fail-closed for anon; 1 = at least one table leaked.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -32,26 +28,79 @@ if (!url || !anonKey || !serviceKey) {
   process.exit(1);
 }
 
-const admin = createClient(url, serviceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+// Every household-scoped table Pawdex defines. Adding a new domain table?
+// Add it here too — and write an RLS policy for it!
+const TABLES_TO_CHECK = [
+  // Phase 1 core
+  "households",
+  "household_members",
+  "pets",
+  "weight_log",
+  "vaccinations",
+  "medical_events",
+  "medications",
+  "vet_clinics",
+  "documents",
+  "document_extractions",
+  "document_pet_links",
+  "reminders",
+  "reminder_preferences",
+  // Phase 2.6 / 2.7
+  "extraction_feedback",
+  // Phase 4
+  "audit_log",
+  "household_invitations",
+  // Phase 5
+  "authorizations",
+  "outbound_emails",
+  "insurance_policies",
+  "cost_estimates",
+  "extraction_chunks",
+  "pending_records_requests",
+  "household_inbound_addresses",
+  // Phase 6
+  "share_links",
+  "qol_entries",
+  "medication_administrations",
+  "medication_price_quotes",
+  "claims",
+  "claim_attachments",
+  "lab_values",
+];
 
 async function main() {
-  console.log("→ Anonymous (no auth) — should see zero pets");
   const anon = createClient(url!, anonKey!);
-  const { data: anonPets, error: anonErr } = await anon.from("pets").select("id");
-  if (anonErr && anonErr.code !== "PGRST301") {
-    // PGRST301 = no rows; acceptable. Other errors fine too if they fail closed.
-    console.log(`   anon error (fail-closed): ${anonErr.message}`);
+
+  console.log(`→ Anonymous read across ${TABLES_TO_CHECK.length} tables — expect zero rows each\n`);
+
+  const leaked: { table: string; count: number; sample: unknown }[] = [];
+  for (const table of TABLES_TO_CHECK) {
+    const { data, error } = await anon
+      .from(table)
+      .select("*", { count: "exact", head: false })
+      .limit(3);
+    const rowCount = data?.length ?? 0;
+    if (rowCount > 0) {
+      leaked.push({ table, count: rowCount, sample: data?.[0] });
+      console.error(`   ✗ ${table}: leaked ${rowCount} row(s)`);
+    } else {
+      // Show errors as informational; fail-closed errors are expected for RLS.
+      const why = error?.message
+        ? ` (${error.code ?? "err"}: ${error.message})`
+        : "";
+      console.log(`   ✓ ${table}${why}`);
+    }
   }
-  if (anonPets && anonPets.length > 0) {
-    console.error(`✗ FAIL: anon read ${anonPets.length} pets without auth`);
+
+  if (leaked.length > 0) {
+    console.error(
+      `\n✗ FAIL: ${leaked.length} table${leaked.length === 1 ? "" : "s"} leaked rows to anon.`,
+    );
     process.exit(1);
   }
-  console.log(`   ✓ anon sees 0 pets`);
 
   if (userAEmail && userAPassword) {
-    console.log("→ User A — should see only their household's pets");
+    console.log("\n→ Authenticated user A — pets must be single-household-scoped");
     const userA = createClient(url!, anonKey!);
     const { error: signInErr } = await userA.auth.signInWithPassword({
       email: userAEmail,
@@ -62,21 +111,19 @@ async function main() {
       process.exit(1);
     }
     const { data: userPets } = await userA.from("pets").select("id, household_id");
-    console.log(`   user A sees ${userPets?.length ?? 0} pets`);
-    // Spot-check: all pets belong to one household.
     const householdIds = new Set((userPets ?? []).map((p) => p.household_id));
+    console.log(`   user A sees ${userPets?.length ?? 0} pets across ${householdIds.size} household(s)`);
     if (householdIds.size > 1) {
       console.error(`✗ FAIL: user A sees pets across ${householdIds.size} households`);
       process.exit(1);
     }
-    console.log(`   ✓ user A scoped to ${householdIds.size} household(s)`);
   } else {
     console.log(
-      "→ Skipping authenticated user check (set RLS_TEST_USER_A_EMAIL + RLS_TEST_USER_A_PASSWORD to enable)",
+      "\n→ Skipping authenticated user check (set RLS_TEST_USER_A_EMAIL + RLS_TEST_USER_A_PASSWORD to enable)",
     );
   }
 
-  console.log("\n✓ RLS smoke test passed");
+  console.log("\n✓ RLS smoke test passed — anon cannot read household data.");
 }
 
 main()
