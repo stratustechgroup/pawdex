@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "pnpm dlx tsx scripts/test-extraction-dedup.ts && pnpm dlx tsx scripts/test-pims-classifier.ts && pnpm dlx tsx scripts/test-form51-anchor.ts && pnpm dlx tsx scripts/test-pec-prefilter.ts",
+    "check": "tsc --noEmit && pnpm test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

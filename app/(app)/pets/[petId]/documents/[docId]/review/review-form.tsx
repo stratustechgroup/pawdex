@@ -1024,6 +1024,10 @@ export function ReviewForm({
                     )
                   }
                   conflict={vaccineConflict(vaccineDupes[i])}
+                  citation={{
+                    quote: extraction.vaccinations[i]?.source_quote ?? null,
+                    page: extraction.vaccinations[i]?.source_page ?? null,
+                  }}
                   badge={
                     v.vaccine_type.toLowerCase().includes("rabies") ? (
                       <span
@@ -1161,6 +1165,10 @@ export function ReviewForm({
                     )
                   }
                   conflict={medConflict(medDupes[i])}
+                  citation={{
+                    quote: extraction.medications[i]?.source_quote ?? null,
+                    page: extraction.medications[i]?.source_page ?? null,
+                  }}
                 >
                   <FieldGrid>
                     <Field label="Name" required>
@@ -1340,6 +1348,10 @@ export function ReviewForm({
                     )
                   }
                   conflict={eventConflict(eventDupes[i])}
+                  citation={{
+                    quote: extraction.medical_events[i]?.source_quote ?? null,
+                    page: extraction.medical_events[i]?.source_page ?? null,
+                  }}
                   badge={
                     billing.kind === "strong" ? (
                       <span
@@ -1517,6 +1529,10 @@ export function ReviewForm({
                     )
                   }
                   conflict={weightConflict(weightDupes[i])}
+                  citation={{
+                    quote: extraction.weights[i]?.source_quote ?? null,
+                    page: extraction.weights[i]?.source_page ?? null,
+                  }}
                 >
                   <FieldGrid>
                     <Field label="Date" required>
@@ -1952,6 +1968,7 @@ function DraftCard({
   onToggleSkip,
   badge,
   conflict,
+  citation,
   children,
 }: {
   skip: boolean;
@@ -1959,6 +1976,9 @@ function DraftCard({
   onToggleSkip: () => void;
   badge?: React.ReactNode;
   conflict?: React.ReactNode;
+  /** v6.1 source grounding — verbatim quote (+ page) the model extracted
+   *  this row from. Null on pre-v6.1 extractions; renders nothing then. */
+  citation?: { quote: string | null; page: number | null } | null;
   children: React.ReactNode;
 }) {
   const low = confidence < LOW_CONFIDENCE;
@@ -2022,6 +2042,46 @@ function DraftCard({
       </div>
       {conflict}
       {children}
+      {citation?.quote ? (
+        <div
+          style={{
+            marginTop: 10,
+            paddingTop: 8,
+            borderTop: "1px dashed var(--pw-border)",
+            display: "flex",
+            alignItems: "baseline",
+            gap: 6,
+            font: "400 11px var(--font-inter)",
+            color: "var(--pw-text-muted)",
+          }}
+        >
+          <span style={{ flexShrink: 0, color: "var(--pw-text-subtle)" }}>
+            Source:
+          </span>
+          <span
+            className="mono"
+            style={{
+              font: "400 10.5px var(--font-jetbrains)",
+              fontStyle: "italic",
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+            title={citation.quote}
+          >
+            &ldquo;{citation.quote}&rdquo;
+          </span>
+          {citation.page !== null && (
+            <span
+              className="tnum"
+              style={{ flexShrink: 0, color: "var(--pw-text-subtle)" }}
+            >
+              p.{citation.page}
+            </span>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }
