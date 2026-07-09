@@ -16,6 +16,8 @@ import {
   matchVaccines,
   matchMedicalEvents,
   matchMedications,
+  matchWeights,
+  matchLabValues,
   isHighConfidence,
   VACCINE_DATE_WINDOW_DAYS,
   EVENT_DATE_WINDOW_DAYS,
@@ -640,6 +642,129 @@ check(
     m?.[0]?.match_strength === "exact" && isHighConfidence(m?.[0]?.match_strength),
     `S16: must be exact + high-confidence (same family + same day), got "${m?.[0]?.match_strength}"`,
   );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// S17 — TS-vs-SQL family divergence: the SQL generated column
+// (vaccine_family_of, migration 0005) stamps 'canine_influenza' on stored
+// rows, while the TS inferFamilyFromType emits 'civ' on candidates. The
+// matcher must canonicalize both sides or every CIV vaccine silently
+// escapes family-match. Note the type strings share no substring, so —
+// like the rabies S16 case — ONLY family-match can link them.
+// ════════════════════════════════════════════════════════════════════
+{
+  const existing = [
+    existingVaccine({
+      vaccine_type: "Canine Influenza Bivalent H3N2/H3N8",
+      vaccine_family: "canine_influenza", // as stamped by the SQL generated column
+      administered_on: "2026-03-10",
+    }),
+  ];
+  const candidates: VaccineCandidate[] = [
+    {
+      vaccine_family: "civ", // as emitted by TS inferFamilyFromType
+      vaccine_type: "CIV vaccine sq",
+      administered_on: "2026-03-10",
+    },
+  ];
+  const res = matchVaccines(candidates, existing);
+  const m = res.get(0);
+  check(
+    m?.length === 1,
+    `S17: 'civ' (TS) vs 'canine_influenza' (SQL) must family-match via alias canonicalization, got ${m?.length ?? 0} matches`,
+  );
+  check(
+    m?.[0]?.match_strength === "exact",
+    `S17: same family + same day must be exact, got "${m?.[0]?.match_strength}"`,
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// S18-S19 — WEIGHTS. Same-day near-identical → exact (pre-skip). Same-day
+// divergent → loose (surface only — could be a legit re-measurement).
+// Different day → no match (day-to-day fluctuation is real signal).
+// ════════════════════════════════════════════════════════════════════
+{
+  const existing = [
+    { id: "w1", recorded_on: "2026-02-14", weight_kg: 29.12, document_id: null },
+  ];
+  // S18a: same day, within 0.05 kg → exact
+  let res = matchWeights(
+    [{ recorded_on: "2026-02-14", weight_kg: 29.15 }],
+    existing,
+  );
+  check(
+    res.get(0)?.[0]?.match_strength === "exact",
+    `S18a: same-day ±0.03kg must be exact, got "${res.get(0)?.[0]?.match_strength}"`,
+  );
+  // S18b: same day, 0.8 kg apart → loose (never pre-skipped)
+  res = matchWeights(
+    [{ recorded_on: "2026-02-14", weight_kg: 29.9 }],
+    existing,
+  );
+  check(
+    res.get(0)?.[0]?.match_strength === "loose" &&
+      !isHighConfidence(res.get(0)![0].match_strength),
+    `S18b: same-day divergent reading must be loose/not-preskipped, got "${res.get(0)?.[0]?.match_strength}"`,
+  );
+  // S19: next day, identical value → NO match
+  res = matchWeights(
+    [{ recorded_on: "2026-02-15", weight_kg: 29.12 }],
+    existing,
+  );
+  check(
+    !res.has(0),
+    `S19: different-day weight must not match (got ${res.get(0)?.length ?? 0})`,
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// S20-S21 — LAB VALUES. Same analyte (normalized) + same date + equal value
+// → exact. Same analyte + date, different value → loose (possible corrected
+// result — must never pre-skip). Different analyte or date → no match.
+// ════════════════════════════════════════════════════════════════════
+{
+  const existing = [
+    {
+      id: "l1",
+      analyte: "Creatinine",
+      value: 0.9,
+      units: "mg/dL",
+      collected_on: "2026-02-14",
+      document_id: null,
+    },
+  ];
+  // S20a: normalization — "CREATININE " matches "Creatinine", equal value → exact
+  let res = matchLabValues(
+    [{ analyte: "CREATININE ", collected_on: "2026-02-14", value: 0.9 }],
+    existing,
+  );
+  check(
+    res.get(0)?.[0]?.match_strength === "exact",
+    `S20a: normalized analyte + equal value must be exact, got "${res.get(0)?.[0]?.match_strength}"`,
+  );
+  // S20b: same analyte + date, DIFFERENT value → loose (corrected result must stay visible)
+  res = matchLabValues(
+    [{ analyte: "Creatinine", collected_on: "2026-02-14", value: 1.4 }],
+    existing,
+  );
+  check(
+    res.get(0)?.[0]?.match_strength === "loose" &&
+      !isHighConfidence(res.get(0)![0].match_strength),
+    `S20b: differing value must be loose/not-preskipped, got "${res.get(0)?.[0]?.match_strength}"`,
+  );
+  // S21a: different analyte, same date → NO match
+  res = matchLabValues(
+    [{ analyte: "ALT", collected_on: "2026-02-14", value: 48 }],
+    existing,
+  );
+  check(!res.has(0), `S21a: different analyte must not match`);
+  // S21b: same analyte, different date → NO match
+  res = matchLabValues(
+    [{ analyte: "Creatinine", collected_on: "2026-05-20", value: 0.9 }],
+    existing,
+  );
+  check(!res.has(0), `S21b: different collection date must not match`);
 }
 
 // ── summary ─────────────────────────────────────────────────────────

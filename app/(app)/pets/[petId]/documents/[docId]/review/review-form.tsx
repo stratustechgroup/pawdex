@@ -20,6 +20,8 @@ import {
   type VaccineMatch,
   type MedicalEventMatch,
   type MedicationMatch,
+  type WeightMatch,
+  type LabValueMatch,
 } from "@/lib/db/extraction-dedup-match";
 
 import { commitExtraction, discardExtraction } from "./actions";
@@ -169,6 +171,8 @@ export function ReviewForm({
   vaccineDupes,
   eventDupes,
   medDupes,
+  weightDupes,
+  labDupes,
 }: {
   petId: string;
   documentId: string;
@@ -185,6 +189,8 @@ export function ReviewForm({
   vaccineDupes: Record<number, VaccineMatch[]>;
   eventDupes: Record<number, MedicalEventMatch[]>;
   medDupes: Record<number, MedicationMatch[]>;
+  weightDupes: Record<number, WeightMatch[]>;
+  labDupes: Record<number, LabValueMatch[]>;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -261,10 +267,13 @@ export function ReviewForm({
 
   const [weights, setWeights] = useState<WeightDraft[]>(
     () =>
-      extraction.weights.map((w) => {
+      extraction.weights.map((w, i) => {
         const kg = w.weight_kg ?? (w.weight_lbs ? w.weight_lbs / 2.20462 : null);
         return {
-          skip: w.confidence < 0.5,
+          // Default-skip when the same-day reading already exists on file
+          // (within 0.05 kg). Divergent same-day readings stay loose — they
+          // surface a banner but are never pre-skipped.
+          skip: w.confidence < 0.5 || hasHighConfidenceDupe(weightDupes[i]),
           recorded_on: asString(w.recorded_on),
           weight_kg: kg ? kg.toFixed(3) : "",
           confidence: w.confidence,
@@ -326,14 +335,22 @@ export function ReviewForm({
       if (hasHighConfidenceDupe(medDupes[i])) n++;
     for (let i = 0; i < extraction.medical_events.length; i++)
       if (hasHighConfidenceDupe(eventDupes[i])) n++;
+    for (let i = 0; i < extraction.weights.length; i++)
+      if (hasHighConfidenceDupe(weightDupes[i])) n++;
+    for (let i = 0; i < (extraction.lab_values ?? []).length; i++)
+      if (hasHighConfidenceDupe(labDupes[i])) n++;
     return n;
   }, [
     extraction.vaccinations.length,
     extraction.medications.length,
     extraction.medical_events.length,
+    extraction.weights.length,
+    extraction.lab_values,
     vaccineDupes,
     medDupes,
     eventDupes,
+    weightDupes,
+    labDupes,
   ]);
 
   const totalSelected =
@@ -825,6 +842,7 @@ export function ReviewForm({
 
       <ReviewExtensions
         labValues={extraction.lab_values ?? []}
+        labDupes={labDupes}
         upcomingReminders={extraction.upcoming_reminders ?? []}
         petAttributes={extraction.pet_attributes ?? null}
         excludedBoilerplate={extraction.excluded_boilerplate ?? []}
@@ -1498,6 +1516,7 @@ export function ReviewForm({
                       rows.map((r, j) => (j === i ? { ...r, skip: !r.skip } : r)),
                     )
                   }
+                  conflict={weightConflict(weightDupes[i])}
                 >
                   <FieldGrid>
                     <Field label="Date" required>
@@ -2098,6 +2117,23 @@ function eventConflict(matches: MedicalEventMatch[] | undefined): React.ReactNod
       strength={m.match_strength}
       summary={`Already on file: ${m.title}`}
       detail={`${m.occurred_on}${m.vet_clinic_name ? ` · ${m.vet_clinic_name}` : ""}${dayLabel(m.days_apart)}`}
+    />
+  );
+}
+
+function weightConflict(matches: WeightMatch[] | undefined): React.ReactNode {
+  if (!matches || matches.length === 0) return null;
+  const m = matches[0];
+  const kg = Number(m.weight_kg);
+  return (
+    <ConflictBanner
+      strength={m.match_strength}
+      summary={`Already on file: ${kg.toFixed(2)} kg on ${m.recorded_on}`}
+      detail={
+        m.kg_delta !== null && m.kg_delta > 0.05
+          ? `This document reads ${m.kg_delta.toFixed(2)} kg differently — could be a re-measurement.`
+          : null
+      }
     />
   );
 }

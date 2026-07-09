@@ -127,6 +127,27 @@ export type VaccineMatch = ExistingVaccine & {
 
 export const VACCINE_DATE_WINDOW_DAYS = 3;
 
+// Two independent family-inference implementations exist: the TS
+// inferFamilyFromType (vaccine-catalog.ts, used on extraction candidates) and
+// the SQL vaccine_family_of() generated column (migration 0005, stamped on
+// stored rows). They mostly agree, but not everywhere — SQL emits
+// 'canine_influenza' where TS emits 'civ'. Without canonicalization the
+// family compare silently fails for every CIV vaccine and the dedup
+// default-skip never fires. Canonicalize BOTH sides through this alias map
+// before comparing. Add entries here whenever the two implementations
+// diverge.
+const FAMILY_ALIASES: Record<string, string> = {
+  canine_influenza: "civ",
+};
+
+export function canonicalFamily(
+  family: string | null | undefined,
+): string | null {
+  if (!family) return null;
+  const k = family.toLowerCase().trim();
+  return FAMILY_ALIASES[k] ?? k;
+}
+
 export function matchVaccines(
   candidates: VaccineCandidate[],
   existing: ExistingVaccine[],
@@ -141,10 +162,9 @@ export function matchVaccines(
       const dist = daysAbs(c.administered_on, e.administered_on);
       if (dist > VACCINE_DATE_WINDOW_DAYS) continue;
 
-      const familyMatch =
-        !!c.vaccine_family &&
-        !!e.vaccine_family &&
-        c.vaccine_family.toLowerCase() === e.vaccine_family.toLowerCase();
+      const cFam = canonicalFamily(c.vaccine_family);
+      const eFam = canonicalFamily(e.vaccine_family);
+      const familyMatch = !!cFam && !!eFam && cFam === eFam;
       const typeMatch =
         c.vaccine_type.toLowerCase().includes(e.vaccine_type.toLowerCase()) ||
         e.vaccine_type.toLowerCase().includes(c.vaccine_type.toLowerCase());
@@ -335,6 +355,138 @@ export function matchMedications(
         (a, b) =>
           strengthRank(a.match_strength) - strengthRank(b.match_strength) ||
           a.days_apart - b.days_apart,
+      );
+      out.set(i, matches);
+    }
+  }
+  return out;
+}
+
+// ── weights ─────────────────────────────────────────────────────────
+//
+// Weights only dedup within the SAME calendar day — a pet is weighed at most
+// once per visit, and day-to-day fluctuation is real signal we must keep.
+// Two tiers only: near-identical reading → exact (pre-skip); same-day but
+// diverging reading → loose (surfaced, never pre-skipped — it may be a
+// legitimate re-measurement or a corrected entry).
+
+export type WeightCandidate = {
+  recorded_on: string;
+  weight_kg: number | null;
+};
+
+export type ExistingWeight = {
+  id: string;
+  recorded_on: string;
+  weight_kg: number;
+  document_id: string | null;
+};
+
+export type WeightMatch = ExistingWeight & {
+  kg_delta: number | null;
+  match_strength: MatchStrength;
+};
+
+export const WEIGHT_EXACT_KG_TOLERANCE = 0.05;
+
+export function matchWeights(
+  candidates: WeightCandidate[],
+  existing: ExistingWeight[],
+): Map<number, WeightMatch[]> {
+  const out = new Map<number, WeightMatch[]>();
+
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
+    if (!c.recorded_on) continue;
+
+    const matches: WeightMatch[] = [];
+    for (const e of existing) {
+      if (daysAbs(c.recorded_on, e.recorded_on) >= 1) continue;
+
+      const delta =
+        c.weight_kg !== null && Number.isFinite(c.weight_kg)
+          ? Math.abs(c.weight_kg - e.weight_kg)
+          : null;
+      const strength: MatchStrength =
+        delta !== null && delta <= WEIGHT_EXACT_KG_TOLERANCE
+          ? "exact"
+          : "loose";
+
+      matches.push({ ...e, kg_delta: delta, match_strength: strength });
+    }
+
+    if (matches.length > 0) {
+      matches.sort(
+        (a, b) =>
+          strengthRank(a.match_strength) - strengthRank(b.match_strength) ||
+          (a.kg_delta ?? Infinity) - (b.kg_delta ?? Infinity),
+      );
+      out.set(i, matches);
+    }
+  }
+  return out;
+}
+
+// ── lab values ──────────────────────────────────────────────────────
+//
+// A lab row duplicates when the SAME analyte was already stored for the SAME
+// collection date. Equal value → exact (pre-skip: it's the same panel
+// re-ingested). Differing value → loose only — a same-day different value can
+// be a corrected/amended result, and pre-skipping would hide the correction.
+
+export type LabValueCandidate = {
+  analyte: string;
+  collected_on: string;
+  value: number | null;
+};
+
+export type ExistingLabValue = {
+  id: string;
+  analyte: string;
+  value: number | null;
+  units: string | null;
+  collected_on: string;
+  document_id: string | null;
+};
+
+export type LabValueMatch = ExistingLabValue & {
+  match_strength: MatchStrength;
+};
+
+export function normalizeAnalyte(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+export function matchLabValues(
+  candidates: LabValueCandidate[],
+  existing: ExistingLabValue[],
+): Map<number, LabValueMatch[]> {
+  const out = new Map<number, LabValueMatch[]>();
+
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
+    const cAnalyte = normalizeAnalyte(c.analyte);
+    if (!cAnalyte || !c.collected_on) continue;
+
+    const matches: LabValueMatch[] = [];
+    for (const e of existing) {
+      if (normalizeAnalyte(e.analyte) !== cAnalyte) continue;
+      if (daysAbs(c.collected_on, e.collected_on) >= 1) continue;
+
+      const sameValue =
+        c.value !== null &&
+        e.value !== null &&
+        Math.abs(c.value - e.value) < 1e-9;
+      matches.push({
+        ...e,
+        match_strength: sameValue ? "exact" : "loose",
+      });
+    }
+
+    if (matches.length > 0) {
+      matches.sort(
+        (a, b) =>
+          strengthRank(a.match_strength) - strengthRank(b.match_strength),
       );
       out.set(i, matches);
     }

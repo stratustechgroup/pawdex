@@ -854,7 +854,8 @@ export type Database = {
           pet_id: string;
           reminder_lead_days?: number[];
           updated_at?: string;
-          vaccine_family?: string | null;
+          // vaccine_family is GENERATED ALWAYS (vaccine_family_of(vaccine_type))
+          // — deliberately absent from Insert/Update; Postgres rejects writes.
           vaccine_type: string;
           vet_clinic_id?: string | null;
         };
@@ -874,7 +875,6 @@ export type Database = {
           pet_id?: string;
           reminder_lead_days?: number[];
           updated_at?: string;
-          vaccine_family?: string | null;
           vaccine_type?: string;
           vet_clinic_id?: string | null;
         };

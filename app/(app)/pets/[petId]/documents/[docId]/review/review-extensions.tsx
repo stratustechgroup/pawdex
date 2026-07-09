@@ -73,6 +73,7 @@ function displayValue(v: unknown): string {
 
 export function ReviewExtensions({
   labValues,
+  labDupes,
   upcomingReminders,
   petAttributes,
   excludedBoilerplate,
@@ -80,6 +81,15 @@ export function ReviewExtensions({
   onChange,
 }: {
   labValues: ExtractedLabValue[];
+  /** Dedup matches keyed by lab-row index — an "exact" match means the same
+   *  analyte + collection date + value is already stored; those rows are
+   *  default-skipped (still visible + toggleable). "loose" matches (same
+   *  analyte/date, different value — possibly a corrected result) only get
+   *  the indicator, never a pre-skip. */
+  labDupes?: Record<
+    number,
+    { match_strength: "exact" | "strong" | "loose" }[]
+  >;
   upcomingReminders: ExtractedUpcomingReminder[];
   petAttributes: ExtractedPetAttributes;
   excludedBoilerplate: ExtractedBoilerplateBlock[];
@@ -87,8 +97,14 @@ export function ReviewExtensions({
   onChange: (state: ReviewExtensionsState) => void;
 }) {
   const [labs, setLabs] = useState<LabValueDraft[]>(() =>
-    labValues.map((l) => ({
-      skip: l.confidence < 0.5 || l.value === null,
+    labValues.map((l, i) => ({
+      skip:
+        l.confidence < 0.5 ||
+        l.value === null ||
+        (labDupes?.[i]?.some(
+          (m) => m.match_strength === "exact" || m.match_strength === "strong",
+        ) ??
+          false),
       analyte: l.analyte,
       value: l.value,
       units: l.units,
@@ -394,6 +410,30 @@ export function ReviewExtensions({
                     </td>
                     <td style={{ ...td, fontWeight: 500, color: "var(--pw-text)" }}>
                       {l.analyte}
+                      {labDupes?.[i]?.length ? (
+                        <span
+                          title={
+                            labDupes[i].some(
+                              (m) => m.match_strength === "exact",
+                            )
+                              ? "This analyte + date + value is already in your records — skipped by default."
+                              : "Same analyte + date already on file with a different value — could be a corrected result. Review before including."
+                          }
+                          style={{
+                            marginLeft: 6,
+                            padding: "1px 6px",
+                            borderRadius: 999,
+                            background: "var(--pw-status-due-bg)",
+                            color: "var(--pw-status-due-fg)",
+                            font: "600 9.5px var(--font-inter)",
+                            letterSpacing: "0.04em",
+                            textTransform: "uppercase",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          on file
+                        </span>
+                      ) : null}
                     </td>
                     <td style={{ ...td, color: "var(--pw-text)" }} className="tnum">
                       {l.value !== null ? `${l.value}${l.units ? ` ${l.units}` : ""}` : "—"}

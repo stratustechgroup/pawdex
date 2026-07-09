@@ -19,6 +19,8 @@ import {
   findCandidateDuplicateVaccines,
   findCandidateDuplicateMedicalEvents,
   findCandidateDuplicateMedications,
+  findCandidateDuplicateWeights,
+  findCandidateDuplicateLabValues,
 } from "@/lib/db/extraction-dedup";
 import { inferFamilyFromType } from "@/lib/clinical/vaccine-catalog";
 
@@ -290,6 +292,17 @@ export default async function ReviewPage({
     generic_name: m.generic_name ?? null,
     started_on: m.started_on ? asDateString(m.started_on) : null,
   }));
+  // Mirror the form's draft init: kg preferred, lbs converted as fallback.
+  const weightCandidates = result.weights.map((w) => ({
+    recorded_on: asDateString(w.recorded_on),
+    weight_kg:
+      w.weight_kg ?? (w.weight_lbs ? w.weight_lbs / 2.20462 : null),
+  }));
+  const labCandidates = (result.lab_values ?? []).map((l) => ({
+    analyte: l.analyte ?? "",
+    collected_on: asDateString(l.collected_on),
+    value: l.value,
+  }));
 
   const [
     signedUrl,
@@ -298,6 +311,8 @@ export default async function ReviewPage({
     vaccineDupes,
     eventDupes,
     medDupes,
+    weightDupes,
+    labDupes,
   ] = await Promise.all([
     getDocumentSignedUrl(doc),
     countReviewQueue(session.householdId, petId),
@@ -317,6 +332,8 @@ export default async function ReviewPage({
       eventCandidates,
     ),
     findCandidateDuplicateMedications(session.householdId, petId, medCandidates),
+    findCandidateDuplicateWeights(session.householdId, petId, weightCandidates),
+    findCandidateDuplicateLabValues(session.householdId, petId, labCandidates),
   ]);
 
   return (
@@ -343,6 +360,8 @@ export default async function ReviewPage({
       vaccineDupes={Object.fromEntries(vaccineDupes)}
       eventDupes={Object.fromEntries(eventDupes)}
       medDupes={Object.fromEntries(medDupes)}
+      weightDupes={Object.fromEntries(weightDupes)}
+      labDupes={Object.fromEntries(labDupes)}
     />
   );
 }

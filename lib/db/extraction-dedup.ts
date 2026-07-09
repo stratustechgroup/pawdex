@@ -6,6 +6,8 @@ import {
   matchVaccines,
   matchMedicalEvents,
   matchMedications,
+  matchWeights,
+  matchLabValues,
   type VaccineCandidate,
   type VaccineMatch,
   type ExistingVaccine,
@@ -15,6 +17,12 @@ import {
   type MedicationCandidate,
   type MedicationMatch,
   type ExistingMedication,
+  type WeightCandidate,
+  type WeightMatch,
+  type ExistingWeight,
+  type LabValueCandidate,
+  type LabValueMatch,
+  type ExistingLabValue,
 } from "@/lib/db/extraction-dedup-match";
 
 /**
@@ -35,6 +43,10 @@ export type {
   MedicalEventMatch,
   MedicationCandidate,
   MedicationMatch,
+  WeightCandidate,
+  WeightMatch,
+  LabValueCandidate,
+  LabValueMatch,
 } from "@/lib/db/extraction-dedup-match";
 
 // ── shared: clinic-name attachment ──────────────────────────────────
@@ -164,6 +176,53 @@ export async function findCandidateDuplicateMedications(
 
   const existing = (data ?? []) as ExistingMedication[];
   return matchMedications(candidates, existing);
+}
+
+// ── weight dedup ────────────────────────────────────────────────────
+
+export async function findCandidateDuplicateWeights(
+  householdId: string,
+  petId: string,
+  candidates: WeightCandidate[],
+): Promise<Map<number, WeightMatch[]>> {
+  if (candidates.length === 0) return new Map();
+
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("weight_log")
+    .select("id, recorded_on, weight_kg, document_id")
+    .eq("household_id", householdId)
+    .eq("pet_id", petId);
+
+  const existing = (data ?? []).map((r) => ({
+    ...r,
+    // numeric columns can arrive as strings through PostgREST — coerce.
+    weight_kg: Number(r.weight_kg),
+  })) as ExistingWeight[];
+  return matchWeights(candidates, existing);
+}
+
+// ── lab value dedup ─────────────────────────────────────────────────
+
+export async function findCandidateDuplicateLabValues(
+  householdId: string,
+  petId: string,
+  candidates: LabValueCandidate[],
+): Promise<Map<number, LabValueMatch[]>> {
+  if (candidates.length === 0) return new Map();
+
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("lab_values")
+    .select("id, analyte, value, units, collected_on, document_id")
+    .eq("household_id", householdId)
+    .eq("pet_id", petId);
+
+  const existing = (data ?? []).map((r) => ({
+    ...r,
+    value: r.value === null ? null : Number(r.value),
+  })) as ExistingLabValue[];
+  return matchLabValues(candidates, existing);
 }
 
 // ── pet attribute reconciliation ────────────────────────────────────
