@@ -542,6 +542,25 @@ Type-check + production build both clean. Both Finn test PDFs (Hillcrest 16-page
 
 UI: `<DeleteDocumentButton>` ([delete-document-button.tsx](app/(app)/pets/[petId]/documents/[docId]/delete-document-button.tsx)) appears in three places — the document viewer header (primary CTA), the gallery card footer (ghost variant), and the inbox row. Confirm-dialog before destruction. Server action `deleteDocumentAction` in [upload/actions.ts](app/(app)/pets/[petId]/upload/actions.ts) handles inbox case (empty petId) so unassigned-document deletes work too.
 
+## Phase 6.40 — Repo hygiene, migration recovery, CIV family fix, labs/weights dedup, citations
+
+Audit-driven cleanup pass converting "impressive working tree" into "recoverable, reproducible project," plus the remaining tracked deliverables.
+
+**Repo hygiene.**
+- The entire platform (154 files, months of work) sat on a single Create-Next-App commit. Now committed in 5 logical chunks (db / lib / ui / app / ops) + follow-up fix commits. Working tree clean.
+- **Migration recovery:** `supabase/migrations/` had 0001–0003 while the live DB carried 23 applied migrations (evolved via MCP during development — schema drift meant a fresh environment couldn't be reproduced). All 20 missing files recovered from `supabase_migrations.schema_migrations`; a background agent verified 0006–0023 **byte-for-byte via md5** against the DB.
+- **`types.gen.ts` generated-column lie fixed:** `vaccine_family` is `GENERATED ALWAYS AS (vaccine_family_of(vaccine_type))` in Postgres, but the hand-authored types still allowed it in Insert/Update — TypeScript would permit writes Postgres rejects at runtime. Removed.
+- **Env naming fixed:** `.env.local` used `OPENROUTER_MODEL_DEFAULT/PREMIUM`; the code reads `OPENROUTER_MODEL_TIER1/2/3`, so env settings were silently ignored. Correctly-named vars appended.
+- **`pnpm test` / `pnpm check`:** all four behavioral suites (extraction dedup, PIMS, Form 51, PEC) now run behind one script; `check` gates tsc + tests — the CI foundation.
+
+**CIV family bug (found while recovering migration 0005).** Two independent family-inference implementations exist: SQL `vaccine_family_of()` (stamps stored rows via the generated column) and TS `inferFamilyFromType` (labels extraction candidates). They diverge on canine influenza — SQL emits `'canine_influenza'`, TS emits `'civ'` — so the dedup family-match silently failed for every CIV vaccine. Fixed with a `canonicalFamily()` alias map in the pure matcher applied to **both** sides before compare, plus regression test S17 (type strings share no substring, so only family-match can link them — same shape as the rabies S16 case).
+
+**Labs + weights dedup (Phase 6.39 item, now done).** Deliberately two-tier and conservative: same-day weight within 0.05 kg → `exact` (default-skip); divergent same-day reading → `loose` only (a re-measurement must stay visible). Same analyte + collection date + equal value → `exact`; same analyte/date with a **different** value → `loose` only — that can be a corrected/amended result and pre-skipping would hide the correction. Wired compute → surface (weight `ConflictBanner`, lab "on file" pill in ReviewExtensions) → commit. Behavioral suite grew to **55 assertions** (S17–S21), all passing.
+
+**Citations rendered (Phase 6.36 item, display half).** Every entity card on `/review` now shows the v6.1 `source_quote` + `source_page` the model grounded the row in — dashed-border footer, 2-line clamp, full quote on hover, null-safe for pre-v6.1 extractions. Click-to-highlight in the PDF viewer remains future work.
+
+**Still open after this pass:** PIMS/Form51/PEC runtime wiring (needs the text pre-pass), receipts/expenses design (awaiting approach approval), end-to-end real-document validation, Phase 7 monetization.
+
 ## Phase 6.38 — Ingestion dedup: making "don't re-ingest" actually work
 
 The platform's core requirement is that scanning a document understands what's in it AND recognizes what we already have so it isn't ingested twice. An audit found this was largely **built but not wired**:
