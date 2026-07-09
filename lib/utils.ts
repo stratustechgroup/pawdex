@@ -30,9 +30,38 @@ export function lbsToKg(lbs: number): number {
   return Math.round((lbs / 2.20462) * 1000) / 1000;
 }
 
+/**
+ * Whole calendar days between two dates — compares at the date level so
+ * the result is independent of what time of day each Date represents.
+ *
+ * Critical for vaccine status math: `parseISO("2026-05-27")` is local
+ * midnight, but `new Date()` is whatever time it is right now. Naive
+ * subtraction would treat "expires today, it's 3pm now" as -0.625 days →
+ * round to -1 → classify as overdue when it should be 0 (due today).
+ */
 export function daysBetween(from: Date, to: Date): number {
-  const ms = to.getTime() - from.getTime();
-  return Math.round(ms / 86_400_000);
+  const fromDay = new Date(
+    from.getFullYear(),
+    from.getMonth(),
+    from.getDate(),
+  );
+  const toDay = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  // DST transitions can give 23h or 25h "days" — round to the nearest
+  // whole day to absorb that without losing accuracy.
+  return Math.round((toDay.getTime() - fromDay.getTime()) / 86_400_000);
+}
+
+/**
+ * A medication is "active" if it has no ended_on date or the ended_on is in
+ * the future. Mirrors the comment in lib/supabase/types.ts — we compute this
+ * in the app because Postgres rejected the generated column (`current_date`
+ * is non-immutable).
+ */
+export function isMedicationActive(endedOn: string | null): boolean {
+  if (!endedOn) return true;
+  const end = new Date(endedOn);
+  if (Number.isNaN(end.getTime())) return true;
+  return end.getTime() > Date.now();
 }
 
 export type VaccineStatus = "up_to_date" | "due_soon" | "overdue" | "incomplete";

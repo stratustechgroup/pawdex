@@ -30,17 +30,35 @@ export async function listPetsForHousehold(
   const ids = petRows.map((p) => p.id);
   const { data: vaccines, error: vaccErr } = await supabase
     .from("vaccinations")
-    .select("pet_id, vaccine_type, expires_on")
-    .in("pet_id", ids);
+    .select("pet_id, vaccine_type, vaccine_family, administered_on, expires_on")
+    .in("pet_id", ids)
+    .order("administered_on", { ascending: false });
 
   if (vaccErr) {
     throw new Error(`listPets vaccines: ${vaccErr.message}`);
   }
 
-  const byPet = new Map<string, { vaccine_type: string; expires_on: string | null }[]>();
-  for (const v of (vaccines ?? []) as Pick<Vaccination, "pet_id" | "vaccine_type" | "expires_on">[]) {
+  // Reduce to the latest-per-family per pet — multiple historical entries for
+  // the same vaccine (e.g. 6 rabies certs over 6 years) collapse to the most
+  // recent dose, which is the one whose expiration drives the status badge.
+  type SlimVacc = Pick<
+    Vaccination,
+    "pet_id" | "vaccine_type" | "vaccine_family" | "administered_on" | "expires_on"
+  >;
+  const byPet = new Map<string, SlimVacc[]>();
+  const seenPerPet = new Map<string, Set<string>>(); // pet_id -> set of families already kept
+  for (const v of (vaccines ?? []) as SlimVacc[]) {
+    const key =
+      v.vaccine_family ?? `__type:${v.vaccine_type.toLowerCase().trim()}`;
+    let seen = seenPerPet.get(v.pet_id);
+    if (!seen) {
+      seen = new Set();
+      seenPerPet.set(v.pet_id, seen);
+    }
+    if (seen.has(key)) continue;
+    seen.add(key);
     const arr = byPet.get(v.pet_id) ?? [];
-    arr.push({ vaccine_type: v.vaccine_type, expires_on: v.expires_on });
+    arr.push(v);
     byPet.set(v.pet_id, arr);
   }
 
