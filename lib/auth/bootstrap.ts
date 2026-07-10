@@ -1,11 +1,13 @@
 import "server-only";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { pickDefaultMembership } from "@/lib/auth/active-household";
 
 /**
  * Idempotent: if the user already belongs to at least one household, returns
- * the most-recently-created one. Otherwise creates a household named
- * "{display}'s Household" and adds the user as owner.
+ * their default one (earliest accepted membership, matching requireSession's
+ * fallback so both agree on the "primary" household). Otherwise creates a
+ * household named "{display}'s Household" and adds the user as owner.
  *
  * Uses the service-role client because creating the first household requires
  * inserting into household_members before the user has any rows that RLS
@@ -19,18 +21,16 @@ export async function bootstrapHousehold(params: {
 
   const { data: existing, error: existingErr } = await supabase
     .from("household_members")
-    .select("household_id, accepted_at")
-    .eq("user_id", params.userId)
-    .order("invited_at", { ascending: false })
-    .limit(1);
+    .select("household_id, role, accepted_at, invited_at")
+    .eq("user_id", params.userId);
 
   if (existingErr) {
     throw new Error(`bootstrap: lookup failed — ${existingErr.message}`);
   }
 
-  const row = existing?.[0] as { household_id: string; accepted_at: string | null } | undefined;
-  if (row) {
-    return { householdId: row.household_id };
+  const primary = pickDefaultMembership(existing ?? []);
+  if (primary) {
+    return { householdId: primary.household_id };
   }
 
   const name = params.displayName?.trim()

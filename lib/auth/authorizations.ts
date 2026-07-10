@@ -71,6 +71,17 @@ export const AUTHORIZATION_DESCRIPTORS: Record<
     scopeText:
       "I acknowledge that Pawdex may earn referral fees, commissions, or other compensation when I purchase pet insurance, products, or services through links or recommendations surfaced in the app. Pawdex will visibly mark any partner-sponsored placement as 'Sponsored' or 'Partner' and link to its full disclosure policy. This acknowledgement enables comparison features and partner intro rates; it does not authorize Pawdex to make any purchase or commitment on my behalf.",
   },
+  research_data_sharing: {
+    type: "research_data_sharing",
+    label: "Share de-identified data for research",
+    short:
+      "Lets Pawdex include your animals' de-identified records in aggregate research datasets. You choose which animals; nothing personally identifying is shared.",
+    icon: "activity",
+    scopeVersion: SCOPE_VERSION,
+    requiresOwner: true,
+    scopeText:
+      "I authorize Pawdex to include de-identified medical records for the animals I select in aggregate datasets shared with veterinary and animal-health researchers. Direct identifiers (my name, contact details, and precise location) are removed before any data leaves Pawdex. I can revoke this authorization at any time; revocation stops inclusion in future releases but does not recall datasets already shared.",
+  },
 };
 
 export const AUTHORIZATION_TYPES = Object.keys(

@@ -1,19 +1,48 @@
 import "server-only";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import {
+  ACTIVE_HOUSEHOLD_COOKIE,
+  resolveActiveMembership,
+  type HouseholdKind,
+  type HouseholdRole,
+  type MembershipRow,
+} from "@/lib/auth/active-household";
+
+export type HouseholdSummary = {
+  householdId: string;
+  name: string;
+  kind: HouseholdKind;
+  role: HouseholdRole;
+  isActive: boolean;
+};
 
 export type Session = {
   userId: string;
   email: string | null;
   householdId: string;
   householdName: string;
-  role: "owner" | "member" | "viewer";
+  role: HouseholdRole;
+  householdKind: HouseholdKind;
+  // Every household the user belongs to, for the switcher. Always includes the
+  // active one. A single-household user gets a one-element array.
+  households: HouseholdSummary[];
+};
+
+type MemberRowWithHousehold = MembershipRow & {
+  households: { id: string; name: string; kind: HouseholdKind } | null;
 };
 
 /**
- * Resolves the authenticated user's primary household for Server Components.
+ * Resolves the authenticated user's active household for Server Components.
  * Redirects to /login if unauthenticated, /onboarding if no household yet.
+ *
+ * The active household comes from the pawdex-active-household cookie when it
+ * names a household the user can reach; otherwise it falls back to the earliest
+ * accepted membership (see resolveActiveMembership). The same fallback backs
+ * bootstrapHousehold so both agree on the "primary" household.
  */
 export async function requireSession(): Promise<Session> {
   const supabase = await createClient();
@@ -28,38 +57,47 @@ export async function requireSession(): Promise<Session> {
 
   const { data: memberRows, error: memberErr } = await supabase
     .from("household_members")
-    .select("household_id, role")
-    .eq("user_id", user.id)
-    .order("invited_at", { ascending: true })
-    .limit(1);
+    .select("household_id, role, accepted_at, invited_at, households(id, name, kind)")
+    .eq("user_id", user.id);
 
   if (memberErr) {
     throw new Error(`requireSession member: ${memberErr.message}`);
   }
 
-  const member = memberRows?.[0];
-  if (!member) {
+  const rows = (memberRows ?? []) as unknown as MemberRowWithHousehold[];
+  if (rows.length === 0) {
     redirect("/onboarding");
   }
 
-  const { data: household, error: hhErr } = await supabase
-    .from("households")
-    .select("id, name")
-    .eq("id", member.household_id)
-    .maybeSingle();
+  const cookieStore = await cookies();
+  const cookieHouseholdId = cookieStore.get(ACTIVE_HOUSEHOLD_COOKIE)?.value;
 
-  if (hhErr) {
-    throw new Error(`requireSession household: ${hhErr.message}`);
-  }
-  if (!household) {
+  const active = resolveActiveMembership(rows, cookieHouseholdId);
+  if (!active || !active.households) {
+    // Membership rows with no readable household are unusable; treat as none.
     redirect("/onboarding");
   }
+
+  const households: HouseholdSummary[] = rows
+    .filter((r): r is MemberRowWithHousehold & { households: NonNullable<MemberRowWithHousehold["households"]> } =>
+      r.households !== null,
+    )
+    .map((r) => ({
+      householdId: r.household_id,
+      name: r.households.name,
+      kind: r.households.kind,
+      role: r.role,
+      isActive: r.household_id === active.household_id,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return {
     userId: user.id,
     email: user.email ?? null,
-    householdId: household.id,
-    householdName: household.name,
-    role: member.role,
+    householdId: active.household_id,
+    householdName: active.households.name,
+    role: active.role,
+    householdKind: active.households.kind,
+    households,
   };
 }

@@ -4,13 +4,14 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { TopNav } from "@/components/pawdex/top-nav";
+import type { SwitcherHousehold } from "@/components/pawdex/household-switcher";
 import { createClient } from "@/lib/supabase/browser";
 
 export function TopNavClient({
-  householdName,
+  households,
   userInitials,
 }: {
-  householdName: string;
+  households: SwitcherHousehold[];
   userInitials: string;
 }) {
   const router = useRouter();
@@ -27,7 +28,7 @@ export function TopNavClient({
 
   return (
     <TopNav
-      householdName={householdName}
+      households={households}
       userInitials={userInitials}
       onSignOut={handleSignOut}
     />

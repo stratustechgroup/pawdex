@@ -1,12 +1,16 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { ACTIVE_HOUSEHOLD_COOKIE } from "@/lib/auth/active-household";
 import { hashToken } from "@/lib/auth/invitations";
 import { recordAudit } from "@/lib/db/audit";
+
+const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
 type AcceptResult =
   | { ok: true; householdId: string }
@@ -82,6 +86,15 @@ export async function acceptInvitation(rawToken: string): Promise<AcceptResult> 
     entityType: "household_invitation",
     entityId: invitation.id,
     diff: { after: { user_id: user.id, role: invitation.role } },
+  });
+
+  // Land the user in the household they just joined.
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_HOUSEHOLD_COOKIE, invitation.household_id, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: ONE_YEAR_SECONDS,
   });
 
   revalidatePath("/");

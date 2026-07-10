@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Icon } from "@/components/brand/icon";
 import { SectionHead } from "@/components/pawdex/chips";
 import { requireSession } from "@/lib/auth/household";
+import { switchHousehold } from "@/lib/auth/switch-household";
 import {
   listHouseholdMembers,
   listPendingInvitations,
@@ -21,6 +22,11 @@ export default async function HouseholdSettingsPage() {
     listPendingInvitations(session.householdId),
   ]);
   const isOwner = session.role === "owner";
+  const ROLE_LABEL: Record<typeof session.role, string> = {
+    owner: "Owner",
+    member: "Member",
+    viewer: "Viewer",
+  };
 
   return (
     <div
@@ -71,6 +77,126 @@ export default async function HouseholdSettingsPage() {
           People with access to this household&apos;s pets, records, and reminders.
         </p>
       </header>
+
+      {session.households.length > 1 && (
+        <section className="pw-card" style={{ padding: 20 }}>
+          <SectionHead
+            title="Your households"
+            sub="You belong to more than one household. The active one is shown throughout Pawdex; switch to manage a different one."
+          />
+          <ul
+            style={{
+              listStyle: "none",
+              margin: "16px 0 0",
+              padding: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+            }}
+          >
+            {session.households.map((h) => (
+              <li
+                key={h.householdId}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 14px",
+                  borderRadius: 8,
+                  border: "1px solid var(--pw-border)",
+                  background: h.isActive
+                    ? "var(--pw-surface-2)"
+                    : "var(--pw-surface)",
+                }}
+              >
+                <Icon
+                  name={h.kind === "breeder" ? "paw" : "home"}
+                  size={16}
+                  style={{ color: "var(--pw-text-muted)", flexShrink: 0 }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <span
+                      style={{
+                        font: "500 14px var(--font-inter)",
+                        color: "var(--pw-text)",
+                      }}
+                    >
+                      {h.name}
+                    </span>
+                    {h.kind === "breeder" && (
+                      <span
+                        style={{
+                          padding: "1px 7px",
+                          borderRadius: 999,
+                          background: "var(--pw-accent-soft)",
+                          color: "var(--pw-accent-fg-on-soft)",
+                          font: "600 9.5px var(--font-inter)",
+                          letterSpacing: "0.04em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Breeder
+                      </span>
+                    )}
+                  </div>
+                  <span
+                    style={{
+                      font: "400 12px var(--font-inter)",
+                      color: "var(--pw-text-muted)",
+                    }}
+                  >
+                    {ROLE_LABEL[h.role]}
+                  </span>
+                </div>
+                {h.isActive ? (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      padding: "3px 10px",
+                      borderRadius: 999,
+                      background: "var(--pw-accent-soft)",
+                      color: "var(--pw-accent-fg-on-soft)",
+                      font: "500 11px var(--font-inter)",
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    <Icon name="check" size={12} />
+                    Active
+                  </span>
+                ) : (
+                  <form action={switchHousehold.bind(null, h.householdId)}>
+                    <button
+                      type="submit"
+                      style={{
+                        height: 32,
+                        padding: "0 14px",
+                        borderRadius: 6,
+                        border: "1px solid var(--pw-border-strong)",
+                        background: "var(--pw-surface)",
+                        color: "var(--pw-text)",
+                        font: "500 12.5px var(--font-inter)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Switch
+                    </button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {isOwner && (
         <section className="pw-card" style={{ padding: 20 }}>

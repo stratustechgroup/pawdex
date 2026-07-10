@@ -6,28 +6,44 @@ import { useEffect, useState } from "react";
 
 import { Icon } from "@/components/brand/icon";
 import { PawdexMark } from "@/components/brand/mark";
+import {
+  HouseholdSwitcher,
+  type SwitcherHousehold,
+} from "@/components/pawdex/household-switcher";
 import { cn } from "@/lib/utils";
 
-const NAV = [
+type NavLink = { label: string; href: string };
+
+const NAV: NavLink[] = [
   { label: "Pets", href: "/" },
   { label: "Expiring", href: "/expiring" },
   { label: "Vets", href: "/vets" },
   { label: "Insurance", href: "/insurance" },
   { label: "Inbox", href: "/inbox" },
   { label: "Ask", href: "/ask" },
-] as const;
+];
+
+// Breeder-only surface. Shown just after Pets, and only when the active
+// household is a breeding operation, so personal households stay uncluttered.
+const BREEDING_LINK: NavLink = { label: "Breeding", href: "/breeding" };
 
 export function TopNav({
-  householdName,
+  households,
   userInitials,
   onSignOut,
 }: {
-  householdName: string;
+  households: SwitcherHousehold[];
   userInitials: string;
   onSignOut: () => void;
 }) {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  const isBreeder =
+    households.find((h) => h.isActive)?.kind === "breeder";
+  const navLinks: NavLink[] = isBreeder
+    ? [NAV[0], BREEDING_LINK, ...NAV.slice(1)]
+    : NAV;
 
   useEffect(() => {
     const stored =
@@ -86,38 +102,7 @@ export function TopNav({
           flexShrink: 0,
         }}
       />
-      <button
-        type="button"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          font: "500 13px var(--font-inter)",
-          color: "var(--pw-text-secondary)",
-          background: "transparent",
-          border: 0,
-          cursor: "pointer",
-          padding: 0,
-        }}
-        title={householdName}
-      >
-        <Icon name="home" size={14} style={{ color: "var(--pw-text-muted)" }} />
-        <span
-          style={{
-            maxWidth: 160,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {householdName}
-        </span>
-        <Icon
-          name="chevronDown"
-          size={13}
-          style={{ color: "var(--pw-text-muted)" }}
-        />
-      </button>
+      <HouseholdSwitcher households={households} />
       <nav
         style={{
           display: "flex",
@@ -126,7 +111,7 @@ export function TopNav({
         }}
         className="hidden md:flex"
       >
-        {NAV.map((link) => {
+        {navLinks.map((link) => {
           const active =
             link.href === "/"
               ? pathname === "/" || pathname.startsWith("/pets")

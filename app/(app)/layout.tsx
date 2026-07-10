@@ -26,7 +26,7 @@ export default async function AppLayout({
       }}
     >
       <TopNavClient
-        householdName={session.householdName}
+        households={session.households}
         userInitials={userInitials}
       />
       <main style={{ flex: 1 }}>{children}</main>
