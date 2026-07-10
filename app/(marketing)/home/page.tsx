@@ -13,15 +13,15 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 const STATS = [
   {
     stat: "~1 min",
-    label: "to read a 40-page chart, cover to cover",
+    label: "to read a 40-page vet chart, cover to cover",
   },
   {
-    stat: "p.2 ¶4",
-    label: "every fact cites the exact page it came from",
+    stat: "100%",
+    label: "of extracted facts link back to the exact page of the original document",
   },
   {
-    stat: "0 records",
-    label: "saved without your explicit approval",
+    stat: "0",
+    label: "records saved without your explicit approval",
   },
 ];
 
