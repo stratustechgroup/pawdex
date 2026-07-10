@@ -8,14 +8,20 @@ import {
   type PolicyExtractionResult,
 } from "@/lib/ai/policy-schema";
 import {
+  buildPolicySystemPrompt,
   POLICY_PROMPT_VERSION,
-  POLICY_SYSTEM_PROMPT,
 } from "@/lib/ai/prompts/policy-v1";
 
 export interface ExtractPolicyOptions {
   fileBytes: Uint8Array;
   mimeType: string;
   filename: string;
+  /**
+   * Optional PEC pre-scan fragment (from `pecPromptFragment`) injected into the
+   * system prompt when a text pre-pass produced a sample. Omitted for scanned
+   * documents and images, which have no text layer to pre-scan.
+   */
+  pecFragment?: string | null;
 }
 
 export interface ExtractPolicyResult {
@@ -46,7 +52,7 @@ export async function extractPolicy(
     const { object, response } = await generateObject({
       model: openrouter(modelId),
       schema: policyExtractionSchema,
-      system: POLICY_SYSTEM_PROMPT,
+      system: buildPolicySystemPrompt(opts.pecFragment),
       messages: [
         {
           role: "user",

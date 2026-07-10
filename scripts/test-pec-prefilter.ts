@@ -14,6 +14,10 @@
 
 import { tagPecSpans, pecPromptFragment } from "../lib/insurance/pec-prefilter";
 import type { PecClauseCategory } from "../lib/insurance/pec-prefilter";
+import {
+  buildPolicySystemPrompt,
+  POLICY_SYSTEM_PROMPT,
+} from "../lib/ai/prompts/policy-v1";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -196,6 +200,46 @@ const emptyFragment = pecPromptFragment([]);
 assert(
   emptyFragment.includes("no PEC signal phrases"),
   "empty-spans fragment instructs the LLM not to invent PEC clauses",
+);
+
+console.log();
+
+// ---------------------------------------------------------------------------
+// Test (d) — policy system prompt composition (the wiring's pure logic)
+// ---------------------------------------------------------------------------
+
+console.log("=".repeat(72));
+console.log("(d) buildPolicySystemPrompt fragment injection");
+console.log("=".repeat(72));
+console.log();
+
+console.log("Assertions:");
+const promptWithFragment = buildPolicySystemPrompt(fragment);
+assert(
+  promptWithFragment.includes(POLICY_SYSTEM_PROMPT),
+  "composed prompt keeps the full policy core verbatim",
+);
+assert(
+  promptWithFragment.includes("Document-specific guidance (auto-detected)"),
+  "composed prompt appends the fragment under a clear header",
+);
+assert(
+  promptWithFragment.includes("PEC") && promptWithFragment.length > POLICY_SYSTEM_PROMPT.length,
+  "composed prompt actually contains the PEC fragment after the core",
+);
+// No fragment / empty / whitespace → core verbatim, so the no-text path
+// (scans, images) is byte-identical to the pre-wiring behavior.
+assert(
+  buildPolicySystemPrompt() === POLICY_SYSTEM_PROMPT,
+  "no fragment returns the policy core verbatim (no-text path unchanged)",
+);
+assert(
+  buildPolicySystemPrompt("   \n  ") === POLICY_SYSTEM_PROMPT,
+  "whitespace-only fragment is dropped (returns core verbatim)",
+);
+assert(
+  buildPolicySystemPrompt(null) === POLICY_SYSTEM_PROMPT,
+  "null fragment returns the policy core verbatim",
 );
 
 console.log();

@@ -111,3 +111,27 @@ Score \`confidence_overall\` low (< 0.7) when:
 # Output
 
 Emit a single JSON object matching the schema. No markdown fences, no commentary.`;
+
+/**
+ * Assemble the full policy system prompt: the always-on core plus an optional
+ * PEC pre-scan fragment produced by `tagPecSpans` / `pecPromptFragment` when a
+ * text pre-pass succeeds. The fragment is appended under a clear header so the
+ * model treats it as additive guidance, not a replacement for the core rules.
+ * An empty/whitespace fragment is dropped, so the no-text path (scans, images)
+ * returns the core verbatim and behaves exactly as before this wiring existed.
+ *
+ * Mirrors `buildExtractionSystemPrompt` on the medical-records path.
+ */
+export function buildPolicySystemPrompt(pecFragment?: string | null): string {
+  const fragment = pecFragment?.trim();
+  if (!fragment) return POLICY_SYSTEM_PROMPT;
+  return [
+    POLICY_SYSTEM_PROMPT,
+    "",
+    "# Document-specific guidance (auto-detected)",
+    "",
+    "Pawdex ran a deterministic pre-scan over this policy's text layer. Apply the following in ADDITION to every rule above:",
+    "",
+    fragment,
+  ].join("\n");
+}

@@ -3,6 +3,12 @@ import "server-only";
 import { recordAudit } from "@/lib/db/audit";
 import { createServiceClient } from "@/lib/supabase/service";
 import { extractPolicy, PolicyExtractionError } from "@/lib/ai/extract-policy";
+import { extractTextSample } from "@/lib/ingest/text-prepass";
+import {
+  tagPecSpans,
+  pecPromptFragment,
+  type PecClauseCategory,
+} from "@/lib/insurance/pec-prefilter";
 import type { Database } from "@/lib/supabase/types";
 
 type InsurancePolicyUpdate =
@@ -51,9 +57,43 @@ export async function processPolicyExtraction(opts: {
   const mimeType = doc.mime_type ?? blob.type ?? "application/octet-stream";
   const filename = doc.original_filename ?? "policy";
 
+  // ── PEC pre-filter pre-pass ──────────────────────────────────────
+  // Read the policy's PDF text layer (never OCR here) so the deterministic
+  // PEC signal-phrase scanner can tag pre-existing-condition clauses and inject
+  // a classification fragment into the extraction prompt. Mirrors the medical
+  // path's PIMS/Form 51 pre-pass. Entirely non-fatal: any failure leaves the
+  // fragment undefined and the policy path behaves exactly as before (raw bytes
+  // → Sonnet, no fragment). Digital PDFs with a text layer get the fragment;
+  // scanned PDFs and images (no text sample) do not.
+  let pecFragment: string | undefined;
+  let pecMeta: {
+    char_count: number;
+    page_count: number;
+    span_count: number;
+    categories: PecClauseCategory[];
+  } | null = null;
+  try {
+    const sample = await extractTextSample(fileBytes, mimeType);
+    if (sample) {
+      const spans = tagPecSpans(sample.text);
+      pecFragment = pecPromptFragment(spans);
+      pecMeta = {
+        char_count: sample.charCount,
+        page_count: sample.pageCount,
+        span_count: spans.length,
+        categories: [...new Set(spans.map((s) => s.category_hint))],
+      };
+    }
+  } catch (err) {
+    console.warn(
+      `[processPolicyExtraction] PEC pre-pass threw for ${doc.id}, continuing without it:`,
+      err instanceof Error ? err.message : err,
+    );
+  }
+
   let extracted;
   try {
-    extracted = await extractPolicy({ fileBytes, mimeType, filename });
+    extracted = await extractPolicy({ fileBytes, mimeType, filename, pecFragment });
   } catch (err) {
     const msg = err instanceof PolicyExtractionError ? err.message : String(err);
     await markFailed(doc.id, msg);
@@ -135,6 +175,9 @@ export async function processPolicyExtraction(opts: {
         confidence_overall: r.confidence_overall,
         prompt_version: extracted.promptVersion,
         model: extracted.model,
+        // What the deterministic PEC pre-filter saw. null when there was no
+        // text layer to pre-scan (scanned PDF / image → vision path unchanged).
+        pec_prefilter: pecMeta,
       },
     },
   });

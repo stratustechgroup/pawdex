@@ -180,25 +180,47 @@ recorded, unchanged.
 
 ## Insurance-policy path (separate)
 
-The policy path is deliberately distinct and was **not** re-wired in this pass:
+The policy path is deliberately distinct from the medical-records ladder:
 
 - entry point `lib/ai/policy-trigger.ts` → `lib/ai/extract-policy.ts`,
 - its own schema (`policy-schema.ts`) and prompt (`prompts/policy-v1.ts`),
 - tier-3 only (Sonnet), single-shot, no escalation ladder,
 - sends raw bytes to the vision model.
 
-`tagPecSpans` (`lib/insurance/pec-prefilter.ts`) was written to run on a policy
-text sample and inject a PEC-classification fragment, mirroring the PIMS/Form 51
-wiring on the medical path. It is not yet wired in. Doing so would mean adding a
-text pre-pass to the policy trigger and threading a fragment into
-`extractPolicy`. It is a self-contained follow-up.
+### PEC pre-filter (now wired)
+
+`processPolicyExtraction` runs the same `extractTextSample` pre-pass as the
+medical path. When the policy PDF has a text layer, the sample is fed to
+`tagPecSpans` (`lib/insurance/pec-prefilter.ts`), which tags pre-existing-
+condition clauses and picks a `category_hint` per span. `pecPromptFragment`
+renders those spans into a fragment, and `buildPolicySystemPrompt` (in
+`prompts/policy-v1.ts`) appends it to the policy core prompt under an
+`auto-detected` header — the exact mirror of `buildExtractionSystemPrompt` on
+the medical side. The fragment is threaded into `extractPolicy` via the optional
+`pecFragment` option.
+
+Behavior by input, mirroring the medical pre-pass:
+
+| Input | Text sample? | PEC fragment injected? |
+|---|---|---|
+| Digital policy PDF with PEC language | yes | yes — tagged spans + category hints |
+| Digital policy PDF with no PEC language | yes | yes — the "found no PEC phrases, do not invent" guard |
+| Scanned PDF / image (no text layer) | no | no — raw bytes to Sonnet, unchanged |
+
+Every step is non-fatal: a pre-pass throw, a null sample, or a tagging failure
+leaves `pecFragment` undefined and the policy path behaves exactly as it did
+before this wiring. What the pre-filter saw (char/page counts, span count, and
+the distinct categories) is recorded on the commit audit row under
+`diff.after.pec_prefilter` (null when there was no text layer), so a policy
+extraction can be debugged without re-running it. The pure composition logic is
+pinned by test (d) in `scripts/test-pec-prefilter.ts`.
 
 ### Known limitations / follow-ups
 
 - **No OCR for scanned documents.** The pre-pass reads embedded text layers
   only. Scanned PDFs and photos fall back to the vision path with no classifier
   guidance. Adding an OCR fallback (so PIMS/Form 51 detection works on scans)
-  is the largest open follow-up.
-- **PEC prefilter not wired into the policy path** (above).
+  is the largest open follow-up. This also limits the PEC pre-filter: a scanned
+  policy PDF has no text layer, so it gets no PEC fragment (see above).
 - **Batch API is a hint only.** Tier-1 `useBatch` sets a provider option;
   OpenRouter has no first-class Batch primitive in AI SDK 6 yet.
