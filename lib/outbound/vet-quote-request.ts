@@ -178,7 +178,7 @@ This message was sent through <a href="https://pawdex.app" style="color:#2d5a3d;
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
+  const from = process.env.RESEND_FROM_EMAIL ?? "vet-requests@pawdex.app";
 
   if (!apiKey) {
     console.warn(
