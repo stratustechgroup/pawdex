@@ -84,7 +84,31 @@ export default async function SettingsPage() {
       </header>
 
       <section className="pw-card" style={{ padding: 20 }}>
-        <SectionHead title="Account" sub="Your profile and household." />
+        <SectionHead
+          title="Account"
+          sub="Your profile and household."
+          right={
+            <Link
+              href="/settings/account"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                height: 30,
+                padding: "0 10px",
+                borderRadius: 6,
+                border: "1px solid var(--pw-border-strong)",
+                background: "var(--pw-surface)",
+                color: "var(--pw-text)",
+                font: "500 12px var(--font-inter)",
+                textDecoration: "none",
+              }}
+            >
+              Manage
+              <Icon name="chevronRight" size={12} />
+            </Link>
+          }
+        />
         <dl
           style={{
             margin: 0,
@@ -197,8 +221,14 @@ export default async function SettingsPage() {
         }}
       >
         <SettingsLink
-          href="/settings/household"
+          href="/settings/account"
           icon="user"
+          title="Account"
+          body="Your display name, email, password, and connected accounts."
+        />
+        <SettingsLink
+          href="/settings/household"
+          icon="home"
           title="Household"
           body="Invite members, manage roles, revoke access."
         />

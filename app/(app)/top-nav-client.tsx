@@ -10,9 +10,13 @@ import { createClient } from "@/lib/supabase/browser";
 export function TopNavClient({
   households,
   userInitials,
+  displayName,
+  email,
 }: {
   households: SwitcherHousehold[];
   userInitials: string;
+  displayName: string | null;
+  email: string | null;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -30,6 +34,8 @@ export function TopNavClient({
     <TopNav
       households={households}
       userInitials={userInitials}
+      displayName={displayName}
+      email={email}
       onSignOut={handleSignOut}
     />
   );

@@ -63,14 +63,21 @@ export default async function ActivityPage() {
 
   const rows = (data ?? []) as LogRow[];
 
-  // Resolve actor emails via service client.
+  // Resolve actor labels via service client — display name when set, else email.
   const actorIds = [...new Set(rows.map((r) => r.actor_id).filter((x): x is string => !!x))];
   const emailById = new Map<string, string | null>();
   if (actorIds.length > 0) {
     const service = createServiceClient();
-    const { data: users } = await service.auth.admin.listUsers({ perPage: 1000 });
+    const [{ data: users }, { data: profiles }] = await Promise.all([
+      service.auth.admin.listUsers({ perPage: 1000 }),
+      service.from("profiles").select("id, display_name").in("id", actorIds),
+    ]);
+    const nameById = new Map<string, string | null>();
+    for (const p of profiles ?? []) nameById.set(p.id, p.display_name ?? null);
     for (const u of users?.users ?? []) {
-      if (actorIds.includes(u.id)) emailById.set(u.id, u.email ?? null);
+      if (actorIds.includes(u.id)) {
+        emailById.set(u.id, nameById.get(u.id) || u.email || null);
+      }
     }
   }
 

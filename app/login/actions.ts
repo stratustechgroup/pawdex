@@ -40,3 +40,36 @@ export async function sendMagicLink(
 
   return { ok: true };
 }
+
+const resetSchema = z.object({
+  email: z.string().email(),
+});
+
+export async function sendPasswordReset(
+  input: z.input<typeof resetSchema>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const parsed = resetSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Invalid email." };
+  }
+
+  const supabase = await createClient();
+  const h = await headers();
+  const origin =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host") ?? "localhost:3000"}`;
+
+  // Land the recovery link signed in on the account page so the user can set a
+  // new password immediately.
+  const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent("/settings/account")}`;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true };
+}

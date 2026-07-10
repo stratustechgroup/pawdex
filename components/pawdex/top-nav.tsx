@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/brand/icon";
 import { PawdexMark } from "@/components/brand/mark";
@@ -30,15 +30,21 @@ const BREEDING_LINK: NavLink = { label: "Breeding", href: "/breeding" };
 export function TopNav({
   households,
   userInitials,
+  displayName,
+  email,
   onSignOut,
 }: {
   households: SwitcherHousehold[];
   userInitials: string;
+  displayName: string | null;
+  email: string | null;
   onSignOut: () => void;
 }) {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
 
   const isBreeder =
     households.find((h) => h.isActive)?.kind === "breeder";
@@ -46,11 +52,24 @@ export function TopNav({
     ? [NAV[0], BREEDING_LINK, ...NAV.slice(1)]
     : NAV;
 
-  // Close the mobile menu whenever the route changes, so a tapped link never
-  // leaves the panel hanging open over the new page.
+  // Close both menus whenever the route changes, so a tapped link never leaves
+  // a panel hanging open over the new page.
   useEffect(() => {
     setMenuOpen(false);
+    setAccountOpen(false);
   }, [pathname]);
+
+  // Close the account dropdown on any click outside it.
+  useEffect(() => {
+    if (!accountOpen) return;
+    function onPointerDown(e: MouseEvent) {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setAccountOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [accountOpen]);
 
   useEffect(() => {
     const stored =
@@ -193,12 +212,111 @@ export function TopNav({
       >
         <Icon name="bell" size={15} />
       </Link>
-      <IconButton title="Sign out" onClick={onSignOut}>
-        <Icon name="logOut" size={15} />
-      </IconButton>
-      <span className="pw-avatar" style={{ background: "var(--pw-photo-tint-4)" }}>
-        {userInitials}
-      </span>
+      <div ref={accountRef} style={{ position: "relative" }}>
+        <button
+          type="button"
+          onClick={() => setAccountOpen((v) => !v)}
+          aria-label="Account menu"
+          aria-haspopup="menu"
+          aria-expanded={accountOpen}
+          aria-controls="pw-account-menu"
+          className="pw-avatar"
+          style={{
+            background: "var(--pw-photo-tint-4)",
+            border: 0,
+            cursor: "pointer",
+          }}
+        >
+          {userInitials}
+        </button>
+        {accountOpen && (
+          <div
+            id="pw-account-menu"
+            role="menu"
+            style={{
+              position: "absolute",
+              top: 40,
+              right: 0,
+              minWidth: 220,
+              background: "var(--pw-surface)",
+              border: "1px solid var(--pw-border)",
+              borderRadius: 10,
+              boxShadow: "0 10px 28px rgba(0,0,0,0.14)",
+              padding: 6,
+              zIndex: 70,
+            }}
+          >
+            <div style={{ padding: "8px 10px 10px" }}>
+              <div
+                style={{
+                  font: "600 13px var(--font-inter)",
+                  color: "var(--pw-text)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {displayName || email?.split("@")[0] || "Your account"}
+              </div>
+              {email && (
+                <div
+                  style={{
+                    font: "400 11.5px var(--font-inter)",
+                    color: "var(--pw-text-muted)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {email}
+                </div>
+              )}
+            </div>
+            <div
+              style={{
+                height: 1,
+                background: "var(--pw-border)",
+                margin: "2px 0 4px",
+              }}
+            />
+            <AccountMenuLink href="/settings/account" icon="user" label="Account settings" />
+            <AccountMenuLink href="/settings/household" icon="home" label="Household settings" />
+            <div
+              style={{
+                height: 1,
+                background: "var(--pw-border)",
+                margin: "4px 0",
+              }}
+            />
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setAccountOpen(false);
+                onSignOut();
+              }}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "9px 10px",
+                borderRadius: 7,
+                border: 0,
+                background: "transparent",
+                color: "var(--pw-text-secondary)",
+                font: "500 13px var(--font-inter)",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+              className="hover:bg-[var(--pw-surface-2)] hover:text-[var(--pw-text)]"
+            >
+              <Icon name="logOut" size={15} />
+              Sign out
+            </button>
+          </div>
+        )}
+      </div>
 
       {menuOpen && (
         <div
@@ -245,6 +363,31 @@ export function TopNav({
               </Link>
             );
           })}
+          <Link
+            href="/settings/account"
+            role="menuitem"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 4,
+              padding: "11px 12px",
+              borderRadius: 8,
+              borderTop: "1px solid var(--pw-border)",
+              font: "500 14px var(--font-inter)",
+              color: pathname.startsWith("/settings/account")
+                ? "var(--pw-text)"
+                : "var(--pw-text-secondary)",
+              background: pathname.startsWith("/settings/account")
+                ? "var(--pw-surface-2)"
+                : "transparent",
+              textDecoration: "none",
+            }}
+          >
+            <Icon name="user" size={16} />
+            Account
+          </Link>
           <button
             type="button"
             role="menuitem"
@@ -254,11 +397,9 @@ export function TopNav({
               display: "flex",
               alignItems: "center",
               gap: 8,
-              marginTop: 4,
               padding: "11px 12px",
               borderRadius: 8,
               border: 0,
-              borderTop: "1px solid var(--pw-border)",
               background: "transparent",
               color: "var(--pw-text-secondary)",
               font: "500 14px var(--font-inter)",
@@ -272,6 +413,37 @@ export function TopNav({
         </div>
       )}
     </header>
+  );
+}
+
+function AccountMenuLink({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: string;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      role="menuitem"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "9px 10px",
+        borderRadius: 7,
+        color: "var(--pw-text-secondary)",
+        font: "500 13px var(--font-inter)",
+        textDecoration: "none",
+      }}
+      className="hover:bg-[var(--pw-surface-2)] hover:text-[var(--pw-text)]"
+    >
+      <Icon name={icon} size={15} />
+      {label}
+    </Link>
   );
 }
 

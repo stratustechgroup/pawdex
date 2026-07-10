@@ -9,8 +9,8 @@ export default async function AppLayout({
   const session = await requireSession();
 
   const userInitials = (() => {
-    const seed = (session.email ?? "?").split("@")[0] ?? "?";
-    const parts = seed.split(/[._-]/).filter(Boolean);
+    const seed = (session.displayName || session.email?.split("@")[0] || "?").trim();
+    const parts = seed.split(/[\s._-]+/).filter(Boolean);
     const first = parts[0]?.charAt(0) ?? "?";
     const last = parts[1]?.charAt(0) ?? "";
     return (first + last).toUpperCase() || "AO";
@@ -28,6 +28,8 @@ export default async function AppLayout({
       <TopNavClient
         households={session.households}
         userInitials={userInitials}
+        displayName={session.displayName}
+        email={session.email}
       />
       <main style={{ flex: 1 }}>{children}</main>
     </div>

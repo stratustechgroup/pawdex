@@ -12,6 +12,7 @@ import { removeHouseholdMember, revokeInvitation } from "./actions";
 type Member = {
   user_id: string;
   email: string | null;
+  display_name: string | null;
   role: "owner" | "member" | "viewer";
   invited_at: string;
   accepted_at: string | null;
@@ -120,7 +121,7 @@ export function MembersList({
                   flexShrink: 0,
                 }}
               >
-                {(m.email ?? "?").charAt(0).toUpperCase()}
+                {(m.display_name || m.email || "?").charAt(0).toUpperCase()}
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
@@ -132,7 +133,7 @@ export function MembersList({
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {m.email ?? "Unknown email"}
+                  {m.display_name || m.email || "Unknown member"}
                   {m.is_self && (
                     <span style={{ color: "var(--pw-text-muted)", fontWeight: 400 }}>
                       {" "}
@@ -144,8 +145,12 @@ export function MembersList({
                   style={{
                     font: "400 11.5px var(--font-inter)",
                     color: "var(--pw-text-muted)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                   }}
                 >
+                  {m.display_name && m.email ? `${m.email} · ` : ""}
                   {ROLE_LABEL[m.role]} · joined{" "}
                   {format(
                     new Date(m.accepted_at ?? m.invited_at),
@@ -157,7 +162,10 @@ export function MembersList({
                 <button
                   type="button"
                   onClick={() =>
-                    handleRemove(m.user_id, m.email ?? "this member")
+                    handleRemove(
+                      m.user_id,
+                      m.display_name || m.email || "this member",
+                    )
                   }
                   disabled={isPending}
                   style={{

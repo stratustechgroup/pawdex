@@ -6,6 +6,7 @@ import { PawdexPetCard } from "@/components/pawdex/pet-card";
 import { PetPhoto } from "@/components/pawdex/pet-photo";
 import { SectionHead } from "@/components/pawdex/chips";
 import { requireSession } from "@/lib/auth/household";
+import { firstNameFrom } from "@/lib/auth/profile";
 import { listPetsForHousehold, type PetWithStatus } from "@/lib/db/pets";
 import { listExpiringForHousehold } from "@/lib/db/expiring";
 import { createClient } from "@/lib/supabase/server";
@@ -318,13 +319,13 @@ function Greeting({
   pets,
   reminders,
 }: {
-  session: { email: string | null; householdName: string };
+  session: { email: string | null; displayName: string | null; householdName: string };
   pets: PetWithStatus[];
   reminders: ReminderItemView[];
 }) {
   const overdue = reminders.filter((r) => r.daysUntil < 0).length;
   const dueSoon = reminders.filter((r) => r.daysUntil >= 0 && r.daysUntil <= 30).length;
-  const name = (session.email?.split("@")[0] ?? "there").split(/[._-]/)[0];
+  const name = firstNameFrom(session.displayName, session.email);
   const greeting = pickGreeting();
 
   let sub = `${pets.length} ${pets.length === 1 ? "pet" : "pets"} in ${session.householdName}.`;
