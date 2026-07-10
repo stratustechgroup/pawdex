@@ -23,10 +23,6 @@ export default async function AccountSettingsPage() {
     getExternalProviders(),
   ]);
 
-  // App-maintained flag written by the setPassword action. See that action for
-  // why auth.users.encrypted_password can't be used to detect password presence.
-  const hasPassword = userData?.user?.user_metadata?.password_set === true;
-
   const identities: IdentitySummary[] = (userData?.user?.identities ?? []).map(
     (i) => ({
       identityId: i.identity_id ?? i.id,
@@ -98,13 +94,9 @@ export default async function AccountSettingsPage() {
       <section className="pw-card" style={{ padding: 20 }}>
         <SectionHead
           title="Password"
-          sub={
-            hasPassword
-              ? "Change the password you use to sign in."
-              : "You sign in with magic links. Add a password for a second way in."
-          }
+          sub="Set or update a password to sign in with. Magic links keep working either way."
         />
-        <PasswordForm hasPassword={hasPassword} />
+        <PasswordForm />
       </section>
 
       <section className="pw-card" style={{ padding: 20 }}>

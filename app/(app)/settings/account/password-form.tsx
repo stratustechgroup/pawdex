@@ -9,7 +9,7 @@ import { fieldStyle, labelStyle, primaryButtonStyle } from "./ui";
 
 const MIN = 10;
 
-export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
+export function PasswordForm() {
   const [password, setPasswordValue] = useState("");
   const [confirm, setConfirm] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -25,7 +25,7 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
     startTransition(async () => {
       const r = await setPassword(password);
       if (r.ok) {
-        toast.success(hasPassword ? "Password changed" : "Password added");
+        toast.success("Password saved");
         setPasswordValue("");
         setConfirm("");
         router.refresh();
@@ -38,7 +38,7 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <label htmlFor="new_password" style={labelStyle}>
-        {hasPassword ? "New password" : "Password"}
+        Password
       </label>
       <input
         id="new_password"
@@ -82,11 +82,7 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
           disabled={isPending || !valid}
           style={primaryButtonStyle(isPending || !valid)}
         >
-          {isPending
-            ? "Saving…"
-            : hasPassword
-              ? "Change password"
-              : "Add password"}
+          {isPending ? "Saving…" : "Save password"}
         </button>
       </div>
     </form>

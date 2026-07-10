@@ -63,18 +63,13 @@ export async function setPassword(rawPassword: string): Promise<ActionResult> {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid password." };
   }
   const supabase = await createClient();
-  // Stamp user_metadata.password_set alongside the password so the account UI
-  // can tell "has a password" from "magic-link only". auth.users.encrypted_password
-  // is NOT a usable signal here: this GoTrue version stores a non-empty hash even
-  // for public magic-link signups (verified against a real signInWithOtp user and
-  // the founder's own account), so current_user_has_password() reads true for
-  // everyone. This flag is the reliable signal, and every set-a-password path
-  // (this form, plus the recovery flow which sets its new password through this
-  // same action) writes it.
-  const { error } = await supabase.auth.updateUser({
-    password: parsed.data,
-    data: { password_set: true },
-  });
+  // updateUser adds a password when there is none and changes it when there is,
+  // so this one call covers both cases. We deliberately don't try to detect which:
+  // auth.users.encrypted_password is non-empty even for magic-link-only users in
+  // this GoTrue version (verified against a real signInWithOtp signup and the
+  // founder's own account), so it can't distinguish "has a password" from "none".
+  // The account UI uses detection-independent copy instead.
+  const { error } = await supabase.auth.updateUser({ password: parsed.data });
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
