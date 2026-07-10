@@ -4,7 +4,7 @@ import "./marketing.css";
 import { MarketingThemeInit } from "@/components/marketing/theme-init";
 
 export const metadata: Metadata = {
-  title: "Pawdex — every vet record, one timeline, for life",
+  title: "Pawdex: every vet record, one timeline, for life",
   description:
     "Forward or snap any vet document and Pawdex turns it into a structured, source-cited medical history that travels with your pet forever. Join the early-access waitlist.",
 };
