@@ -170,7 +170,7 @@ export async function sendRecordsRequestForEvent(input: {
 
   // 7. Actually send via Resend.
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
+  const from = process.env.RESEND_FROM_EMAIL ?? "records@pawdex.app";
 
   if (!apiKey) {
     console.warn(
@@ -183,6 +183,19 @@ export async function sendRecordsRequestForEvent(input: {
         error_message: "RESEND_API_KEY not configured (dev mode)",
       })
       .eq("id", outbound.id);
+    // Cancel the pending row this call created. Left on 'scheduled', the daily
+    // cron would re-pick it every run (its query is status='scheduled' AND
+    // scheduled_for<=today), spawning a fresh drafted outbound + pending row
+    // each day: an unbounded loop precisely in the no-key state we ship in.
+    if (pending?.id) {
+      await supabase
+        .from("pending_records_requests")
+        .update({
+          status: "cancelled",
+          error_message: "RESEND_API_KEY not configured (dev mode)",
+        })
+        .eq("id", pending.id);
+    }
     return {
       ok: true,
       outbound_email_id: outbound.id,

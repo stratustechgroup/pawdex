@@ -115,8 +115,10 @@ export async function POST(request: NextRequest) {
 
   switch (event.type) {
     case "email.delivered": {
-      // Already-sent rows: no DB change needed (status is already 'sent').
-      // We could timestamp a delivered_at column in the future if useful.
+      // A message id lives in exactly one of the two channels. reminders has no
+      // 'delivered' status and outbound_email_status has none either, so the
+      // row stays 'sent' (its terminal happy state). Deliberate no-op on both
+      // tables, recorded here so the "handled every event type" claim holds.
       break;
     }
 
@@ -126,6 +128,19 @@ export async function POST(request: NextRequest) {
         event.type === "email.complained"
           ? "Recipient flagged the email as spam"
           : "Hard bounce — delivery permanently failed";
+
+      // The same message id may belong to a transactional outbound_emails row
+      // (records requests, insurer/vet-quote emails) rather than a reminder.
+      // Update that table too so a bounce there isn't silently dropped. There
+      // is no 'complained' status, so complaints map to 'failed'; hard bounces
+      // to 'bounced'.
+      await supabase
+        .from("outbound_emails")
+        .update({
+          status: event.type === "email.bounced" ? "bounced" : "failed",
+          error_message: errorMessage,
+        })
+        .eq("resend_message_id", messageId);
 
       // Flip the matching reminder rows to 'failed' for visibility, and find
       // the affected household so we can disable email after enough strikes.

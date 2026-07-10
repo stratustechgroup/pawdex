@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { after } from "next/server";
-import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 import { processDocumentExtraction } from "@/lib/ai/extraction-trigger";
 import { recordAudit } from "@/lib/db/audit";
@@ -205,6 +205,13 @@ export async function POST(request: NextRequest) {
     const buf = Buffer.from(att.content ?? "", "base64");
     if (buf.byteLength === 0 || buf.byteLength > MAX_ATTACHMENT_BYTES) continue;
 
+    // Content hash powers dedup. Resend retries inbound deliveries on any
+    // non-2xx (and occasionally on 2xx), so without this a retry of the same
+    // email would create duplicate documents. The partial unique index
+    // documents_household_content_hash_uniq only fires when content_hash is
+    // non-null, so we MUST populate it (the UI upload path already does).
+    const contentHash = createHash("sha256").update(buf).digest("hex");
+
     const docId = randomUUID();
     const ext = extFromMime(mime, att.filename);
     const storagePath = `${householdId}/inbound/${docId}.${ext}`;
@@ -236,6 +243,7 @@ export async function POST(request: NextRequest) {
         mime_type: mime,
         original_filename: filename,
         byte_size: buf.byteLength,
+        content_hash: contentHash,
         processing_status: "pending",
         created_by: null, // inbound = no user actor
       })
@@ -243,10 +251,17 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertErr || !doc) {
-      console.error("[inbound webhook] document insert failed", {
-        documentId: docId,
-        err: insertErr?.message,
-      });
+      // 23505 on the content-hash index = this exact file already exists for
+      // the household (a Resend redelivery, or the owner already uploaded it).
+      // Not an error: drop the freshly-uploaded storage object and skip so we
+      // don't duplicate the document or re-run extraction.
+      const isDuplicate = (insertErr as { code?: string } | null)?.code === "23505";
+      if (!isDuplicate) {
+        console.error("[inbound webhook] document insert failed", {
+          documentId: docId,
+          err: insertErr?.message,
+        });
+      }
       // Best-effort cleanup of the orphaned storage object.
       await supabase.storage.from("documents").remove([storagePath]);
       continue;

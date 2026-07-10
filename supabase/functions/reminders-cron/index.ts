@@ -23,7 +23,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const CRON_SECRET = Deno.env.get("CRON_SECRET");
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const RESEND_FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") ?? "onboarding@resend.dev";
+const RESEND_FROM_EMAIL = Deno.env.get("RESEND_FROM_EMAIL") ?? "reminders@pawdex.app";
 const APP_URL = Deno.env.get("NEXT_PUBLIC_APP_URL") ?? "http://localhost:3000";
 const UNSUBSCRIBE_SECRET = Deno.env.get("REMINDER_UNSUBSCRIBE_SECRET");
 
@@ -411,10 +411,18 @@ function buildSubject(
   return `${petName} has ${lines.length} vaccines coming due`;
 }
 
+// base64url: the token rides in a URL path segment (/api/unsubscribe/<token>)
+// so it MUST be URL-safe. Standard base64 emits `/` and `+`; a `/` splits the
+// path and the [token] segment never matches. Must stay byte-for-byte
+// compatible with lib/reminders/unsubscribe-token.ts on the verifying side.
+function b64url(s: string): string {
+  return s.replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+}
+
 async function signUnsubToken(householdId: string): Promise<string> {
   const payload = { h: householdId, t: Date.now() };
   const payloadJson = JSON.stringify(payload);
-  const payloadB64 = btoa(payloadJson).replace(/=+$/, "");
+  const payloadB64 = b64url(btoa(payloadJson));
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
@@ -423,8 +431,10 @@ async function signUnsubToken(householdId: string): Promise<string> {
     false,
     ["sign"],
   );
+  // Sign over the URL-safe payload string so the verifier, which HMACs the
+  // exact string it receives, reproduces the same digest.
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(payloadB64));
-  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=+$/, "");
+  const sigB64 = b64url(btoa(String.fromCharCode(...new Uint8Array(sig))));
   return `${payloadB64}.${sigB64}`;
 }
 
