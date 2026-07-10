@@ -279,6 +279,7 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           id: string;
+          kind: Database["public"]["Enums"]["household_kind"];
           name: string;
           updated_at: string;
         };
@@ -286,6 +287,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           id?: string;
+          kind?: Database["public"]["Enums"]["household_kind"];
           name: string;
           updated_at?: string;
         };
@@ -293,6 +295,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           id?: string;
+          kind?: Database["public"]["Enums"]["household_kind"];
           name?: string;
           updated_at?: string;
         };
@@ -646,6 +649,7 @@ export type Database = {
       pets: {
         Row: {
           acquired_on: string | null;
+          animal_id: string | null;
           allergies: string | null;
           altered: boolean | null;
           archived_at: string | null;
@@ -671,6 +675,7 @@ export type Database = {
         };
         Insert: {
           acquired_on?: string | null;
+          animal_id?: string | null;
           allergies?: string | null;
           altered?: boolean | null;
           archived_at?: string | null;
@@ -696,6 +701,7 @@ export type Database = {
         };
         Update: {
           acquired_on?: string | null;
+          animal_id?: string | null;
           allergies?: string | null;
           altered?: boolean | null;
           archived_at?: string | null;
@@ -1424,11 +1430,311 @@ export type Database = {
         };
         Relationships: [];
       };
+      animals: {
+        Row: {
+          acquired_on: string | null;
+          allergies: string | null;
+          altered: boolean | null;
+          archived_at: string | null;
+          breed: string | null;
+          color: string | null;
+          created_at: string;
+          created_by: string | null;
+          current_weight_kg: number | null;
+          dam_id: string | null;
+          date_of_birth: string | null;
+          dob_is_estimated: boolean;
+          id: string;
+          litter_id: string | null;
+          markings: string | null;
+          microchip_implanted_on: string | null;
+          microchip_number: string | null;
+          microchip_registry: string | null;
+          name: string;
+          notes: string | null;
+          photo_storage_path: string | null;
+          placement_status: Database["public"]["Enums"]["animal_placement_status"];
+          sex: Database["public"]["Enums"]["pet_sex"];
+          sire_id: string | null;
+          species: Database["public"]["Enums"]["pet_species"];
+          updated_at: string;
+        };
+        Insert: {
+          acquired_on?: string | null;
+          allergies?: string | null;
+          altered?: boolean | null;
+          archived_at?: string | null;
+          breed?: string | null;
+          color?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          current_weight_kg?: number | null;
+          dam_id?: string | null;
+          date_of_birth?: string | null;
+          dob_is_estimated?: boolean;
+          id?: string;
+          litter_id?: string | null;
+          markings?: string | null;
+          microchip_implanted_on?: string | null;
+          microchip_number?: string | null;
+          microchip_registry?: string | null;
+          name: string;
+          notes?: string | null;
+          photo_storage_path?: string | null;
+          placement_status?: Database["public"]["Enums"]["animal_placement_status"];
+          sex?: Database["public"]["Enums"]["pet_sex"];
+          sire_id?: string | null;
+          species: Database["public"]["Enums"]["pet_species"];
+          updated_at?: string;
+        };
+        Update: {
+          acquired_on?: string | null;
+          allergies?: string | null;
+          altered?: boolean | null;
+          archived_at?: string | null;
+          breed?: string | null;
+          color?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          current_weight_kg?: number | null;
+          dam_id?: string | null;
+          date_of_birth?: string | null;
+          dob_is_estimated?: boolean;
+          id?: string;
+          litter_id?: string | null;
+          markings?: string | null;
+          microchip_implanted_on?: string | null;
+          microchip_number?: string | null;
+          microchip_registry?: string | null;
+          name?: string;
+          notes?: string | null;
+          photo_storage_path?: string | null;
+          placement_status?: Database["public"]["Enums"]["animal_placement_status"];
+          sex?: Database["public"]["Enums"]["pet_sex"];
+          sire_id?: string | null;
+          species?: Database["public"]["Enums"]["pet_species"];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      custodianships: {
+        Row: {
+          animal_id: string;
+          created_at: string;
+          created_by: string | null;
+          ended_at: string | null;
+          household_id: string;
+          id: string;
+          role: Database["public"]["Enums"]["custodianship_role"];
+          started_at: string;
+        };
+        Insert: {
+          animal_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          ended_at?: string | null;
+          household_id: string;
+          id?: string;
+          role: Database["public"]["Enums"]["custodianship_role"];
+          started_at?: string;
+        };
+        Update: {
+          animal_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          ended_at?: string | null;
+          household_id?: string;
+          id?: string;
+          role?: Database["public"]["Enums"]["custodianship_role"];
+          started_at?: string;
+        };
+        Relationships: [];
+      };
+      litters: {
+        Row: {
+          created_at: string;
+          dam_animal_id: string;
+          household_id: string;
+          id: string;
+          name: string;
+          notes: string | null;
+          sire_animal_id: string | null;
+          updated_at: string;
+          whelped_on: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          dam_animal_id: string;
+          household_id: string;
+          id?: string;
+          name: string;
+          notes?: string | null;
+          sire_animal_id?: string | null;
+          updated_at?: string;
+          whelped_on?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          dam_animal_id?: string;
+          household_id?: string;
+          id?: string;
+          name?: string;
+          notes?: string | null;
+          sire_animal_id?: string | null;
+          updated_at?: string;
+          whelped_on?: string | null;
+        };
+        Relationships: [];
+      };
+      animal_transfers: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          accepted_household_id: string | null;
+          animal_id: string;
+          created_at: string;
+          created_by: string | null;
+          declined_at: string | null;
+          expires_at: string;
+          from_household_id: string;
+          id: string;
+          message: string | null;
+          recipient_email: string | null;
+          revoked_at: string | null;
+          token_hash: string;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          accepted_household_id?: string | null;
+          animal_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          declined_at?: string | null;
+          expires_at?: string;
+          from_household_id: string;
+          id?: string;
+          message?: string | null;
+          recipient_email?: string | null;
+          revoked_at?: string | null;
+          token_hash: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          accepted_household_id?: string | null;
+          animal_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          declined_at?: string | null;
+          expires_at?: string;
+          from_household_id?: string;
+          id?: string;
+          message?: string | null;
+          recipient_email?: string | null;
+          revoked_at?: string | null;
+          token_hash?: string;
+        };
+        Relationships: [];
+      };
+      research_consents: {
+        Row: {
+          animal_id: string | null;
+          authorization_id: string;
+          granted_at: string;
+          household_id: string;
+          id: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          animal_id?: string | null;
+          authorization_id: string;
+          granted_at?: string;
+          household_id: string;
+          id?: string;
+          revoked_at?: string | null;
+        };
+        Update: {
+          animal_id?: string | null;
+          authorization_id?: string;
+          granted_at?: string;
+          household_id?: string;
+          id?: string;
+          revoked_at?: string | null;
+        };
+        Relationships: [];
+      };
+      dataset_releases: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          description: string | null;
+          id: string;
+          name: string;
+          recipient: string | null;
+          released_at: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          name: string;
+          recipient?: string | null;
+          released_at?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          description?: string | null;
+          id?: string;
+          name?: string;
+          recipient?: string | null;
+          released_at?: string | null;
+        };
+        Relationships: [];
+      };
+      dataset_release_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          release_id: string;
+          row_hash: string | null;
+          source_row_id: string;
+          source_table: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          release_id: string;
+          row_hash?: string | null;
+          source_row_id: string;
+          source_table: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          release_id?: string;
+          row_hash?: string | null;
+          source_row_id?: string;
+          source_table?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       has_household_write: { Args: { p_household: string }; Returns: boolean };
+      is_animal_custodian: { Args: { p_animal: string }; Returns: boolean };
       is_household_member: { Args: { p_household: string }; Returns: boolean };
+      transfer_animal: {
+        Args: {
+          p_animal_id: string;
+          p_to_household_id: string;
+          p_transfer_id: string;
+        };
+        Returns: undefined;
+      };
       match_extraction_chunks: {
         Args: {
           query_embedding: string;
@@ -1458,11 +1764,15 @@ export type Database = {
         | "accept_invitation"
         | "login"
         | "preferences_change";
+      animal_placement_status: "none" | "available" | "reserved" | "placed";
       authorization_type:
         | "records_request_to_vets"
         | "records_distribution_to_third_parties"
         | "insurer_clarification_emails"
-        | "affiliate_disclosure_acknowledged";
+        | "affiliate_disclosure_acknowledged"
+        | "research_data_sharing";
+      custodianship_role: "owner" | "breeder" | "foster" | "co_owner";
+      household_kind: "personal" | "breeder";
       claim_status:
         | "drafted"
         | "submitted"

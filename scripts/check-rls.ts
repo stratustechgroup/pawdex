@@ -66,6 +66,14 @@ const TABLES_TO_CHECK = [
   "claims",
   "claim_attachments",
   "lab_values",
+  // Phase 6.41 — identity core
+  "animals",
+  "custodianships",
+  "litters",
+  "animal_transfers",
+  "research_consents",
+  "dataset_releases",
+  "dataset_release_items",
 ];
 
 async function main() {
