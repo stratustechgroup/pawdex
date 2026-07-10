@@ -1,17 +1,28 @@
-import { Icon } from "@/components/brand/icon";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { HeroVisual } from "@/components/marketing/hero-visual";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
-import { HowItWorks } from "@/components/marketing/how-it-works";
-import { Differentiators } from "@/components/marketing/differentiators";
+import { FormatTicker } from "@/components/marketing/format-ticker";
+import { Lifecycle } from "@/components/marketing/lifecycle";
+import { Claims } from "@/components/marketing/claims";
 import { BreederStrip } from "@/components/marketing/breeder-strip";
 import { Faq } from "@/components/marketing/faq";
 import { SiteFooter } from "@/components/marketing/site-footer";
 
-const TRUST = [
-  { icon: "mail", text: "Any clinic, any format" },
-  { icon: "link", text: "Every fact cited" },
-  { icon: "shieldCheck", text: "PII never shared" },
+// Quantified, honest, product-true. The Flighty lesson: concrete numbers
+// beat adjectives.
+const STATS = [
+  {
+    stat: "~1 min",
+    label: "to read a 40-page chart, cover to cover",
+  },
+  {
+    stat: "p.2 ¶4",
+    label: "every fact cites the exact page it came from",
+  },
+  {
+    stat: "0 records",
+    label: "saved without your explicit approval",
+  },
 ];
 
 export default function MarketingHome() {
@@ -19,128 +30,95 @@ export default function MarketingHome() {
     <div id="top">
       <SiteHeader />
 
-      {/* ---------------------------------------------------------------- Hero */}
-      <section
-        className="mk-container"
-        style={{ paddingBlock: "clamp(48px, 8vw, 104px)" }}
-      >
-        <div
-          className="mk-hero-grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr",
-            gap: 48,
-            alignItems: "center",
-          }}
-        >
+      {/* ------------------------------------------------------------- Hero */}
+      <section className="mk-hero">
+        <div className="mk-container mk-hero-grid">
           <div>
-            <span className="mk-eyebrow mk-reveal">
-              <Icon name="sparkles" size={12} />
-              Pet medical records, finally organized
-            </span>
-
-            <h1
-              className="mk-serif mk-display mk-reveal"
-              style={{ margin: "22px 0 0", color: "var(--pw-text)" }}
-            >
-              Every vet record,
-              <br />
-              one timeline,{" "}
-              <span style={{ color: "var(--pw-accent)" }}>for life.</span>
+            <span className="mk-eyebrow mk-reveal">The permanent record for pets</span>
+            <h1 className="mk-display mk-reveal" style={{ margin: "24px 0 0", color: "var(--pw-text)" }}>
+              They can&apos;t tell you their history. <em>Pawdex can.</em>
             </h1>
-
-            <p
-              className="mk-lead mk-reveal"
-              style={{ margin: "22px 0 0", maxWidth: "50ch" }}
-            >
-              Your pet&apos;s history is scattered across clinics, inboxes and
-              paper folders. Forward or snap any vet document and Pawdex turns it
-              into a structured, source-cited record that stays current and
-              travels with your pet forever.
+            <p className="mk-lead mk-reveal" style={{ margin: "24px 0 0", maxWidth: "46ch" }}>
+              Your pet&apos;s medical story is scattered across clinics, inboxes
+              and a shoebox of paper. Forward any vet document to Pawdex and it
+              becomes one clean, source-cited timeline that stays current for
+              life, and follows them wherever life goes.
             </p>
-
-            <div className="mk-reveal" style={{ marginTop: 30 }}>
+            <div className="mk-reveal" style={{ marginTop: 32 }}>
               <WaitlistForm source="hero" />
             </div>
+          </div>
+          <HeroVisual />
+        </div>
 
-            <ul
-              className="mk-reveal"
-              style={{
-                listStyle: "none",
-                margin: "26px 0 0",
-                padding: 0,
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "10px 22px",
-              }}
-            >
-              {TRUST.map((t) => (
-                <li
-                  key={t.text}
+        {/* Quantified claims strip */}
+        <div className="mk-container" style={{ marginTop: "clamp(40px, 6vw, 72px)" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 0,
+              borderTop: "1px solid var(--pw-border)",
+            }}
+          >
+            {STATS.map((s, i) => (
+              <div
+                key={s.stat}
+                style={{
+                  padding: "22px 24px 4px",
+                  borderLeft: i === 0 ? "none" : "1px solid var(--pw-border)",
+                }}
+                className="max-sm:!border-l-0"
+              >
+                <div
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 7,
-                    font: "500 12.5px var(--font-inter)",
-                    color: "var(--pw-text-muted)",
+                    font: "600 clamp(22px, 2.6vw, 30px) var(--mk-mono)",
+                    letterSpacing: "-0.02em",
+                    color: "var(--pw-accent)",
                   }}
                 >
-                  <Icon
-                    name={t.icon}
-                    size={14}
-                    style={{ color: "var(--pw-accent)" }}
-                  />
-                  {t.text}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mk-reveal">
-            <HeroVisual />
+                  {s.stat}
+                </div>
+                <div className="mk-small" style={{ marginTop: 6, maxWidth: "30ch" }}>
+                  {s.label}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <div className="mk-container">
-        <div className="mk-hairline" />
-      </div>
+      {/* Reads-everything ticker */}
+      <FormatTicker />
 
-      <HowItWorks />
-      <Differentiators />
+      <Lifecycle />
+      <Claims />
       <BreederStrip />
       <Faq />
 
-      {/* ------------------------------------------------------------ Final CTA */}
-      <section id="waitlist" className="mk-section">
-        <div className="mk-container">
-          <div
-            className="mk-card mk-reveal"
+      {/* -------------------------------------------------------- Final CTA */}
+      <section id="waitlist" className="mk-final">
+        <div className="mk-container" style={{ position: "relative" }}>
+          <span className="mk-eyebrow" style={{ justifyContent: "center" }}>
+            Early access
+          </span>
+          <h2
+            className="mk-display"
             style={{
-              padding: "clamp(36px, 6vw, 72px)",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
+              margin: "22px auto 0",
+              maxWidth: "14ch",
+              fontSize: "clamp(40px, 6.4vw, 76px)",
+              color: "var(--pw-text)",
             }}
           >
-            <span className="mk-eyebrow">Early access</span>
-            <h2
-              className="mk-serif mk-h2"
-              style={{ margin: "20px 0 14px", maxWidth: "18ch", color: "var(--pw-text)" }}
-            >
-              Give your pet a record that lasts a lifetime.
-            </h2>
-            <p
-              className="mk-lead"
-              style={{ margin: "0 0 30px", maxWidth: "48ch" }}
-            >
-              Join the waitlist for free early access. We will email you the
-              moment your spot opens.
-            </p>
-            <div style={{ display: "flex", justifyContent: "center", width: "100%" }}>
-              <WaitlistForm source="footer-cta" />
-            </div>
+            One timeline. <em>For life.</em>
+          </h2>
+          <p className="mk-lead" style={{ margin: "20px auto 0", maxWidth: "44ch" }}>
+            Join the waitlist and be first in when we open the doors. Your
+            future self, standing in an emergency vet at 2 a.m., says thanks.
+          </p>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 30 }}>
+            <WaitlistForm source="footer-cta" center />
           </div>
         </div>
       </section>
