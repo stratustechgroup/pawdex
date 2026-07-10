@@ -1,0 +1,267 @@
+/* =====================================================================
+   Pawdex marketing — scoped styles for the public home.
+   Reuses the app tokens (--pw-*) from globals.css; adds only what the
+   landing page needs: scroll reveals, the hero animation, and a few
+   editorial atoms. CSS-only, theme-aware, motion-safe.
+   ===================================================================== */
+
+.mk {
+  --mk-max: 1120px;
+  --mk-gutter: 24px;
+  /* Warm paper wash behind the whole page, tinted for each theme. */
+  background:
+    radial-gradient(120% 80% at 50% -10%, var(--pw-accent-soft) 0%, transparent 55%),
+    var(--pw-bg);
+  color: var(--pw-text);
+}
+
+.mk-container {
+  width: 100%;
+  max-width: var(--mk-max);
+  margin: 0 auto;
+  padding-inline: var(--mk-gutter);
+}
+
+.mk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 11.5px/1 var(--font-inter);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pw-accent-fg-on-soft);
+  background: var(--pw-accent-soft);
+  border: 1px solid var(--pw-accent-soft-2);
+  padding: 6px 11px;
+  border-radius: 999px;
+}
+
+.mk-serif {
+  font-family: var(--font-source-serif), Georgia, serif;
+  letter-spacing: -0.025em;
+  font-feature-settings: "ss01";
+  font-weight: 500;
+  line-height: 1.04;
+}
+
+.mk-display {
+  font-size: clamp(2.6rem, 6.2vw, 4.6rem);
+}
+
+.mk-h2 {
+  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+}
+
+.mk-lead {
+  font: 400 clamp(1.05rem, 1.6vw, 1.28rem)/1.55 var(--font-inter);
+  color: var(--pw-text-secondary);
+  letter-spacing: -0.01em;
+}
+
+/* --- Buttons ---------------------------------------------------------- */
+.mk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font: 550 14.5px var(--font-inter);
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+  white-space: nowrap;
+}
+.mk-btn-primary {
+  background: var(--pw-accent);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(20, 24, 27, 0.16), 0 8px 24px -12px var(--pw-accent);
+}
+.mk-btn-primary:hover {
+  background: var(--pw-accent-hover);
+  transform: translateY(-1px);
+}
+.mk-btn-ghost {
+  background: var(--pw-surface);
+  color: var(--pw-text);
+  border-color: var(--pw-border-strong);
+}
+.mk-btn-ghost:hover {
+  background: var(--pw-surface-2);
+  transform: translateY(-1px);
+}
+
+/* --- Cards ------------------------------------------------------------ */
+.mk-card {
+  background: var(--pw-surface);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-r-xl);
+  box-shadow: var(--pw-shadow-sm);
+}
+
+/* --- Citation pill (the differentiator motif) ------------------------- */
+.mk-cite {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 8px 0 7px;
+  border-radius: 999px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent-fg-on-soft);
+  border: 1px solid var(--pw-accent-soft-2);
+  font: 500 10.5px/1 var(--font-jetbrains, monospace);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* --- Scroll reveal ---------------------------------------------------- */
+/* Progressive enhancement: default is fully visible, so no-JS / unsupported
+   browsers and reduced-motion users always see content. Where scroll-driven
+   animations are supported, elements ease in as they enter the viewport. */
+.mk-reveal {
+  opacity: 1;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .mk-reveal {
+      opacity: 0;
+      animation: mk-rise-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+}
+
+@keyframes mk-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Hero animation: a scanned document resolving into records -------- */
+.mk-hero-doc {
+  position: relative;
+  aspect-ratio: 4 / 3.4;
+  width: 100%;
+}
+.mk-scan {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--pw-accent) 22%, transparent),
+    transparent 62%
+  );
+  mix-blend-mode: multiply;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mk-scan {
+    animation: mk-scan 3.8s ease-in-out infinite;
+  }
+  .mk-row-in {
+    opacity: 0;
+    animation: mk-row-in 0.6s ease forwards;
+  }
+  .mk-pill-pop {
+    opacity: 0;
+    transform: scale(0.9);
+    animation: mk-pill-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+}
+[data-theme="dark"] .mk-scan,
+.dark .mk-scan {
+  mix-blend-mode: screen;
+}
+@keyframes mk-scan {
+  0% { transform: translateY(-4%); opacity: 0; }
+  12% { opacity: 1; }
+  50% { transform: translateY(72%); opacity: 1; }
+  62% { opacity: 0; }
+  100% { transform: translateY(72%); opacity: 0; }
+}
+@keyframes mk-row-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes mk-pill-pop {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* --- FAQ accordion (native details/summary) --------------------------- */
+.mk-faq details {
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-faq summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 4px;
+  font: 550 16.5px var(--font-inter);
+  letter-spacing: -0.01em;
+  color: var(--pw-text);
+}
+.mk-faq summary::-webkit-details-marker {
+  display: none;
+}
+.mk-faq summary .mk-faq-plus {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  color: var(--pw-text-muted);
+}
+.mk-faq details[open] summary .mk-faq-plus {
+  transform: rotate(45deg);
+  color: var(--pw-accent);
+}
+.mk-faq-body {
+  padding: 0 4px 22px;
+  max-width: 62ch;
+  font: 400 14.5px/1.62 var(--font-inter);
+  color: var(--pw-text-secondary);
+}
+
+/* --- Section rhythm --------------------------------------------------- */
+.mk-section {
+  padding-block: clamp(64px, 9vw, 116px);
+}
+.mk-hairline {
+  height: 1px;
+  background: var(--pw-border);
+  width: 100%;
+}
+
+/* --- Responsive grids ------------------------------------------------- */
+/* Inline styles carry the single-column mobile defaults; these override to
+   multi-column on wider viewports (author !important beats inline, the same
+   pattern globals.css uses for .pw-form-section). */
+@media (min-width: 860px) {
+  .mk-hero-grid {
+    grid-template-columns: 1.05fr 0.95fr !important;
+    gap: 56px !important;
+  }
+  .mk-hiw-grid {
+    grid-template-columns: 1.12fr 0.88fr !important;
+    gap: 52px !important;
+  }
+}
+@media (max-width: 720px) {
+  .mk-diff-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .mk-breeder-items {
+    grid-template-columns: 1fr !important;
+  }
+}

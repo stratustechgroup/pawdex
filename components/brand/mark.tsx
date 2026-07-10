@@ -1,5 +1,11 @@
-// Pawdex brand mark — abstract "ear-arch" inside a soft tag silhouette.
-// Dog/cat agnostic; reads as a smooth pet-tag shape.
+// Pawdex brand mark — a paw cut from a shield.
+//
+// The shield reads as protection and trusted custody (medical records that
+// travel with the animal); the paw makes it unmistakably about pets. Drawn as
+// a SINGLE evenodd path filled with `color`, so the paw is true negative space:
+// whatever sits behind the mark shows through. That keeps it monochrome and
+// theme-correct on any surface (cream, forest green, dark) with no baked-in
+// fill colors. The public API (size + color) is unchanged.
 
 export function PawdexMark({
   size = 24,
@@ -12,20 +18,22 @@ export function PawdexMark({
     <svg
       width={size}
       height={size}
-      viewBox="0 0 28 28"
+      viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
       <path
-        d="M14 2.5c-5.8 0-10.5 4.4-10.5 10.2 0 6 4 9.5 6.4 11.1 1.4.95 2.5 1.7 2.7 2.5.2.6.6.9 1.4.9.8 0 1.2-.3 1.4-.9.2-.8 1.3-1.55 2.7-2.5C20.5 22.2 24.5 18.7 24.5 12.7 24.5 6.9 19.8 2.5 14 2.5z"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16 3L26 5.5Q27 5.75 27 7L27 15.5C27 21.8 22.4 26.4 16 29C9.6 26.4 5 21.8 5 15.5L5 7Q5 5.75 6 5.5Z
+           M8.9 12.6a1.7 2 0 1 0 3.4 0a1.7 2 0 1 0 -3.4 0Z
+           M11.9 10a1.8 2.1 0 1 0 3.6 0a1.8 2.1 0 1 0 -3.6 0Z
+           M16.5 10a1.8 2.1 0 1 0 3.6 0a1.8 2.1 0 1 0 -3.6 0Z
+           M19.7 12.6a1.7 2 0 1 0 3.4 0a1.7 2 0 1 0 -3.4 0Z
+           M11.8 18.4a4.2 3.5 0 1 0 8.4 0a4.2 3.5 0 1 0 -8.4 0Z"
         fill={color}
       />
-      <path
-        d="M9.5 9.4c1.4 0 2.4 1.2 2.4 2.5 0 .9-.5 1.6-1.1 2.1-.6-.6-1.5-1.4-2.4-1.4-.7 0-1.2.3-1.5.5C6.8 11 7.9 9.4 9.5 9.4zM18.5 9.4c-1.4 0-2.4 1.2-2.4 2.5 0 .9.5 1.6 1.1 2.1.6-.6 1.5-1.4 2.4-1.4.7 0 1.2.3 1.5.5-.1-2.1-1.2-3.7-2.6-3.7z"
-        fill="#FAF9F6"
-      />
-      <circle cx="14" cy="17" r="1.5" fill="#FAF9F6" />
     </svg>
   );
 }
