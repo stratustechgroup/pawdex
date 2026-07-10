@@ -1,6 +1,14 @@
-export const EXTRACTION_PROMPT_VERSION = "v6.1.0";
+// v7.0.0: split the v6.1 mega-prompt into a leaner always-on core plus
+// conditionally-injected fragments. When a server-side text pre-pass succeeds,
+// the PIMS classifier and Form 51 detector run on the extracted text and their
+// format-specific guidance is appended to this core at call time (see
+// buildExtractionSystemPrompt + lib/ai/extraction-trigger.ts). The core stays
+// self-sufficient for the no-text case (images, scanned PDFs) where no fragment
+// fires, so no core extraction rule was removed. Only the per-PIMS vendor
+// detail now lives in the classifier fragments instead of being inlined here.
+export const EXTRACTION_PROMPT_VERSION = "v7.0.0";
 
-export const EXTRACTION_SYSTEM_PROMPT = `You are a veterinary medical records extraction system for Pawdex, a pet medical records app. You receive scanned or digital veterinary documents and emit a strict JSON object matching the provided schema.
+export const EXTRACTION_CORE_PROMPT = `You are a veterinary medical records extraction system for Pawdex, a pet medical records app. You receive scanned or digital veterinary documents and emit a strict JSON object matching the provided schema.
 
 # Step 1 — Identify the document type
 
@@ -19,9 +27,9 @@ Pick ONE documentType that best describes the WHOLE document. Be precise:
 
 # Step 2 — Recognize the document FORMAT (critical for ingestion quality)
 
-Pawdex sees two dominant formats. Identifying which one you're looking at changes how you segment the document:
+Pawdex sees two dominant formats. Identifying which one you're looking at changes how you segment the document. When Pawdex recognizes the source practice-management system (PIMS) up front, additional format-specific instructions are appended at the end of this prompt; follow them in addition to the rules here.
 
-## Format A — PIMS aggregated chart (Cornerstone, AVImark, eVetPractice exports)
+## Format A — PIMS aggregated chart (practice-management system export)
 
 Telltales: repeated page headers like "Patient Chart for {NAME}", every page has a clinic letterhead, body rows are formatted as \`Date | By | Code | Description | Qty | Photo\`. The "Code" column contains PIMS-internal codes — sometimes numeric (\`510\`, \`107\`, \`173\`), sometimes alpha (\`FLUVAC#2\`, \`GABALIQ\`, \`META10\`, \`INBORD\`).
 
@@ -238,3 +246,26 @@ When the document spans multiple clinics, \`vet_clinic\` is the clinic that *iss
 # Output
 
 Emit a single JSON object matching the schema. No markdown fences, no commentary. The schema is strict.`;
+
+/**
+ * Assemble the full system prompt: the always-on core plus any conditionally-
+ * detected fragments (PIMS-specific guidance, Form 51 anchoring). Fragments are
+ * appended under a clear header so the model treats them as additive rules, not
+ * a replacement for the core. Empty/whitespace fragments are dropped. With no
+ * fragments this returns the core verbatim, so the no-text path is unchanged.
+ */
+export function buildExtractionSystemPrompt(
+  fragments: ReadonlyArray<string> = [],
+): string {
+  const active = fragments.map((f) => f.trim()).filter(Boolean);
+  if (active.length === 0) return EXTRACTION_CORE_PROMPT;
+  return [
+    EXTRACTION_CORE_PROMPT,
+    "",
+    "# Document-specific guidance (auto-detected)",
+    "",
+    "Pawdex identified format signals in this document. Apply the following in ADDITION to every rule above:",
+    "",
+    active.join("\n\n"),
+  ].join("\n");
+}

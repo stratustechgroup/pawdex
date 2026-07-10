@@ -9,7 +9,7 @@ import {
   extractionResultSchema,
   type ExtractionResult,
 } from "./extraction-schema";
-import { EXTRACTION_SYSTEM_PROMPT } from "./prompts/v1";
+import { buildExtractionSystemPrompt } from "./prompts/v1";
 
 type Tier = 1 | 2 | 3;
 
@@ -19,6 +19,19 @@ export interface ExtractDocumentOptions {
   filename: string;
   /** Skip the escalation ladder and run a specific tier directly (e.g. tier 3 for rabies certs). */
   forceTier?: Tier;
+  /**
+   * Cap the escalation ladder at this tier. Used when a document is too large
+   * for tier 3's provider caps (Claude PDF/image limits), we decide up front
+   * to stop at tier 2 rather than paying tiers 1-2 then hard-failing at tier 3.
+   * Ignored when forceTier is set. Defaults to 3 (full ladder).
+   */
+  maxTier?: Tier;
+  /**
+   * Format-specific prompt fragments (PIMS guidance, Form 51 anchoring) to
+   * append to the core system prompt. Produced by the text pre-pass +
+   * classifiers in extraction-trigger. Empty/absent → core prompt only.
+   */
+  promptFragments?: string[];
   /** Tier 1 only. When undefined or true, hint the provider to use the Batch API.
    *  See note in runTier — AI SDK has no first-class Batch primitive yet, so this
    *  is currently a provider hint only. */
@@ -130,8 +143,9 @@ async function runTier(
       schema: extractionResultSchema,
       providerOptions: callBatchHint,
       // System prompt goes at the top level — keeps it out of the messages
-      // array (per AI SDK warning) and lets providers cache it natively.
-      system: EXTRACTION_SYSTEM_PROMPT,
+      // array (per AI SDK warning) and lets providers cache it natively. The
+      // core is stable (cache-friendly); detected fragments append after it.
+      system: buildExtractionSystemPrompt(opts.promptFragments),
       messages: [
         {
           role: "user",
@@ -200,10 +214,15 @@ export async function extractDocument(
     );
   }
 
-  const ladder: Tier[] = [1, 2, 3];
+  // Cap the ladder when a size-aware caller (extraction-trigger) already knows
+  // tier 3 would 400 on this document's byte size. Stopping at the cap up front
+  // avoids paying tiers 1-2 only to hard-fail at tier 3.
+  const maxTier: Tier = opts.maxTier ?? 3;
+  const ladder: Tier[] = ([1, 2, 3] as Tier[]).filter((t) => t <= maxTier);
+  const terminalTier = ladder[ladder.length - 1];
   let attempts = 0;
   let lastError: unknown = undefined;
-  let lastModel = modelForTier(1);
+  let lastModel = modelForTier(ladder[0]);
   // v6.1 — Track the hint to feed to the next tier when escalation happens.
   // We pass a compact one-line summary, not the full error object/stack —
   // the next-tier model needs the failure reason, not the JS internals.
@@ -221,8 +240,9 @@ export async function extractDocument(
       continue;
     }
 
-    // Escalate on soft failure (confidence below floor) — unless we're already on tier 3.
-    if (outcome.reason && tier !== 3) {
+    // Escalate on soft failure (confidence below floor), unless we're already
+    // at the terminal tier (which may be the size-capped tier 2, not tier 3).
+    if (outcome.reason && tier !== terminalTier) {
       lastError = new Error(outcome.reason);
       priorFailureHint = outcome.reason;
       continue;

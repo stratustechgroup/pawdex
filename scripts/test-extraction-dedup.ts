@@ -19,6 +19,7 @@ import {
   matchWeights,
   matchLabValues,
   isHighConfidence,
+  canonicalVaccineFamily,
   VACCINE_DATE_WINDOW_DAYS,
   EVENT_DATE_WINDOW_DAYS,
   MIN_TITLE_TOKEN_OVERLAP,
@@ -647,10 +648,11 @@ check(
 // ════════════════════════════════════════════════════════════════════
 // S17 — TS-vs-SQL family divergence: the SQL generated column
 // (vaccine_family_of, migration 0005) stamps 'canine_influenza' on stored
-// rows, while the TS inferFamilyFromType emits 'civ' on candidates. The
-// matcher must canonicalize both sides or every CIV vaccine silently
-// escapes family-match. Note the type strings share no substring, so —
-// like the rabies S16 case — ONLY family-match can link them.
+// rows, while a candidate may still carry the catalog label 'civ'. The
+// matcher runs both through canonicalVaccineFamily (which mirrors SQL), so
+// 'civ' → 'canine_influenza' on both sides and they family-match with no
+// alias band-aid. Note the type strings share no substring, so — like the
+// rabies S16 case — ONLY family-match can link them.
 // ════════════════════════════════════════════════════════════════════
 {
   const existing = [
@@ -662,7 +664,7 @@ check(
   ];
   const candidates: VaccineCandidate[] = [
     {
-      vaccine_family: "civ", // as emitted by TS inferFamilyFromType
+      vaccine_family: "civ", // catalog-namespace label on the candidate side
       vaccine_type: "CIV vaccine sq",
       administered_on: "2026-03-10",
     },
@@ -671,11 +673,92 @@ check(
   const m = res.get(0);
   check(
     m?.length === 1,
-    `S17: 'civ' (TS) vs 'canine_influenza' (SQL) must family-match via alias canonicalization, got ${m?.length ?? 0} matches`,
+    `S17: 'civ' vs 'canine_influenza' must family-match via canonicalVaccineFamily, got ${m?.length ?? 0} matches`,
   );
   check(
     m?.[0]?.match_strength === "exact",
     `S17: same family + same day must be exact, got "${m?.[0]?.match_strength}"`,
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// S17b — AGREEMENT: canonicalVaccineFamily(name) must equal exactly what the
+// SQL generated column public.vaccine_family_of() (migration 0005) would
+// produce for the same string. This is THE guard that keeps the single TS
+// parser from drifting away from the DB's stored family values — any drift
+// silently breaks dedup for the affected vaccine (the family-compare fails,
+// the default-skip never fires, and a duplicate dose lands).
+//
+// The expected column below is hand-derived from the SQL CASE, honoring:
+//   - first-LIKE-wins ordering (rabies before dhpp before …),
+//   - literal substring matching (SQL is not a smart parser — "Distemper"
+//     alone is NOT dhpp, "FLUVAC" is NOT canine_influenza, "Crotalus" is NOT
+//     rattlesnake; each falls to the slug branch),
+//   - the else slug: lower(regexp_replace(vt, '[^a-z0-9]+', '_', 'gi')) with
+//     no trimming of leading/trailing separators.
+// If you change either the SQL function or the TS parser, update this table.
+// ════════════════════════════════════════════════════════════════════
+{
+  const AGREEMENT: Array<[input: string, sqlFamily: string]> = [
+    // rabies (wins even when other families co-occur)
+    ["Rabies", "rabies"],
+    ["Canine Rabies Annual Vaccine", "rabies"],
+    ["3-year rabies", "rabies"],
+    ["Rabies DHPP combo", "rabies"], // ordering: rabies clause first
+    // dhpp group — only the four literal substrings match
+    ["DHPP", "dhpp"],
+    ["DA2PP", "dhpp"],
+    ["DHLPP", "dhpp"],
+    ["DAPP", "dhpp"],
+    ["Distemper DAPP", "dhpp"],
+    ["DAPPv", "dhpp"], // contains "dapp"
+    ["Distemper", "distemper"], // NO dhpp/dapp substring → slug, NOT dhpp
+    // bordetella
+    ["Bordetella", "bordetella"],
+    ["Kennel Cough", "bordetella"],
+    ["INBORD", "inbord"], // PIMS code, not "bordetella" → slug
+    // leptospirosis
+    ["Lepto", "leptospirosis"],
+    ["Leptospirosis", "leptospirosis"],
+    ["Lepto-4", "leptospirosis"],
+    // canine influenza — SQL keys on 'influenza' or 'civ' only
+    ["Canine Influenza", "canine_influenza"],
+    ["CIV", "canine_influenza"],
+    ["civ", "canine_influenza"], // catalog label round-trips into SQL namespace
+    ["Bivalent Flu", "bivalent_flu"], // "flu" != "influenza" → slug
+    ["FLUVAC", "fluvac"], // → slug, NOT canine_influenza
+    // lyme
+    ["Lyme", "lyme"],
+    ["Lyme Disease Vaccine", "lyme"],
+    ["Borrelia", "lyme"],
+    // rattlesnake — literal only
+    ["Rattlesnake", "rattlesnake"],
+    ["Crotalus", "crotalus"], // → slug, NOT rattlesnake
+    // feline
+    ["FVRCP", "fvrcp"],
+    ["FRCP", "fvrcp"],
+    ["FeLV", "felv"],
+    ["Feline Leukemia", "feline_leukemia"], // → slug, NOT felv
+    ["FIV", "fiv"],
+    // giardia
+    ["Giardia", "giardia"],
+    // slug fallback edge cases
+    ["SNAP 4Dx", "snap_4dx"],
+    ["Vanguard Plus 5", "vanguard_plus_5"],
+    ["Misc. Vaccine!", "misc_vaccine_"], // trailing separator survives
+  ];
+  for (const [input, expected] of AGREEMENT) {
+    const got = canonicalVaccineFamily(input);
+    check(
+      got === expected,
+      `S17b: canonicalVaccineFamily("${input}") must equal SQL "${expected}", got "${got}"`,
+    );
+  }
+  // null in → null out (SQL: `when vt is null then null`)
+  check(
+    canonicalVaccineFamily(null) === null &&
+      canonicalVaccineFamily(undefined) === null,
+    "S17b: null/undefined input must return null (mirrors SQL null branch)",
   );
 }
 

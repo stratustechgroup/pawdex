@@ -8,7 +8,11 @@ import { requireSession } from "@/lib/auth/household";
 import { createClient } from "@/lib/supabase/server";
 import { getNextPendingReviewDocument } from "@/lib/db/documents";
 import { getLatestExtraction, extractResultFromEnvelope } from "@/lib/db/extractions";
-import { computeValueDiff, type CommittedDraft } from "@/lib/ai/value-diff";
+import {
+  computeValueDiff,
+  type CommittedDraft,
+  type ValueDiff,
+} from "@/lib/ai/value-diff";
 import { indexExtractionForQa } from "@/lib/ai/extraction-indexer";
 import {
   computeExpiryFromFamily,
@@ -28,6 +32,27 @@ type FeedbackPayload = {
   issue_tags: string[];
   issue_notes: string | null;
 };
+
+/**
+ * Did the user actually touch the extraction before committing? True when any
+ * row was edited or skipped, or the vet clinic was changed. Drives whether we
+ * write an implicit feedback row. An untouched commit produces no signal, so
+ * we stay silent rather than fabricating a "mostly_good" rating.
+ */
+function diffHasCorrections(diff: ValueDiff): boolean {
+  if (diff.vet_clinic_changed) return true;
+  for (const group of [
+    diff.vaccinations,
+    diff.medications,
+    diff.medical_events,
+    diff.weights,
+  ]) {
+    for (const row of group) {
+      if (row.skipped || row.changes.length > 0) return true;
+    }
+  }
+  return false;
+}
 
 type CommitInput = {
   petId: string;
@@ -510,6 +535,7 @@ export async function commitExtraction(input: CommitInput): Promise<CommitResult
   if (extractionRow.data) {
     const rawExtraction = extractResultFromEnvelope(extractionRow.data.raw_response);
     let valueDiff: Json = {};
+    let userMadeCorrections = false;
     if (rawExtraction) {
       const diff = computeValueDiff(rawExtraction, {
         vaccinations: input.vaccinations,
@@ -519,6 +545,7 @@ export async function commitExtraction(input: CommitInput): Promise<CommitResult
         vetClinic: input.vetClinic,
       });
       valueDiff = diff as unknown as Json;
+      userMadeCorrections = diffHasCorrections(diff);
     }
 
     if (input.feedback) {
@@ -534,9 +561,15 @@ export async function commitExtraction(input: CommitInput): Promise<CommitResult
         extraction_prompt_version: extractionRow.data.prompt_version,
         created_by: session.userId,
       });
-    } else {
-      // No explicit rating — still capture the implicit diff as "mostly_good"
-      // baseline so the learning pipeline has signal on every commit.
+    } else if (userMadeCorrections) {
+      // No explicit rating, but the user edited or skipped rows before
+      // committing, record that as implicit "mostly_good" (right enough that
+      // they kept it, wrong enough that they fixed it). We deliberately do NOT
+      // write anything when the extraction was committed untouched: stamping a
+      // rating on every commit biased the learning corpus toward "mostly_good"
+      // and drowned out the real correction signal. The enum has no neutral
+      // value and we can't add one without a migration, so silence is the
+      // honest option for an uncorrected commit.
       await supabase.from("extraction_feedback").insert({
         household_id: session.householdId,
         document_id: input.documentId,

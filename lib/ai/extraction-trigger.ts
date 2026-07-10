@@ -3,6 +3,12 @@ import "server-only";
 import { createServiceClient } from "@/lib/supabase/service";
 import { extractDocument, ExtractionError } from "@/lib/ai/extract-document";
 import { EXTRACTION_PROMPT_VERSION } from "@/lib/ai/prompts/v1";
+import { extractTextSample } from "@/lib/ingest/text-prepass";
+import {
+  classifyPimsFromText,
+  pimsPromptFragment,
+} from "@/lib/ai/pims-classifier";
+import { detectForm51, form51PromptFragment } from "@/lib/ai/form51-anchor";
 import type { Json } from "@/lib/supabase/types";
 
 /**
@@ -80,38 +86,96 @@ export async function processDocumentExtraction(opts: {
   // Gemini Flash-Lite/Flash: 50 MB inline (PDFs) / 20 MB images / 1000 pages.
   // Claude Sonnet 4.5:       32 MB PDFs / 100 pages / 5 MB images (API mode).
   // OpenAI (if escalated):    20 MB images / no native PDF (would need rasterize).
-  // We bail with a clear error rather than letting the tier-N call 400 mid-route.
+  // We decide the whole ladder up front from byte size rather than letting a
+  // tier-N call 400 mid-route.
   const isPdf = mimeType === "application/pdf";
+  const isImage = mimeType.startsWith("image/");
   const GEMINI_MAX_INLINE = 50 * 1024 * 1024;
   const CLAUDE_MAX_PDF = 32 * 1024 * 1024;
   const CLAUDE_MAX_IMAGE_API = 5 * 1024 * 1024;
+  const mb = (n: number) => (n / 1024 / 1024).toFixed(1);
 
   // First-tier (Gemini) check — bail entirely if too big for the smallest
   // provider in the ladder.
   if (sizeBytes > GEMINI_MAX_INLINE) {
     await markFailed(
       documentId,
-      `File is ${(sizeBytes / 1024 / 1024).toFixed(1)} MB — exceeds the 50 MB extraction limit. Re-upload a smaller version or split the document.`,
+      `File is ${mb(sizeBytes)} MB, over the 50 MB extraction limit. Re-upload a smaller version or split the document.`,
     );
     return;
   }
-  // Tier-3 cap warning — log only; tier 3 may still be needed for rabies
-  // certs which are typically small. The runtime will fail more cleanly if
-  // it happens to exceed mid-ladder.
-  if (isPdf && sizeBytes > CLAUDE_MAX_PDF) {
+
+  // Tier-3 (Claude) cap, computed UP FRONT. When a document exceeds it we
+  // either cap the ladder at tier 2 (normal docs) or hard-fail (docs that MUST
+  // run tier 3), decided below, before we pay for tier 1.
+  const exceedsTier3Cap =
+    (isPdf && sizeBytes > CLAUDE_MAX_PDF) ||
+    (isImage && sizeBytes > CLAUDE_MAX_IMAGE_API);
+
+  // ── Text pre-pass + classifiers ──────────────────────────────────
+  // Read the PDF text layer (never OCR here) so the PIMS classifier and Form 51
+  // detector have real text to fingerprint. Non-fatal: any failure yields null
+  // and the pipeline behaves exactly as before (raw bytes → vision model).
+  let textSample = null;
+  try {
+    textSample = await extractTextSample(fileBytes, mimeType);
+  } catch (err) {
     console.warn(
-      `[extraction-trigger] Document ${documentId} (${(sizeBytes / 1024 / 1024).toFixed(1)} MB) exceeds Claude PDF cap — Tier 3 escalation will fail. Consider splitting.`,
-    );
-  }
-  if (!isPdf && mimeType.startsWith("image/") && sizeBytes > CLAUDE_MAX_IMAGE_API) {
-    console.warn(
-      `[extraction-trigger] Image document ${documentId} (${(sizeBytes / 1024 / 1024).toFixed(1)} MB) exceeds Claude API image cap — Tier 3 escalation will require Files API.`,
+      `[extraction-trigger] text pre-pass threw for ${documentId}, continuing without it:`,
+      err instanceof Error ? err.message : err,
     );
   }
 
-  // Run extraction. Rabies certs jump straight to tier 3.
-  const forceTier =
-    opts.forceTier3 || isLikelyRabiesDocument(filename) ? 3 : undefined;
+  const pims = textSample ? classifyPimsFromText(textSample.text) : null;
+  const form51 = textSample ? detectForm51(textSample.text) : null;
+
+  // Confidence floor for injecting PIMS guidance: 2+ signals ("confident
+  // match"). Below that the classifier is guessing and a wrong PIMS fragment
+  // could mislead segmentation more than help.
+  const PIMS_CONFIDENCE_FLOOR = 0.7;
+  const promptFragments: string[] = [];
+  const firedFragments: string[] = [];
+  if (
+    pims &&
+    pims.family !== "unknown" &&
+    pims.confidence >= PIMS_CONFIDENCE_FLOOR
+  ) {
+    const frag = pimsPromptFragment(pims.family);
+    if (frag.trim()) {
+      promptFragments.push(frag);
+      firedFragments.push(`pims:${pims.family}`);
+    }
+  }
+  if (form51?.is_form51) {
+    promptFragments.push(form51PromptFragment());
+    firedFragments.push("form51");
+  }
+
+  // Tier-3 forcing: an explicit request, a rabies filename, OR a positive
+  // Form 51 text detection. The filename heuristic remains the fallback for the
+  // no-text case (scanned images) where detectForm51 never runs.
+  const needsTier3 =
+    opts.forceTier3 ||
+    isLikelyRabiesDocument(filename) ||
+    (form51?.is_form51 ?? false);
+
+  // A legally-significant document that MUST run tier 3 can't be silently
+  // downgraded to tier 2 just because it's oversized. Fail loudly instead.
+  if (needsTier3 && exceedsTier3Cap) {
+    await markFailed(
+      documentId,
+      `This document requires our most careful model, which rabies certificates and NASPHV Form 51 always do, but at ${mb(sizeBytes)} MB it exceeds that model's ${isPdf ? "32 MB PDF" : "5 MB image"} limit. Please split it or upload a smaller version.`,
+    );
+    return;
+  }
+
+  const forceTier = needsTier3 ? 3 : undefined;
+  // Normal docs that are too big for tier 3: cap the ladder at tier 2 up front
+  // and record why, instead of escalating into a guaranteed tier-3 failure.
+  const maxTier = !forceTier && exceedsTier3Cap ? 2 : undefined;
+  const tierCapReason = maxTier
+    ? `Document is ${mb(sizeBytes)} MB, over the Claude ${isPdf ? "32 MB PDF" : "5 MB image"} cap; escalation capped at tier 2.`
+    : null;
 
   try {
     const out = await extractDocument({
@@ -119,16 +183,42 @@ export async function processDocumentExtraction(opts: {
       mimeType,
       filename,
       forceTier,
+      maxTier,
+      promptFragments,
     });
 
     // Persist extraction row. The raw response sometimes carries headers /
     // metadata we don't want to round-trip into Postgres — only keep the
-    // structured result + a small bookkeeping envelope.
+    // structured result + a small bookkeeping envelope. The `metadata` block
+    // records what the pre-pass saw and which fragments fired, for debugging
+    // extraction quality without re-running the pipeline.
     // Cast the structured extraction result into Json. The Zod schema
     // guarantees serializability — there are no Dates / functions / etc.
     const rawResponse: Json = {
       tier: out.tier,
       result: out.result as unknown as Json,
+      metadata: {
+        text_prepass: textSample
+          ? { char_count: textSample.charCount, page_count: textSample.pageCount }
+          : null,
+        pims:
+          pims && pims.family !== "unknown"
+            ? {
+                family: pims.family,
+                confidence: pims.confidence,
+                matched_signals: pims.matched_signals,
+              }
+            : null,
+        form51: form51
+          ? {
+              is_form51: form51.is_form51,
+              confidence: form51.confidence,
+              matched_signals: form51.matched_signals,
+            }
+          : null,
+        prompt_fragments: firedFragments,
+        tier_cap: tierCapReason ? { capped_at: 2, reason: tierCapReason } : null,
+      } as unknown as Json,
     };
 
     await supabase.from("document_extractions").insert({

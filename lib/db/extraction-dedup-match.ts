@@ -127,26 +127,62 @@ export type VaccineMatch = ExistingVaccine & {
 
 export const VACCINE_DATE_WINDOW_DAYS = 3;
 
-// Two independent family-inference implementations exist: the TS
-// inferFamilyFromType (vaccine-catalog.ts, used on extraction candidates) and
-// the SQL vaccine_family_of() generated column (migration 0005, stamped on
-// stored rows). They mostly agree, but not everywhere — SQL emits
-// 'canine_influenza' where TS emits 'civ'. Without canonicalization the
-// family compare silently fails for every CIV vaccine and the dedup
-// default-skip never fires. Canonicalize BOTH sides through this alias map
-// before comparing. Add entries here whenever the two implementations
-// diverge.
-const FAMILY_ALIASES: Record<string, string> = {
-  canine_influenza: "civ",
-};
-
-export function canonicalFamily(
-  family: string | null | undefined,
+// ── canonical vaccine family: THE single source of truth ────────────
+//
+// This is a faithful TS mirror of the SQL generated column
+// public.vaccine_family_of() (migration 0005). Stored `vaccination` rows carry
+// the SQL output as a GENERATED ALWAYS column; that value is the fixed point we
+// cannot change without a migration. So the canonical namespace IS the SQL
+// namespace: 'canine_influenza' (not 'civ'), 'giardia', and a slug fallback
+// for anything unrecognized. Making the TS parser conform to SQL is what lets
+// the dedup family-compare work without an alias band-aid: both the candidate
+// side and the stored side land in the same namespace directly.
+//
+// It is substring-based like the SQL CASE, so it canonicalizes BOTH a raw
+// vaccine_type string ("Canine Influenza Bivalent") AND an already-resolved
+// family label ("civ" contains "civ" → 'canine_influenza'; "dhpp" → 'dhpp').
+// That single property is why one function serves the matcher (raw types +
+// prior labels), the extraction-dedup wrapper, and (via the thin remap in
+// vaccine-catalog.inferFamilyFromType) the commit path.
+//
+// scripts/test-extraction-dedup.ts pins this against a fixture table mirroring
+// the SQL CASE. Keep the ordering and the LIKE semantics in lockstep with
+// migration 0005 whenever either side changes.
+export function canonicalVaccineFamily(
+  input: string | null | undefined,
 ): string | null {
-  if (!family) return null;
-  const k = family.toLowerCase().trim();
-  return FAMILY_ALIASES[k] ?? k;
+  if (input === null || input === undefined) return null;
+  const vt = input.toLowerCase();
+  // Order matters: first LIKE match wins, exactly as the SQL CASE evaluates.
+  if (vt.includes("rabies")) return "rabies";
+  if (
+    vt.includes("dhlpp") ||
+    vt.includes("da2pp") ||
+    vt.includes("dhpp") ||
+    vt.includes("dapp")
+  )
+    return "dhpp";
+  if (vt.includes("bordetella") || vt.includes("kennel cough"))
+    return "bordetella";
+  if (vt.includes("lepto")) return "leptospirosis";
+  if (vt.includes("influenza") || vt.includes("civ")) return "canine_influenza";
+  if (vt.includes("lyme") || vt.includes("borrelia")) return "lyme";
+  if (vt.includes("rattlesnake")) return "rattlesnake";
+  if (vt.includes("fvrcp") || vt.includes("frcp")) return "fvrcp";
+  if (vt.includes("felv")) return "felv";
+  if (vt.includes("fiv")) return "fiv";
+  if (vt.includes("giardia")) return "giardia";
+  // Slug fallback: mirrors lower(regexp_replace(vt, '[^a-z0-9]+', '_', 'gi')).
+  // Runs of non-alphanumerics collapse to a single underscore; no trimming, so
+  // trailing/leading separators survive exactly as Postgres emits them.
+  return input.replace(/[^a-z0-9]+/gi, "_").toLowerCase();
 }
+
+/**
+ * @deprecated Prefer {@link canonicalVaccineFamily}. Retained as a named
+ * re-export so existing call sites keep compiling; it is the same function.
+ */
+export const canonicalFamily = canonicalVaccineFamily;
 
 export function matchVaccines(
   candidates: VaccineCandidate[],
@@ -162,8 +198,8 @@ export function matchVaccines(
       const dist = daysAbs(c.administered_on, e.administered_on);
       if (dist > VACCINE_DATE_WINDOW_DAYS) continue;
 
-      const cFam = canonicalFamily(c.vaccine_family);
-      const eFam = canonicalFamily(e.vaccine_family);
+      const cFam = canonicalVaccineFamily(c.vaccine_family);
+      const eFam = canonicalVaccineFamily(e.vaccine_family);
       const familyMatch = !!cFam && !!eFam && cFam === eFam;
       const typeMatch =
         c.vaccine_type.toLowerCase().includes(e.vaccine_type.toLowerCase()) ||

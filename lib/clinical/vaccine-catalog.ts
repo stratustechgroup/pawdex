@@ -19,6 +19,7 @@
  */
 
 import { addMonths, differenceInMonths, parseISO } from "date-fns";
+import { canonicalVaccineFamily } from "@/lib/db/extraction-dedup-match";
 
 export type VaccineFamily =
   | "rabies"
@@ -165,28 +166,44 @@ export const VACCINE_CATALOG: Record<VaccineFamily, VaccineCatalogEntry> = {
 };
 
 /**
- * Best-effort family inference from a free-text vaccine_type string. The
- * extraction prompt v6 is supposed to fill `vaccine_family` directly, but
- * older extractions + manually-entered rows might only have the type text.
+ * Best-effort family inference from a free-text vaccine_type string, for
+ * CATALOG purposes (expiry math, UI labels).
+ *
+ * There is exactly one family parser in the codebase: canonicalVaccineFamily()
+ * in extraction-dedup-match.ts, a faithful mirror of the SQL vaccine_family_of()
+ * generated column. This delegates to it, then remaps the SQL/storage namespace
+ * into the catalog's VaccineFamily namespace. The only difference is that
+ * SQL emits 'canine_influenza' where the catalog is keyed on 'civ'. Storage
+ * families with no catalog entry (e.g. 'giardia', or the slug fallback for an
+ * unrecognized type) return null so callers degrade gracefully.
+ *
+ * Keeping this as a thin remap (rather than a second regex parser) is what
+ * makes "TS canonical family == SQL vaccine_family_of()" hold (the property
+ * pinned by scripts/test-extraction-dedup.ts) while the catalog keeps its own
+ * stable vocabulary for the expiry helpers and UI.
  */
 export function inferFamilyFromType(
   vaccineType: string | null | undefined,
 ): VaccineFamily | null {
-  if (!vaccineType) return null;
-  const t = vaccineType.toLowerCase();
-
-  // Order matters — check more-specific terms before more-general ones.
-  if (/\brabies\b/.test(t)) return "rabies";
-  if (/dhlpp|dhpp|da2pp|dapp|dappv|distemper/.test(t)) return "dhpp";
-  if (/\blepto/.test(t)) return "leptospirosis";
-  if (/bordetella|kennel.?cough/.test(t)) return "bordetella";
-  if (/\bciv\b|canine.?(flu|influenza)|bivalent.?flu|fluvac/.test(t)) return "civ";
-  if (/\blyme\b/.test(t)) return "lyme";
-  if (/rattlesnake|crotalus/.test(t)) return "rattlesnake";
-  if (/fvrcp|frcp/.test(t)) return "fvrcp";
-  if (/felv|feline.?leukemia/.test(t)) return "felv";
-  if (/\bfiv\b/.test(t)) return "fiv";
-  return null;
+  const canon = canonicalVaccineFamily(vaccineType);
+  if (!canon) return null;
+  // Remap storage namespace → catalog namespace. Only CIV differs by name;
+  // everything else the catalog covers shares the SQL spelling.
+  if (canon === "canine_influenza") return "civ";
+  const catalogFamilies: VaccineFamily[] = [
+    "rabies",
+    "dhpp",
+    "leptospirosis",
+    "bordetella",
+    "lyme",
+    "rattlesnake",
+    "fvrcp",
+    "felv",
+    "fiv",
+  ];
+  return (catalogFamilies as string[]).includes(canon)
+    ? (canon as VaccineFamily)
+    : null;
 }
 
 export type ComputedExpiry = {
