@@ -758,6 +758,62 @@ export default async function PetOverviewPage({
             )}
           </div>
         </section>
+
+        {/* Ownership — owner-only handoff to another household */}
+        {session.role === "owner" && (
+          <section>
+            <Link
+              href={`/pets/${petId}/transfer`}
+              className="pw-card"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                padding: "12px 14px",
+                textDecoration: "none",
+                color: "var(--pw-text)",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 34,
+                  height: 34,
+                  borderRadius: 8,
+                  background: "var(--pw-accent-soft)",
+                  color: "var(--pw-accent-fg-on-soft)",
+                  flexShrink: 0,
+                }}
+              >
+                <Icon name="send" size={16} />
+              </span>
+              <span style={{ minWidth: 0, flex: 1 }}>
+                <span
+                  style={{
+                    display: "block",
+                    font: "600 13px var(--font-inter)",
+                    color: "var(--pw-text)",
+                  }}
+                >
+                  Transfer ownership
+                </span>
+                <span
+                  style={{
+                    display: "block",
+                    font: "400 11.5px var(--font-inter)",
+                    color: "var(--pw-text-muted)",
+                    marginTop: 1,
+                  }}
+                >
+                  Hand this animal and its records to a new owner
+                </span>
+              </span>
+              <Icon name="chevronRight" size={15} style={{ color: "var(--pw-text-subtle)" }} />
+            </Link>
+          </section>
+        )}
       </aside>
 
       <style>{`
