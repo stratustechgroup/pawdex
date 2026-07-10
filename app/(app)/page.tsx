@@ -7,8 +7,8 @@ import { PetPhoto } from "@/components/pawdex/pet-photo";
 import { SectionHead } from "@/components/pawdex/chips";
 import { requireSession } from "@/lib/auth/household";
 import { listPetsForHousehold, type PetWithStatus } from "@/lib/db/pets";
+import { listExpiringForHousehold } from "@/lib/db/expiring";
 import { createClient } from "@/lib/supabase/server";
-import { daysBetween } from "@/lib/utils";
 
 export const metadata = { title: "Dashboard — Pawdex" };
 
@@ -47,40 +47,24 @@ export default async function DashboardPage() {
     }
   }
 
-  // Upcoming reminders — pull from vaccinations expiring in the next 60 days
-  // or already overdue.
-  const reminders: ReminderItemView[] = [];
-  if (pets.length > 0) {
-    const today = new Date();
-    const horizon = new Date();
-    horizon.setDate(today.getDate() + 60);
-    const horizonStr = horizon.toISOString().slice(0, 10);
-
-    const { data: vaccRows } = await supabase
-      .from("vaccinations")
-      .select("id, vaccine_type, expires_on, pet_id")
-      .eq("household_id", session.householdId)
-      .not("expires_on", "is", null)
-      .lte("expires_on", horizonStr)
-      .order("expires_on", { ascending: true })
-      .limit(8);
-
-    const petById = new Map(pets.map((p) => [p.id, p]));
-    for (const v of vaccRows ?? []) {
-      if (!v.expires_on) continue;
-      const pet = petById.get(v.pet_id);
-      if (!pet) continue;
-      const due = new Date(v.expires_on);
-      reminders.push({
-        id: v.id,
-        petName: pet.name,
-        petId: pet.id,
-        title: v.vaccine_type,
-        due,
-        daysUntil: daysBetween(today, due),
-      });
-    }
-  }
+  // Upcoming reminders. Reuse the same aggregation that powers /expiring so
+  // the rail can never diverge from the radar. That helper dedups vaccines to
+  // the latest dose per family (so a superseded, expired cert never shows as a
+  // false "overdue") and includes insurance renewals, both of which the old
+  // inline vaccinations-only query got wrong. Keep the "next 60 days" horizon
+  // by dropping the "ok" bucket (everything > 60 days out).
+  const expiringItems = await listExpiringForHousehold(session.householdId);
+  const reminders: ReminderItemView[] = expiringItems
+    .filter((item) => item.status !== "ok")
+    .slice(0, 8)
+    .map((item) => ({
+      id: `${item.kind}:${item.entity_id}`,
+      petName: item.pet_name ?? "Whole household",
+      petId: item.pet_id ?? "",
+      title: item.title,
+      due: new Date(item.expires_on),
+      daysUntil: item.days_until,
+    }));
 
   // Recent documents
   const { data: docRows } = await supabase

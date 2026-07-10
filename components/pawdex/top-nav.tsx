@@ -38,12 +38,19 @@ export function TopNav({
 }) {
   const pathname = usePathname();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const isBreeder =
     households.find((h) => h.isActive)?.kind === "breeder";
   const navLinks: NavLink[] = isBreeder
     ? [NAV[0], BREEDING_LINK, ...NAV.slice(1)]
     : NAV;
+
+  // Close the mobile menu whenever the route changes, so a tapped link never
+  // leaves the panel hanging open over the new page.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const stored =
@@ -70,6 +77,7 @@ export function TopNav({
   return (
     <header
       style={{
+        position: "relative",
         height: 56,
         borderBottom: "1px solid var(--pw-border)",
         background: "var(--pw-surface)",
@@ -104,8 +112,11 @@ export function TopNav({
       />
       <HouseholdSwitcher households={households} />
       <nav
+        // Display is driven by the `hidden md:flex` classes below (hidden under
+        // 768px, flex at md+). An inline `display: flex` here would beat the
+        // `.hidden` rule via specificity and pin the nav visible on mobile,
+        // overflowing the header, so only non-display props live inline.
         style={{
-          display: "flex",
           gap: 2,
           marginLeft: 8,
         }}
@@ -138,76 +149,128 @@ export function TopNav({
         })}
       </nav>
       <div style={{ flex: 1 }} />
-      <div
-        className="hidden sm:block"
-        style={{ position: "relative", flex: "0 1 220px" }}
+      <button
+        type="button"
+        // Mobile-only. Display is class-driven ("inline-flex" base, hidden at
+        // md+); no inline `display` so `md:hidden` isn't beaten by specificity.
+        className="inline-flex md:hidden hover:bg-[var(--pw-surface-2)] hover:text-[var(--pw-text)]"
+        onClick={() => setMenuOpen((v) => !v)}
+        aria-label="Menu"
+        aria-expanded={menuOpen}
+        aria-controls="pw-mobile-menu"
+        title="Menu"
+        style={{
+          width: 32,
+          height: 32,
+          alignItems: "center",
+          justifyContent: "center",
+          background: "transparent",
+          border: 0,
+          borderRadius: 6,
+          color: "var(--pw-text-secondary)",
+          cursor: "pointer",
+        }}
       >
-        <Icon
-          name="search"
-          size={14}
-          style={{
-            position: "absolute",
-            left: 10,
-            top: "50%",
-            transform: "translateY(-50%)",
-            color: "var(--pw-text-muted)",
-          }}
-        />
-        <input
-          type="search"
-          placeholder="Search anything…"
-          style={{
-            width: "100%",
-            height: 32,
-            padding: "0 56px 0 32px",
-            border: "1px solid var(--pw-border-strong)",
-            borderRadius: 6,
-            background: "var(--pw-surface)",
-            color: "var(--pw-text)",
-            font: "400 12.5px var(--font-inter)",
-            outline: "none",
-          }}
-        />
-        <span
-          style={{
-            position: "absolute",
-            right: 8,
-            top: "50%",
-            transform: "translateY(-50%)",
-            display: "flex",
-            gap: 3,
-          }}
-        >
-          <span className="pw-kbd">⌘</span>
-          <span className="pw-kbd">K</span>
-        </span>
-      </div>
+        <Icon name={menuOpen ? "x" : "menu"} size={17} />
+      </button>
       <IconButton title={theme === "dark" ? "Light" : "Dark"} onClick={toggleTheme}>
         <Icon name={theme === "dark" ? "sun" : "moon"} size={15} />
       </IconButton>
-      <IconButton title="Notifications">
-        <span style={{ position: "relative", display: "inline-flex" }}>
-          <Icon name="bell" size={15} />
-          <span
-            style={{
-              position: "absolute",
-              top: -2,
-              right: -2,
-              width: 7,
-              height: 7,
-              borderRadius: "50%",
-              background: "#B5732A",
-              border: "1.5px solid var(--pw-surface)",
-            }}
-          />
-        </span>
-      </IconButton>
+      <Link
+        href="/expiring"
+        title="Expiring soon"
+        aria-label="Expiring soon"
+        style={{
+          width: 32,
+          height: 32,
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 6,
+          color: "var(--pw-text-secondary)",
+        }}
+        className="hover:bg-[var(--pw-surface-2)] hover:text-[var(--pw-text)]"
+      >
+        <Icon name="bell" size={15} />
+      </Link>
       <IconButton title="Sign out" onClick={onSignOut}>
         <Icon name="logOut" size={15} />
       </IconButton>
       <span className="pw-avatar" style={{ background: "var(--pw-photo-tint-4)" }}>
         {userInitials}
       </span>
+
+      {menuOpen && (
+        <div
+          id="pw-mobile-menu"
+          role="menu"
+          // Mobile-only panel. `md:hidden` guards it if the viewport grows to
+          // desktop while open; default block layout, so no inline `display`
+          // that would beat the class.
+          className="md:hidden"
+          style={{
+            position: "absolute",
+            top: 56,
+            left: 0,
+            right: 0,
+            background: "var(--pw-surface)",
+            borderBottom: "1px solid var(--pw-border)",
+            boxShadow: "0 10px 28px rgba(0,0,0,0.12)",
+            padding: 8,
+            zIndex: 60,
+          }}
+        >
+          {navLinks.map((link) => {
+            const active =
+              link.href === "/"
+                ? pathname === "/" || pathname.startsWith("/pets")
+                : pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                role="menuitem"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  display: "block",
+                  padding: "11px 12px",
+                  borderRadius: 8,
+                  font: "500 14px var(--font-inter)",
+                  color: active ? "var(--pw-text)" : "var(--pw-text-secondary)",
+                  background: active ? "var(--pw-surface-2)" : "transparent",
+                  textDecoration: "none",
+                }}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={toggleTheme}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 4,
+              padding: "11px 12px",
+              borderRadius: 8,
+              border: 0,
+              borderTop: "1px solid var(--pw-border)",
+              background: "transparent",
+              color: "var(--pw-text-secondary)",
+              font: "500 14px var(--font-inter)",
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            <Icon name={theme === "dark" ? "sun" : "moon"} size={16} />
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+        </div>
+      )}
     </header>
   );
 }
