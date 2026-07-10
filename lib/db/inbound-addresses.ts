@@ -6,7 +6,7 @@ import type { HouseholdInboundAddress } from "@/lib/supabase/types";
 // Override via env when deploying to a non-default inbound domain. Resend's
 // inbound DNS instructions are tied to this — bump the env var, update DNS,
 // reissue addresses. Existing slugs remain valid; only the host changes.
-const INBOX_DOMAIN = process.env.PAWDEX_INBOUND_DOMAIN ?? "inbound.pawdex.app";
+const INBOX_DOMAIN = process.env.PAWDEX_INBOUND_DOMAIN ?? "inbound.pawdex.co";
 
 // Crockford-style base32 alphabet (no I, L, O, U) — readable when typed by a
 // human relaying the address verbally.

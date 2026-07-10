@@ -599,6 +599,7 @@ function EmptyState() {
       </p>
       <Link
         href="/pets/new"
+        className="pw-accent-fill"
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -606,8 +607,6 @@ function EmptyState() {
           height: 36,
           padding: "0 14px",
           borderRadius: 6,
-          background: "var(--pw-accent)",
-          color: "#fff",
           font: "500 13px var(--font-inter)",
           textDecoration: "none",
         }}

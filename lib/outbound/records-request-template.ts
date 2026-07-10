@@ -35,7 +35,7 @@ Records of interest: ${visitLine}, including the SOAP notes, lab results, imagin
 
 Please reply directly to ${ctx.ownerEmail ?? "the owner"} with the records attached as PDFs. ${ctx.ownerEmail ? `A copy will be retained in their Pawdex account.` : ""}
 
-This message was sent through Pawdex (https://pawdex.app) under the owner's documented authorization to request records on their behalf. The authorization is available on request.
+This message was sent through Pawdex (https://pawdex.co) under the owner's documented authorization to request records on their behalf. The authorization is available on request.
 
 Thank you,
 Pawdex on behalf of ${ownerLabel}`;
@@ -46,7 +46,7 @@ Pawdex on behalf of ${ownerLabel}`;
 <p><strong>Records of interest:</strong> ${escapeHtml(visitLine)}, including the SOAP notes, lab results, imaging reports, prescriptions issued, and discharge summaries.</p>
 <p>Please reply directly to <a href="mailto:${escapeHtml(ctx.ownerEmail ?? "")}">${escapeHtml(ctx.ownerEmail ?? "the owner")}</a> with the records attached as PDFs.${ctx.ownerEmail ? " A copy will be retained in their Pawdex account." : ""}</p>
 <p style="color:#666; font-size: 13px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e5e5;">
-This message was sent through <a href="https://pawdex.app" style="color:#2d5a3d;">Pawdex</a> under the owner's documented authorization to request records on their behalf. The authorization is available on request.
+This message was sent through <a href="https://pawdex.co" style="color:#2d5a3d;">Pawdex</a> under the owner's documented authorization to request records on their behalf. The authorization is available on request.
 </p>
 <p>Thank you,<br>Pawdex on behalf of ${escapeHtml(ownerLabel)}</p>
 </body></html>`;

@@ -165,7 +165,7 @@ export async function sendInsurerClarification(input: {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL ?? "insurance@pawdex.app";
+  const from = process.env.RESEND_FROM_EMAIL ?? "insurance@pawdex.co";
 
   if (!apiKey) {
     console.warn(

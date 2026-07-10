@@ -12,7 +12,10 @@
   --mk-body: var(--font-inter), system-ui, sans-serif;
   --mk-mono: var(--font-jetbrains), "SF Mono", monospace;
 
-  --mk-amber: #b5732a;
+  /* Darker amber than the brand's mid-tone so the 11px eyebrow/index labels
+     clear AA (4.5:1) on the cream and white surfaces. The dark theme restores a
+     warmer amber below, where the darker value would fail against the dark bg. */
+  --mk-amber: #955c1b;
   --mk-ink-band: #17382a;
   --mk-ink-band-2: #122c21;
 
@@ -35,6 +38,11 @@
 }
 :root[data-theme="dark"] .mk::before {
   opacity: 0.07;
+}
+/* Warmer, lighter amber on the dark surface (the light-mode value is too dark
+   for the dark background to clear AA). */
+:root[data-theme="dark"] .mk {
+  --mk-amber: #c9873c;
 }
 
 /* ------------------------------------------------------------- primitives */
@@ -566,7 +574,9 @@
 .mk-tab-label .mk-tab-index {
   font: 600 10px var(--mk-mono);
   letter-spacing: 0.08em;
-  opacity: 0.7;
+  /* Full opacity so the muted index still clears AA contrast; the color already
+     carries the visual de-emphasis. */
+  opacity: 1;
 }
 .mk-tab-label:hover {
   color: var(--pw-text);
@@ -745,7 +755,9 @@
 .mk-faq-num {
   font: 600 11px var(--mk-mono);
   letter-spacing: 0.1em;
-  color: var(--pw-text-subtle);
+  /* text-muted rather than text-subtle: subtle drops below AA on the dark
+     surface at this size. Still clearly a secondary marker. */
+  color: var(--pw-text-muted);
   flex-shrink: 0;
   transform: translateY(-1px);
 }
@@ -845,4 +857,123 @@
 .mk-footer {
   border-top: 1px solid var(--pw-border);
   padding-block: 40px;
+}
+
+/* ------------------------------------------------------------- skip link */
+/* Visible only on keyboard focus; jumps past the header to main content.
+   Present on the marketing shell for WCAG 2.1 AA (2.4.1 Bypass Blocks). */
+.mk-skip {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 200;
+  padding: 10px 16px;
+  border-radius: var(--pw-r-md);
+  background: var(--pw-accent);
+  color: #f6f4ee;
+  font: 600 14px var(--mk-body);
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.mk-skip:focus-visible {
+  top: 16px;
+  outline: 3px solid var(--pw-border-focus);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------- legal prose */
+/* Long-form reading column for privacy / terms / accessibility. Editorial but
+   quiet: Fraunces headings, Inter body, generous measure and leading. */
+.mk-legal {
+  width: min(720px, calc(100% - 48px));
+  margin-inline: auto;
+  padding-block: clamp(48px, 8vw, 96px);
+}
+.mk-legal-eyebrow {
+  font: 600 11px/1 var(--mk-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mk-amber);
+}
+.mk-legal h1 {
+  font-family: var(--mk-display);
+  font-weight: 500;
+  font-size: clamp(30px, 4.5vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 14px 0 0;
+  color: var(--pw-text);
+}
+.mk-legal .mk-legal-meta {
+  margin-top: 14px;
+  font: 400 14px var(--mk-body);
+  color: var(--pw-text-muted);
+}
+.mk-legal h2 {
+  font-family: var(--mk-display);
+  font-weight: 500;
+  font-size: clamp(21px, 2.6vw, 26px);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: 44px 0 0;
+  color: var(--pw-text);
+}
+.mk-legal h3 {
+  font: 600 16.5px var(--mk-body);
+  margin: 28px 0 0;
+  color: var(--pw-text);
+}
+.mk-legal p,
+.mk-legal li {
+  font: 400 16.5px/1.7 var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+.mk-legal p {
+  margin: 14px 0 0;
+}
+.mk-legal ul {
+  margin: 14px 0 0;
+  padding-left: 22px;
+  list-style: disc;
+}
+.mk-legal li {
+  margin-top: 8px;
+}
+.mk-legal li::marker {
+  color: var(--pw-text-subtle);
+}
+.mk-legal a {
+  color: var(--pw-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.mk-legal a:hover {
+  color: var(--pw-accent-hover);
+}
+.mk-legal strong {
+  color: var(--pw-text);
+  font-weight: 600;
+}
+.mk-legal .mk-legal-lead {
+  font-size: 18.5px;
+  line-height: 1.6;
+  color: var(--pw-text);
+  margin-top: 20px;
+}
+
+/* ------------------------------------------------- dark-mode AA contrast */
+/* The dark-theme --pw-accent (#4A9472) is too light for the near-white button
+   text (#f6f4ee) at these sizes (about 3.3:1, under the WCAG AA 4.5:1 floor).
+   Pin the darker brand green for accent-filled controls in dark mode, keeping
+   the exact hue. Applies to the header/waitlist buttons and the active tab. */
+:root[data-theme="dark"] .mk-btn {
+  background: #2f6f4e;
+}
+:root[data-theme="dark"] .mk-btn:hover {
+  background: #276044;
+}
+:root[data-theme="dark"] #mk-tab-1:checked ~ .mk-tab-labels label[for="mk-tab-1"],
+:root[data-theme="dark"] #mk-tab-2:checked ~ .mk-tab-labels label[for="mk-tab-2"],
+:root[data-theme="dark"] #mk-tab-3:checked ~ .mk-tab-labels label[for="mk-tab-3"] {
+  background: #2f6f4e;
 }

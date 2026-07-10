@@ -14,9 +14,48 @@ export type WaitlistInsert = {
 export type JoinWaitlistResult =
   | { status: "joined" }
   | { status: "already" }
+  | { status: "rate_limited" }
   | { status: "error" };
 
 const PG_UNIQUE_VIOLATION = "23505";
+
+// Serverless-safe throttle without extra tables or shared state: cap how many
+// signups the whole list accepts inside a short rolling window. A real visitor
+// signs up once; only a script hammering the public form crosses this. Paired
+// with the per-email unique index and the form honeypot, it keeps a flood from
+// filling the table without punishing normal traffic. Per-email dedup means a
+// single automated address cannot inflate the count by retrying.
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+const RATE_MAX_IN_WINDOW = 30;
+
+async function recentSignupCount(
+  supabase: ReturnType<typeof createServiceClient>,
+): Promise<number | null> {
+  const since = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
+  const { count, error } = await (supabase as unknown as {
+    from: (table: string) => {
+      select: (
+        cols: string,
+        opts: { count: "exact"; head: true },
+      ) => {
+        gte: (
+          col: string,
+          value: string,
+        ) => Promise<{ count: number | null; error: { message: string } | null }>;
+      };
+    };
+  })
+    .from("waitlist_signups")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", since);
+
+  if (error) {
+    // Fail open on a count error: the throttle is a backstop, not the gate.
+    console.error("recentSignupCount:", error.message);
+    return null;
+  }
+  return count ?? 0;
+}
 
 /**
  * Insert a normalized email into the waitlist. Runs with the service role
@@ -30,6 +69,11 @@ export async function joinWaitlist(
   input: WaitlistInsert,
 ): Promise<JoinWaitlistResult> {
   const supabase = createServiceClient();
+
+  const recent = await recentSignupCount(supabase);
+  if (recent !== null && recent >= RATE_MAX_IN_WINDOW) {
+    return { status: "rate_limited" };
+  }
 
   // Cast scoped to this call: the table exists in the DB but not in the
   // generated Database type until 0029 is pushed and types are regenerated.

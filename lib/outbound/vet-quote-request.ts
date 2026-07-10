@@ -114,7 +114,7 @@ ${input.procedureSummary.trim()}
 
 Please reply with itemized line items + a total estimate so we can plan with the pet insurance carrier. ${replyTo ? `Reply to ${replyTo} and a copy will be retained in the owner's Pawdex account.` : `Reply to ${ownerEmail ?? "the owner"}.`}
 
-This message was sent through Pawdex (https://pawdex.app) under the owner's documented authorization to communicate with their veterinary providers.
+This message was sent through Pawdex (https://pawdex.co) under the owner's documented authorization to communicate with their veterinary providers.
 
 Thank you,
 Pawdex on behalf of ${ownerLabel}`;
@@ -125,7 +125,7 @@ Pawdex on behalf of ${ownerLabel}`;
 <blockquote style="margin: 12px 0; padding: 10px 14px; border-left: 3px solid #2d5a3d; background: #f7f5ee; white-space: pre-wrap;">${escapeHtml(input.procedureSummary)}</blockquote>
 <p>Please reply with itemized line items + a total estimate so we can plan with the pet insurance carrier. ${replyTo ? `Reply to <a href="mailto:${escapeHtml(replyTo)}">${escapeHtml(replyTo)}</a> and a copy will be retained in the owner's Pawdex account.` : `Reply to <a href="mailto:${escapeHtml(ownerEmail ?? "")}">${escapeHtml(ownerEmail ?? "the owner")}</a>.`}</p>
 <p style="color:#666; font-size: 13px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e5e5;">
-This message was sent through <a href="https://pawdex.app" style="color:#2d5a3d;">Pawdex</a> under the owner's documented authorization to communicate with veterinary providers.
+This message was sent through <a href="https://pawdex.co" style="color:#2d5a3d;">Pawdex</a> under the owner's documented authorization to communicate with veterinary providers.
 </p>
 <p>Thank you,<br>Pawdex on behalf of ${escapeHtml(ownerLabel)}</p>
 </body></html>`;
@@ -178,7 +178,7 @@ This message was sent through <a href="https://pawdex.app" style="color:#2d5a3d;
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL ?? "vet-requests@pawdex.app";
+  const from = process.env.RESEND_FROM_EMAIL ?? "vet-requests@pawdex.co";
 
   if (!apiKey) {
     console.warn(

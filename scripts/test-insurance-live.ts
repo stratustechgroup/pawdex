@@ -376,7 +376,7 @@ async function main() {
           assert(b?.to === "claims@zztest-insurer.example.com" || (Array.isArray(b?.to) && (b.to as string[]).includes("claims@zztest-insurer.example.com")), "stubbed payload has correct recipient", JSON.stringify(b?.to));
           assert(b?.subject === draft.subject, "stubbed payload has correct subject");
           assert(typeof b?.text === "string" && (b.text as string).length >= 40, "stubbed payload carries the body text");
-          assert(typeof b?.from === "string" && (b.from as string).endsWith("@pawdex.app"), "from-address falls back to a @pawdex.app sender, not the Resend sandbox", `from=${String(b?.from)}`);
+          assert(typeof b?.from === "string" && (b.from as string).endsWith("@pawdex.co"), "from-address falls back to a @pawdex.co sender, not the Resend sandbox", `from=${String(b?.from)}`);
         }
         if (sent.ok) {
           const { data: row } = await svc.from("outbound_emails").select("status, resend_message_id, sent_at").eq("id", sent.outbound_email_id).single();
@@ -459,7 +459,7 @@ async function main() {
           const b = captured[0].body as Record<string, unknown>;
           assert(b?.subject != null && String(b.subject).includes("ZZTEST Insurance Pet"), "vet-quote payload subject names the pet");
           assert(typeof b?.html === "string" && typeof b?.text === "string", "vet-quote payload carries both html and text parts");
-          assert(typeof b?.from === "string" && (b.from as string).endsWith("@pawdex.app"), "vet-quote from-address falls back to a @pawdex.app sender, not the Resend sandbox", `from=${String(b?.from)}`);
+          assert(typeof b?.from === "string" && (b.from as string).endsWith("@pawdex.co"), "vet-quote from-address falls back to a @pawdex.co sender, not the Resend sandbox", `from=${String(b?.from)}`);
         }
       } finally {
         globalThis.fetch = realFetch;

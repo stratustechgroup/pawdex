@@ -27,7 +27,7 @@ Every required + optional env var Pawdex reads. Group by where the value lives.
 | `RESEND_FROM_EMAIL` | ✅ for any email | A verified-domain sender; in dev `onboarding@resend.dev` is fine |
 | `RESEND_WEBHOOK_SECRET` | ✅ in prod | Resend delivery webhook signing secret (`whsec_…`) |
 | `RESEND_INBOUND_SECRET` | ✅ in prod | Resend Inbound webhook signing secret (`whsec_…`) |
-| `PAWDEX_INBOUND_DOMAIN` | optional | Defaults to `inbound.pawdex.app` |
+| `PAWDEX_INBOUND_DOMAIN` | optional | Defaults to `inbound.pawdex.co` |
 | `CRON_SECRET` | ✅ in prod | 32-byte hex string (`openssl rand -hex 32`). Same value must land in Supabase Vault — see below. |
 | `REMINDER_UNSUBSCRIBE_SECRET` | ✅ for reminders | 32-byte hex string for HMAC unsubscribe tokens. Must match the Edge Function's secret. |
 | `NEXT_PUBLIC_APP_URL` | ✅ for shared links | `http://localhost:3000` or your production URL — used in share-link URLs |
@@ -92,10 +92,10 @@ Re-runnable — only touches `content_hash IS NULL` rows.
 
 | Subdomain | Type | Target | Purpose |
 |---|---|---|---|
-| `pawdex.app` | A / CNAME | Vercel | Production app |
-| `reminders.pawdex.app` | TXT + DKIM | Resend's records | Sender domain for transactional email (or use a subdomain Resend assigns) |
-| `inbound.pawdex.app` | MX 10 | `feedback-smtp.us-east-1.amazonses.com.` | Receives forwarded vet email |
-| `inbound.pawdex.app` | TXT | `v=spf1 include:amazonses.com ~all` | SPF for Resend Inbound |
+| `pawdex.co` | A / CNAME | Vercel | Production app |
+| `reminders.pawdex.co` | TXT + DKIM | Resend's records | Sender domain for transactional email (or use a subdomain Resend assigns) |
+| `inbound.pawdex.co` | MX 10 | `feedback-smtp.us-east-1.amazonses.com.` | Receives forwarded vet email |
+| `inbound.pawdex.co` | TXT | `v=spf1 include:amazonses.com ~all` | SPF for Resend Inbound |
 
 The Resend dashboard shows the exact records for both outbound + inbound — copy them verbatim.
 
@@ -105,7 +105,7 @@ The Resend dashboard shows the exact records for both outbound + inbound — cop
 
 ### Outbound delivery webhook
 
-Resend → **Webhooks → Add Endpoint** → `https://pawdex.app/api/webhooks/resend`. Events: `email.delivered`, `email.bounced`, `email.complained`. Copy the signing secret to `RESEND_WEBHOOK_SECRET`.
+Resend → **Webhooks → Add Endpoint** → `https://pawdex.co/api/webhooks/resend`. Events: `email.delivered`, `email.bounced`, `email.complained`. Copy the signing secret to `RESEND_WEBHOOK_SECRET`.
 
 ### Inbound route
 
@@ -113,12 +113,12 @@ Resend → **Inbound → Add Route**.
 
 | Field | Value |
 |---|---|
-| Domain | `inbound.pawdex.app` |
-| Destination | `https://pawdex.app/api/webhooks/resend-inbound` |
+| Domain | `inbound.pawdex.co` |
+| Destination | `https://pawdex.co/api/webhooks/resend-inbound` |
 | Forwarding | Off |
 | Signing secret | Copy → set `RESEND_INBOUND_SECRET` |
 
-Verify with `curl -X POST https://pawdex.app/api/webhooks/resend-inbound -d '{}' -H 'content-type: application/json'`. Expect a 401 (no signature) or 200 with `{"ok":true,"status":"no_match"}`.
+Verify with `curl -X POST https://pawdex.co/api/webhooks/resend-inbound -d '{}' -H 'content-type: application/json'`. Expect a 401 (no signature) or 200 with `{"ok":true,"status":"no_match"}`.
 
 ---
 

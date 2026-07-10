@@ -170,7 +170,7 @@ export async function sendRecordsRequestForEvent(input: {
 
   // 7. Actually send via Resend.
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL ?? "records@pawdex.app";
+  const from = process.env.RESEND_FROM_EMAIL ?? "records@pawdex.co";
 
   if (!apiKey) {
     console.warn(

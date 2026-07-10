@@ -242,7 +242,11 @@ export function Lifecycle() {
               defaultChecked={i === 0}
             />
           ))}
-          <div className="mk-tab-labels" role="tablist">
+          {/* Native radio inputs (above) carry the group semantics and keyboard
+              behavior; each label is associated to its input via htmlFor, so
+              no explicit tablist/tab roles are needed (and a bare role="tablist"
+              without role="tab" children fails WCAG aria-required-children). */}
+          <div className="mk-tab-labels">
             {TABS.map((t) => (
               <label key={t.id} className="mk-tab-label" htmlFor={t.id}>
                 <span className="mk-tab-index">{t.index}</span>

@@ -25,13 +25,18 @@ export default async function AppLayout({
         background: "var(--pw-bg)",
       }}
     >
+      <a href="#main" className="pw-skip">
+        Skip to content
+      </a>
       <TopNavClient
         households={session.households}
         userInitials={userInitials}
         displayName={session.displayName}
         email={session.email}
       />
-      <main style={{ flex: 1 }}>{children}</main>
+      <main id="main" style={{ flex: 1 }}>
+        {children}
+      </main>
     </div>
   );
 }

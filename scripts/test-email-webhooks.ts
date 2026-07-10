@@ -54,7 +54,7 @@ const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET ?? "";
 const INBOUND_SECRET = process.env.RESEND_INBOUND_SECRET ?? "";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-const INBOUND_DOMAIN = process.env.PAWDEX_INBOUND_DOMAIN ?? "inbound.pawdex.app";
+const INBOUND_DOMAIN = process.env.PAWDEX_INBOUND_DOMAIN ?? "inbound.pawdex.co";
 
 for (const [k, v] of Object.entries({
   RESEND_WEBHOOK_SECRET: WEBHOOK_SECRET,

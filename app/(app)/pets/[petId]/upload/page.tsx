@@ -8,17 +8,13 @@ import { createClient } from "@/lib/supabase/server";
 import { getPet } from "@/lib/db/pets";
 
 import { CopyInboxButton } from "./copy-inbox-button";
+import {
+  getOrCreateInboundAddress,
+  inboxAddressFor,
+} from "@/lib/db/inbound-addresses";
 
 export const dynamic = "force-dynamic";
 
-function slug(input: string): string {
-  return (
-    input
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "")
-      .slice(0, 32) || "household"
-  );
-}
 
 export default async function UploadPage({
   params,
@@ -30,7 +26,8 @@ export default async function UploadPage({
   const pet = await getPet(session.householdId, petId);
   if (!pet) notFound();
 
-  const inboxAddress = `inbox+${slug(session.householdName)}@pawdex.app`;
+  const inbound = await getOrCreateInboundAddress(session.householdId);
+  const inboxAddress = inboxAddressFor(inbound.slug);
 
   // Resolve photo URL for the compact pet avatar in the page header.
   const supabase = await createClient();

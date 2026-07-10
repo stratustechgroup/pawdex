@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Dummy values so the build and the fast test suite run without any real
+    # secrets. The build only needs the NEXT_PUBLIC_* vars to be present and
+    # URL-shaped; the unsubscribe-token test signs and verifies with whatever
+    # REMINDER_UNSUBSCRIBE_SECRET it is given, so any non-empty value works.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://dummy.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key
+      NEXT_PUBLIC_APP_URL: https://www.pawdex.co
+      SUPABASE_SERVICE_ROLE_KEY: dummy-service-role-key
+      REMINDER_UNSUBSCRIBE_SECRET: ci-dummy-unsubscribe-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm tsc --noEmit
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

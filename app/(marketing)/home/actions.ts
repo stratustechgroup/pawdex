@@ -51,6 +51,13 @@ export async function joinWaitlistAction(
   if (result.status === "already") {
     return { status: "already", email: parsed.data.email };
   }
+  if (result.status === "rate_limited") {
+    return {
+      status: "error",
+      message:
+        "We are getting a lot of signups right now. Please try again in a few minutes.",
+    };
+  }
   return {
     status: "error",
     message: "Something went wrong on our end. Please try again in a moment.",

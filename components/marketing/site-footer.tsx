@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Wordmark } from "@/components/brand/wordmark";
 
 export function SiteFooter() {
@@ -17,11 +19,23 @@ export function SiteFooter() {
           Your pets&apos; records, organized for life.
         </span>
         <div style={{ flex: 1 }} />
-        <span className="mk-small" style={{ fontSize: 12.5 }}>
-          Personal information is never shared. Ever.
-        </span>
-        <span className="mk-small" style={{ fontSize: 12.5 }}>
-          Made with love in South Carolina · © {new Date().getFullYear()} Pawdex
+        <nav
+          aria-label="Legal"
+          style={{ display: "flex", flexWrap: "wrap", gap: "16px 20px" }}
+        >
+          <Link href="/privacy" className="mk-nav-link">
+            Privacy
+          </Link>
+          <Link href="/terms" className="mk-nav-link">
+            Terms
+          </Link>
+          <Link href="/accessibility" className="mk-nav-link">
+            Accessibility
+          </Link>
+        </nav>
+        <span className="mk-small" style={{ fontSize: 12.5, width: "100%" }}>
+          Personal information is never sold or shared. Made with love in South
+          Carolina · © {new Date().getFullYear()} Pawdex
         </span>
       </div>
     </footer>

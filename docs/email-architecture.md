@@ -95,14 +95,14 @@ day, unbounded. Fix: the no-key branch now cancels the pending row it created.
 
 `reminders-cron` and `records-request.ts` fell back to `onboarding@resend.dev`
 (Resend's sandbox address) when `RESEND_FROM_EMAIL` was unset. Changed to
-`reminders@pawdex.app` and `records@pawdex.app`. Low severity because
+`reminders@pawdex.co` and `records@pawdex.co`. Low severity because
 `RESEND_FROM_EMAIL` is set in the environment, but the fallback should never be a
 sandbox domain.
 
 ## Findings in other teams' files (not changed)
 
 The same `onboarding@resend.dev` sandbox fallback exists in three files this team
-does not own. Each should be changed to a real `@pawdex.app` sender:
+does not own. Each should be changed to a real `@pawdex.co` sender:
 
 - `lib/outbound/vet-quote-request.ts:181` (insurance team)
 - `lib/outbound/insurer-clarification.ts:168` (insurance team)
@@ -117,15 +117,15 @@ not audited here; worth a look by those owners.
 
 1. Create the Resend API key and set `RESEND_API_KEY` on both the Vercel project
    and the Supabase edge function (`reminders-cron` uses its own copy).
-2. Verify the sending domain in Resend (SPF, DKIM, DMARC for `pawdex.app`) and
+2. Verify the sending domain in Resend (SPF, DKIM, DMARC for `pawdex.co`) and
    set `RESEND_FROM_EMAIL` to a verified sender (for example
-   `reminders@pawdex.app`). The code default is now a real domain, but set it
+   `reminders@pawdex.co`). The code default is now a real domain, but set it
    explicitly.
 3. Configure the delivery webhook in the Resend dashboard pointing at
    `https://<app>/api/webhooks/resend`, copy its signing secret into
    `RESEND_WEBHOOK_SECRET`. Without this secret the route refuses all requests in
    production (verified), so it must be set before enabling the webhook.
-4. Configure the inbound domain and route (for example `inbound.pawdex.app`) in
+4. Configure the inbound domain and route (for example `inbound.pawdex.co`) in
    Resend, add the MX and TXT records, point the route at
    `https://<app>/api/webhooks/resend-inbound`, and copy the signing secret into
    `RESEND_INBOUND_SECRET`. Set `PAWDEX_INBOUND_DOMAIN` if not using the default.

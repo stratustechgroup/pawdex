@@ -28,8 +28,12 @@ const STATS = [
 export default function MarketingHome() {
   return (
     <div id="top">
+      <a href="#main" className="mk-skip">
+        Skip to content
+      </a>
       <SiteHeader />
 
+      <main id="main">
       {/* ------------------------------------------------------------- Hero */}
       <section className="mk-hero">
         <div className="mk-container mk-hero-grid">
@@ -122,6 +126,7 @@ export default function MarketingHome() {
           </div>
         </div>
       </section>
+      </main>
 
       <SiteFooter />
     </div>

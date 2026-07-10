@@ -129,10 +129,10 @@ export default async function AccountSettingsPage() {
           Account deletion isn&apos;t self-serve yet. To close your account and
           erase your data, email{" "}
           <a
-            href="mailto:support@pawdex.app"
-            style={{ color: "var(--pw-accent)", textDecoration: "none" }}
+            href="mailto:support@pawdex.co"
+            style={{ color: "var(--pw-accent)", textDecoration: "underline" }}
           >
-            support@pawdex.app
+            support@pawdex.co
           </a>{" "}
           and we&apos;ll take care of it.
         </p>

@@ -630,3 +630,38 @@
   font: 500 11px var(--font-jetbrains);
   color: var(--pw-text-muted);
 }
+
+/* Skip-to-content link for the authenticated app shell. Off-screen until it
+   receives keyboard focus, then it drops into view (WCAG 2.1 AA, 2.4.1). */
+.pw-skip {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  z-index: 200;
+  padding: 10px 16px;
+  border-radius: var(--pw-r-md);
+  background: var(--pw-accent);
+  color: #f6f4ee;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.pw-skip:focus-visible {
+  top: 16px;
+  outline: 3px solid var(--pw-border-focus);
+  outline-offset: 2px;
+}
+
+/* Filled accent control that carries white text. The dark-theme --pw-accent
+   (#4A9472) is too light for #fff at small sizes (about 3.6:1, below the WCAG
+   AA 4.5:1 floor), so in dark mode we pin the darker brand green while keeping
+   the exact hue. Use this instead of inline `background: var(--pw-accent);
+   color:#fff` on any small filled button so white text stays legible. */
+.pw-accent-fill {
+  background: var(--pw-accent);
+  color: #fff;
+}
+:root[data-theme="dark"] .pw-accent-fill {
+  background: #2f6f4e;
+}

@@ -166,5 +166,7 @@ const primaryTextStyle: React.CSSProperties = {
 
 const subTextStyle: React.CSSProperties = {
   font: "400 11.5px var(--font-inter)",
-  color: "var(--pw-text-muted)",
+  // secondary, not muted: muted (#6A7079) on the surface-2 row (#F4F2EC) is
+  // 4.45:1, a hair under the AA 4.5:1 floor at this size.
+  color: "var(--pw-text-secondary)",
 };

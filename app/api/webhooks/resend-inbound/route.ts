@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 // document-shaped attachment into a `documents` row + extraction job.
 //
 // Wiring (one-time, in Resend dashboard):
-//   1. Create an inbound domain (eg `inbound.pawdex.app`) and add the MX/TXT
+//   1. Create an inbound domain (eg `inbound.pawdex.co`) and add the MX/TXT
 //      records Resend gives you.
 //   2. Create an inbound route with destination = this URL
 //      (https://<your-app>/api/webhooks/resend-inbound).

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -24,9 +26,10 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pawdex — your pets' medical records, organized",
+  metadataBase: new URL("https://www.pawdex.co"),
+  title: "Pawdex: your pets' medical records, organized",
   description:
-    "Upload any vet document — vaccine certs, SOAP notes, lab reports — and Pawdex keeps your pet's medical history searchable and on schedule.",
+    "Upload any vet document (vaccine certs, SOAP notes, lab reports) and Pawdex keeps your pet's medical history searchable and on schedule.",
 };
 
 export default function RootLayout({
@@ -43,6 +46,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster richColors closeButton />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

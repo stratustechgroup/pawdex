@@ -183,7 +183,7 @@ select * from cron.job_run_details where jobid = (
 
 Phase 5 adds two breakthrough flows on top of the staged extraction pipeline:
 
-- **Email-forwarding ingestion** — every household gets a unique `inbox+{slug}@inbound.pawdex.app` address. Forwarded vet emails auto-ingest via Resend Inbound, attachments become document rows, extraction runs in the background, and the new `/inbox` page lets you assign each to a pet.
+- **Email-forwarding ingestion** — every household gets a unique `inbox+{slug}@inbound.pawdex.co` address. Forwarded vet emails auto-ingest via Resend Inbound, attachments become document rows, extraction runs in the background, and the new `/inbox` page lets you assign each to a pet.
 - **Records-request automation** — from a pet's medical history, one click drafts and sends a templated records-request email to the clinic. The email's `Reply-To` is set to the household's inbox slug, so the clinic's response routes straight back into Pawdex.
 
 Every outbound action is gated behind an `authorizations` row managed at `/settings/authorizations`.
@@ -195,7 +195,7 @@ Append to `.env.local`:
 ```
 # Resend Inbound (parsed inbound email webhook)
 RESEND_INBOUND_SECRET=whsec_xxx              # from the Resend dashboard
-PAWDEX_INBOUND_DOMAIN=inbound.pawdex.app     # optional — defaults to this string
+PAWDEX_INBOUND_DOMAIN=inbound.pawdex.co     # optional — defaults to this string
 ```
 
 ### 2. DNS + Resend Inbound configuration
@@ -203,15 +203,15 @@ PAWDEX_INBOUND_DOMAIN=inbound.pawdex.app     # optional — defaults to this str
 In your DNS provider, point your inbound subdomain at Resend (the dashboard shows the current MX target):
 
 ```
-inbound.pawdex.app   MX 10   feedback-smtp.us-east-1.amazonses.com.
-inbound.pawdex.app   TXT     "v=spf1 include:amazonses.com ~all"
+inbound.pawdex.co   MX 10   feedback-smtp.us-east-1.amazonses.com.
+inbound.pawdex.co   TXT     "v=spf1 include:amazonses.com ~all"
 ```
 
 Then in Resend → **Inbound → Add Route**:
 
 | Field | Value |
 |---|---|
-| Domain | `inbound.pawdex.app` |
+| Domain | `inbound.pawdex.co` |
 | Destination | `https://<your-app>/api/webhooks/resend-inbound` |
 | Forwarding | Off (we want raw webhook delivery) |
 | Signing secret | Copy → set `RESEND_INBOUND_SECRET` in `.env.local` *and* on Vercel |
