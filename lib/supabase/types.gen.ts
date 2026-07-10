@@ -1880,6 +1880,27 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qol_entries: {
         Row: {
           created_at: string
@@ -2427,6 +2448,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_user_has_password: { Args: never; Returns: boolean }
       has_household_write: { Args: { p_household: string }; Returns: boolean }
       is_animal_custodian: { Args: { p_animal: string }; Returns: boolean }
       is_household_member: { Args: { p_household: string }; Returns: boolean }

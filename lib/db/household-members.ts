@@ -9,6 +9,7 @@ import type {
 
 export type MemberWithEmail = HouseholdMember & {
   email: string | null;
+  display_name: string | null;
   is_self: boolean;
 };
 
@@ -36,9 +37,19 @@ export async function listHouseholdMembers(
   const emailById = new Map<string, string | null>();
   for (const u of users?.users ?? []) emailById.set(u.id, u.email ?? null);
 
+  // Display names come from profiles (service client, so RLS never hides a
+  // fellow member's name). A missing row falls back to null → email downstream.
+  const { data: profiles } = await service
+    .from("profiles")
+    .select("id, display_name")
+    .in("id", rows.map((m) => m.user_id));
+  const nameById = new Map<string, string | null>();
+  for (const p of profiles ?? []) nameById.set(p.id, p.display_name ?? null);
+
   return rows.map((m) => ({
     ...m,
     email: emailById.get(m.user_id) ?? null,
+    display_name: nameById.get(m.user_id) ?? null,
     is_self: m.user_id === currentUserId,
   }));
 }

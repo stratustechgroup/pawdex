@@ -22,6 +22,7 @@ export type HouseholdSummary = {
 export type Session = {
   userId: string;
   email: string | null;
+  displayName: string | null;
   householdId: string;
   householdName: string;
   role: HouseholdRole;
@@ -69,6 +70,15 @@ export async function requireSession(): Promise<Session> {
     redirect("/onboarding");
   }
 
+  // Display name is a best-effort second read: a missing profile row (before
+  // the 0030 backfill lands in a given DB) or an unset name both fall back to
+  // email downstream, so a null here is never fatal.
+  const { data: profileRow } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
   const cookieStore = await cookies();
   const cookieHouseholdId = cookieStore.get(ACTIVE_HOUSEHOLD_COOKIE)?.value;
 
@@ -94,6 +104,7 @@ export async function requireSession(): Promise<Session> {
   return {
     userId: user.id,
     email: user.email ?? null,
+    displayName: profileRow?.display_name ?? null,
     householdId: active.household_id,
     householdName: active.households.name,
     role: active.role,

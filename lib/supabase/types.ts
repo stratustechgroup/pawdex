@@ -40,6 +40,9 @@ export type HouseholdInvitation = Database["public"]["Tables"]["household_invita
 export type HouseholdInvitationInsert =
   Database["public"]["Tables"]["household_invitations"]["Insert"];
 
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
+
 // Phase 5 — authorizations, outbound email, insurance, cost estimates, doc Q&A, inbound routing.
 export type Authorization = Database["public"]["Tables"]["authorizations"]["Row"];
 export type AuthorizationInsert = Database["public"]["Tables"]["authorizations"]["Insert"];
