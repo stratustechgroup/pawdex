@@ -2,8 +2,22 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { bootstrapHousehold } from "@/lib/auth/bootstrap";
+import { requireSession } from "@/lib/auth/household";
 
-export const metadata = { title: "Welcome — Pawdex" };
+import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard";
+
+export const metadata = { title: "Welcome, Pawdex" };
+export const dynamic = "force-dynamic";
+
+/** "The Farmer household" from a display name; falls back gracefully. */
+function suggestHouseholdName(displayName: string | null, email: string | null): string {
+  const source = (displayName ?? email?.split("@")[0] ?? "").trim();
+  const tokens = source.split(/[\s._-]+/).filter(Boolean);
+  const last = tokens.length > 1 ? tokens[tokens.length - 1] : tokens[0];
+  if (!last) return "My household";
+  const cap = last.charAt(0).toUpperCase() + last.slice(1);
+  return `The ${cap} household`;
+}
 
 export default async function OnboardingPage() {
   const supabase = await createClient();
@@ -15,6 +29,8 @@ export default async function OnboardingPage() {
     redirect("/login");
   }
 
+  // Idempotent, creates the auto-household on first visit, returns the
+  // existing one otherwise. Same call the auth callback makes.
   try {
     await bootstrapHousehold({
       userId: user.id,
@@ -39,5 +55,19 @@ export default async function OnboardingPage() {
     );
   }
 
-  redirect("/");
+  const session = await requireSession();
+
+  const prefillDisplayName =
+    session.displayName?.trim() ||
+    (user.user_metadata?.full_name as string | undefined)?.trim() ||
+    "";
+
+  return (
+    <OnboardingWizard
+      householdId={session.householdId}
+      initialDisplayName={prefillDisplayName}
+      initialHouseholdName={session.householdName}
+      suggestedHouseholdName={suggestHouseholdName(session.displayName, session.email)}
+    />
+  );
 }
