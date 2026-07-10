@@ -72,7 +72,7 @@ export async function sendHouseholdInvitation(
   // Send via Resend if a key is configured. In dev without one, log to console
   // so the developer can still test by visiting the URL manually.
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev";
+  const from = process.env.RESEND_FROM_EMAIL ?? "invites@pawdex.app";
 
   if (apiKey) {
     try {
