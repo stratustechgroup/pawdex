@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PrintButton } from "../packet/print-button";
 import { DestinationSelector } from "./destination-selector";
 
-export const metadata = { title: "EU travel readiness — Pawdex" };
+export const metadata = { title: "EU travel readiness · Pawdex" };
 export const dynamic = "force-dynamic";
 
 const DEFAULT_DESTINATION: Destination =

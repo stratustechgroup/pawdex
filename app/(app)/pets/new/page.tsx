@@ -4,7 +4,7 @@ import { Icon } from "@/components/brand/icon";
 
 import { PetForm } from "./pet-form";
 
-export const metadata = { title: "Add a pet — Pawdex" };
+export const metadata = { title: "Add a pet · Pawdex" };
 
 export default function NewPetPage() {
   return (

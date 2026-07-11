@@ -11,7 +11,7 @@ import { DeleteDocumentButton } from "@/app/(app)/pets/[petId]/documents/[docId]
 
 import { AssignPetForm } from "./assign-pet-form";
 
-export const metadata = { title: "Inbox — Pawdex" };
+export const metadata = { title: "Inbox · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function InboxPage() {

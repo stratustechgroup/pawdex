@@ -9,7 +9,7 @@ import { getPet } from "@/lib/db/pets";
 import type { PetFormValues } from "@/lib/schemas/pet";
 import { kgToLbs } from "@/lib/utils";
 
-export const metadata = { title: "Edit pet — Pawdex" };
+export const metadata = { title: "Edit pet · Pawdex" };
 
 export default async function EditPetPage({
   params,

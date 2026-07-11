@@ -10,7 +10,7 @@ import {
   type ExpiringStatus,
 } from "@/lib/db/expiring";
 
-export const metadata = { title: "Expiring soon — Pawdex" };
+export const metadata = { title: "Expiring soon · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function ExpiringPage() {

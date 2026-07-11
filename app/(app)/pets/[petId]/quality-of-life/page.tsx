@@ -11,7 +11,7 @@ import { deleteQolEntry, saveQolEntry } from "./actions";
 import { DimensionSlider } from "./dimension-slider";
 import { QolTrendChart } from "./qol-trend-chart";
 
-export const metadata = { title: "Quality of life — Pawdex" };
+export const metadata = { title: "Quality of life · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function QolPage({
@@ -48,7 +48,7 @@ export default async function QolPage({
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <SectionHead
         title="Quality of life"
-        sub="HHHHHMM journal — Hurt, Hunger, Hydration, Hygiene, Happiness, Mobility, More good days. Daily scores 0-10 per dimension. This is a data tool for you and your vet — Pawdex never recommends end-of-life decisions."
+        sub="HHHHHMM journal — Hurt, Hunger, Hydration, Hygiene, Happiness, Mobility, More good days. Daily scores 0-10 per dimension. This is a data tool for you and your vet · Pawdex never recommends end-of-life decisions."
       />
 
       <section

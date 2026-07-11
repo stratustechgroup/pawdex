@@ -4,7 +4,7 @@ import { PawdexMark } from "@/components/brand/mark";
 import { LoginForm } from "./login-form";
 
 export const metadata = {
-  title: "Sign in — Pawdex",
+  title: "Sign in · Pawdex",
 };
 
 export default async function LoginPage({

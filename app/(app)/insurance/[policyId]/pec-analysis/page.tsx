@@ -10,7 +10,7 @@ import { analyzePECForHousehold } from "@/lib/db/pec-analysis";
 
 import { RefineButton } from "./refine-button";
 
-export const metadata = { title: "Pre-existing risk — Pawdex" };
+export const metadata = { title: "Pre-existing risk · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function PecAnalysisPage({

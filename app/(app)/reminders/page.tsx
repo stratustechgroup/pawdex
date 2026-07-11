@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import { RunCronButton } from "./run-cron-button";
 
-export const metadata = { title: "Reminders — Pawdex" };
+export const metadata = { title: "Reminders · Pawdex" };
 export const dynamic = "force-dynamic";
 
 type ReminderRow = {

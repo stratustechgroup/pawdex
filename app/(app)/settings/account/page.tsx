@@ -11,7 +11,7 @@ import { EmailForm } from "./email-form";
 import { PasswordForm } from "./password-form";
 import { ConnectedAccounts, type IdentitySummary } from "./connected-accounts";
 
-export const metadata = { title: "Account — Pawdex" };
+export const metadata = { title: "Account · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function AccountSettingsPage() {

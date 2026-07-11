@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { AuditAction } from "@/lib/supabase/types";
 
-export const metadata = { title: "Activity — Pawdex" };
+export const metadata = { title: "Activity · Pawdex" };
 export const dynamic = "force-dynamic";
 
 type LogRow = {

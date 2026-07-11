@@ -10,7 +10,7 @@ import type { MedicationPriceQuote, PharmacySource } from "@/lib/supabase/types"
 
 import { addPriceQuote, deletePriceQuote } from "./actions";
 
-export const metadata = { title: "Pharmacy prices — Pawdex" };
+export const metadata = { title: "Pharmacy prices · Pawdex" };
 export const dynamic = "force-dynamic";
 
 const SOURCE_LABEL: Record<PharmacySource, string> = {

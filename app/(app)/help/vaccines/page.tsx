@@ -4,7 +4,7 @@ import { Icon } from "@/components/brand/icon";
 import { SectionHead } from "@/components/pawdex/chips";
 import { VACCINE_CATALOG_LIST } from "@/lib/clinical/vaccine-catalog";
 
-export const metadata = { title: "Vaccine durations — Pawdex" };
+export const metadata = { title: "Vaccine durations · Pawdex" };
 
 const SPECIES_LABEL: Record<"dog" | "cat" | "both", string> = {
   dog: "Dogs",

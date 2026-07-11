@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 // Re-enable by restoring the tab entry in pet-tabs.tsx and replacing this
 // body with a real report. See README "Phase 6.37 — Breed risk pulled".
 
-export const metadata = { title: "Breed risk — Pawdex" };
+export const metadata = { title: "Breed risk · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function BreedRiskPausedPage({

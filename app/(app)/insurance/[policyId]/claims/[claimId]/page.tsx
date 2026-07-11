@@ -10,7 +10,7 @@ import type { Claim, ClaimStatus } from "@/lib/supabase/types";
 
 import { deleteClaim, updateClaim } from "../actions";
 
-export const metadata = { title: "Claim — Pawdex" };
+export const metadata = { title: "Claim · Pawdex" };
 export const dynamic = "force-dynamic";
 
 const STATUS_OPTIONS: { value: ClaimStatus; label: string }[] = [

@@ -15,7 +15,7 @@ import {
 } from "./actions";
 import { NewPolicyForm } from "./new-policy-form";
 
-export const metadata = { title: "Insurance — Pawdex" };
+export const metadata = { title: "Insurance · Pawdex" };
 export const dynamic = "force-dynamic";
 
 function formatMoney(cents: number | null): string {

@@ -9,7 +9,7 @@ import { getInsurancePolicy } from "@/lib/db/insurance";
 
 import { ClarifyFlow } from "./clarify-flow";
 
-export const metadata = { title: "Ask the insurer — Pawdex" };
+export const metadata = { title: "Ask the insurer · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function ClarifyPage({

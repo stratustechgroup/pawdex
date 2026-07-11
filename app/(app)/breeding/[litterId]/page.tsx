@@ -12,7 +12,7 @@ import { getAnimal } from "@/lib/db/animals";
 import { AddPuppyForm } from "./add-puppy-form";
 import { PlacementControl } from "./placement-control";
 
-export const metadata = { title: "Litter — Pawdex" };
+export const metadata = { title: "Litter · Pawdex" };
 
 export default async function LitterDetailPage({
   params,

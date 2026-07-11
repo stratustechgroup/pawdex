@@ -7,7 +7,7 @@ import { requireSession } from "@/lib/auth/household";
 import { listVetClinics } from "@/lib/db/vet-clinics";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Vets — Pawdex" };
+export const metadata = { title: "Vets · Pawdex" };
 
 export default async function VetsPage() {
   const session = await requireSession();

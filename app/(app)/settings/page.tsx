@@ -20,7 +20,7 @@ import {
 import { InboundAddressCard } from "./inbound-address";
 import { RemindersForm } from "./reminders-form";
 
-export const metadata = { title: "Settings — Pawdex" };
+export const metadata = { title: "Settings · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {

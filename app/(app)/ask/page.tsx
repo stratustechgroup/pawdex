@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import { AskForm } from "./ask-form";
 
-export const metadata = { title: "Ask — Pawdex" };
+export const metadata = { title: "Ask · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function AskPage() {

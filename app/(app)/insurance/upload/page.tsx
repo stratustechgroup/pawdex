@@ -7,7 +7,7 @@ import { listPetsForHousehold } from "@/lib/db/pets";
 
 import { UploadPolicyForm } from "./upload-form";
 
-export const metadata = { title: "Upload policy — Pawdex" };
+export const metadata = { title: "Upload policy · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function UploadPolicyPage() {

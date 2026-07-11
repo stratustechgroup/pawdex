@@ -10,7 +10,7 @@ import { listShareLinksForPet } from "@/lib/db/share-links";
 import { PrintButton } from "./print-button";
 import { SharePanel } from "./share-panel";
 
-export const metadata = { title: "Compliance packet — Pawdex" };
+export const metadata = { title: "Compliance packet · Pawdex" };
 export const dynamic = "force-dynamic";
 
 type PetRow = {

@@ -6,7 +6,7 @@ import { PawdexMark } from "@/components/brand/mark";
 import { resolveShareToken } from "@/lib/db/share-links";
 import { createServiceClient } from "@/lib/supabase/service";
 
-export const metadata = { title: "Shared pet records — Pawdex" };
+export const metadata = { title: "Shared pet records · Pawdex" };
 export const dynamic = "force-dynamic";
 
 type PetRow = {

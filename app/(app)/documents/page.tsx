@@ -9,7 +9,7 @@ import { listPetsForHousehold } from "@/lib/db/pets";
 import { createClient } from "@/lib/supabase/server";
 import type { DocumentRow } from "@/lib/supabase/types";
 
-export const metadata = { title: "Documents — Pawdex" };
+export const metadata = { title: "Documents · Pawdex" };
 export const dynamic = "force-dynamic";
 
 type DocListRow = Pick<

@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import { PrintButton } from "../print-button";
 
-export const metadata = { title: "APHIS 7001 worksheet — Pawdex" };
+export const metadata = { title: "APHIS 7001 worksheet · Pawdex" };
 export const dynamic = "force-dynamic";
 
 type PetRow = {

@@ -125,7 +125,7 @@ export async function listExpiringForHousehold(
       pet_id: p.pet_id,
       pet_name: p.pet_id ? (petNameById.get(p.pet_id) ?? null) : null,
       entity_id: p.id,
-      title: `${p.insurer_name}${p.plan_name ? ` — ${p.plan_name}` : ""}`,
+      title: `${p.insurer_name}${p.plan_name ? ` · ${p.plan_name}` : ""}`,
       expires_on: p.renews_on,
       days_until: days,
       status: statusForDays(days),

@@ -9,7 +9,7 @@ import { hashToken } from "@/lib/auth/invitations";
 
 import { AcceptForm } from "./accept-form";
 
-export const metadata = { title: "Join household — Pawdex" };
+export const metadata = { title: "Join household · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function InviteAcceptPage({

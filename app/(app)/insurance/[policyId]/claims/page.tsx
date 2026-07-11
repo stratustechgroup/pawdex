@@ -11,7 +11,7 @@ import type { Claim, ClaimStatus } from "@/lib/supabase/types";
 
 import { createClaim } from "./actions";
 
-export const metadata = { title: "Claims — Pawdex" };
+export const metadata = { title: "Claims · Pawdex" };
 export const dynamic = "force-dynamic";
 
 const STATUS_LABEL: Record<ClaimStatus, string> = {

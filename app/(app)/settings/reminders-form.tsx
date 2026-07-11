@@ -103,7 +103,7 @@ export function RemindersForm({
           </div>
           <div style={{ font: "400 12px var(--font-inter)", color: "var(--pw-text-muted)" }}>
             {emailEnabled
-              ? "On — Pawdex will email you ahead of expiring vaccines."
+              ? "On · Pawdex will email you ahead of expiring vaccines."
               : "Off — no reminder emails will be sent."}
           </div>
         </div>

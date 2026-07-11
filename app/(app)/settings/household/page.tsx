@@ -12,7 +12,7 @@ import {
 import { InviteForm } from "./invite-form";
 import { MembersList } from "./members-list";
 
-export const metadata = { title: "Household — Pawdex" };
+export const metadata = { title: "Household · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function HouseholdSettingsPage() {

@@ -10,7 +10,7 @@ import {
 
 import { InboundAddressCard } from "@/app/(app)/settings/inbound-address";
 
-export const metadata = { title: "Auto-import vet emails — Pawdex" };
+export const metadata = { title: "Auto-import vet emails · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function EmailForwardingHelpPage() {

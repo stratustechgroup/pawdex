@@ -10,7 +10,7 @@ import type { LabValue } from "@/lib/supabase/types";
 import { addLabValue, deleteLabValue } from "./actions";
 import { LabTrendChart } from "./lab-trend-chart";
 
-export const metadata = { title: "Labs — Pawdex" };
+export const metadata = { title: "Labs · Pawdex" };
 export const dynamic = "force-dynamic";
 
 type AnalyteGroup = {
@@ -86,7 +86,7 @@ export default async function LabsPage({
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <SectionHead
         title="Lab trends"
-        sub="Plot individual analytes over time. Pawdex highlights out-of-range values and shows the reference band when available. Discuss any trend with your vet — Pawdex never interprets clinically."
+        sub="Plot individual analytes over time. Pawdex highlights out-of-range values and shows the reference band when available. Discuss any trend with your vet · Pawdex never interprets clinically."
       />
 
       <section

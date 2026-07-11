@@ -14,7 +14,7 @@ import {
   revokeAuthorizationAction,
 } from "./actions";
 
-export const metadata = { title: "Authorizations — Pawdex" };
+export const metadata = { title: "Authorizations · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function AuthorizationsPage() {

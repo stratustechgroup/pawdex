@@ -10,7 +10,7 @@ import { hashTransferToken } from "@/lib/db/transfers";
 
 import { AcceptTransferForm } from "./accept-form";
 
-export const metadata = { title: "Accept an animal — Pawdex" };
+export const metadata = { title: "Accept an animal · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function TransferAcceptPage({

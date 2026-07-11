@@ -7,7 +7,7 @@ import { findDuplicateGroups } from "@/lib/db/vet-clinic-duplicates";
 
 import { MergeGroup } from "./merge-group";
 
-export const metadata = { title: "Merge clinics — Pawdex" };
+export const metadata = { title: "Merge clinics · Pawdex" };
 export const dynamic = "force-dynamic";
 
 export default async function MergeClinicsPage() {

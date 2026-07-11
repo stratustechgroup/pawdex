@@ -10,7 +10,7 @@ import { listAnimalsForHousehold } from "@/lib/db/animals";
 import { BreederEnable } from "./breeder-enable";
 import { CreateLitterForm } from "./create-litter-form";
 
-export const metadata = { title: "Breeding — Pawdex" };
+export const metadata = { title: "Breeding · Pawdex" };
 
 export default async function BreedingPage() {
   const session = await requireSession();

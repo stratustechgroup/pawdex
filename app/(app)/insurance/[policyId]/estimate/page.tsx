@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createCostEstimate, deleteCostEstimate } from "./actions";
 import { RequestQuoteForm } from "./request-quote-form";
 
-export const metadata = { title: "Cost estimate — Pawdex" };
+export const metadata = { title: "Cost estimate · Pawdex" };
 export const dynamic = "force-dynamic";
 
 function formatMoney(cents: number | null): string {

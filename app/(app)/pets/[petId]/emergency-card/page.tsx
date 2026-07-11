@@ -9,7 +9,7 @@ import { isMedicationActive } from "@/lib/utils";
 
 import { PrintButton } from "../packet/print-button";
 
-export const metadata = { title: "Emergency card — Pawdex" };
+export const metadata = { title: "Emergency card · Pawdex" };
 export const dynamic = "force-dynamic";
 
 type PetRow = {

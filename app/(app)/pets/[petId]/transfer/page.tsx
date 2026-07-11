@@ -8,7 +8,7 @@ import { getPet } from "@/lib/db/pets";
 
 import { TransferPanel } from "./transfer-form";
 
-export const metadata = { title: "Transfer animal — Pawdex" };
+export const metadata = { title: "Transfer animal · Pawdex" };
 
 export default async function TransferPage({
   params,
