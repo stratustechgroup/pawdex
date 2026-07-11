@@ -14,7 +14,7 @@ export default function AccessibilityPage() {
     <LegalShell
       eyebrow="Commitment"
       title="Accessibility"
-      updated="Last reviewed July 2026"
+      updated="Last reviewed July 10, 2026"
     >
       <p className="mk-legal-lead">
         Your pet&apos;s medical history should be usable by everyone who needs
@@ -82,6 +82,12 @@ export default function AccessibilityPage() {
         <a href="mailto:support@pawdex.co">support@pawdex.co</a> with what you
         were trying to do and the assistive technology you use. We will work with
         you directly and prioritize a fix.
+      </p>
+
+      <h2>Change log</h2>
+      <p>
+        July 10, 2026: Reviewed as part of the pre-launch compliance pass. No
+        changes to our WCAG 2.1 Level AA target; effective date refreshed.
       </p>
     </LegalShell>
   );

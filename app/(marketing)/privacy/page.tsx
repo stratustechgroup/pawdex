@@ -14,7 +14,7 @@ export default function PrivacyPage() {
     <LegalShell
       eyebrow="Legal"
       title="Privacy Policy"
-      updated="Effective July 2026"
+      updated="Effective July 10, 2026"
     >
       <p className="mk-legal-lead">
         Pawdex keeps your pets&apos; medical records in one place. Those records
@@ -83,6 +83,25 @@ export default function PrivacyPage() {
         works.
       </p>
 
+      <h2>Analytics, and why there is no cookie banner</h2>
+      <p>
+        We use Vercel Web Analytics and Vercel Speed Insights to understand which
+        pages are used and how fast they load. Both are privacy-first and
+        cookieless: they set no advertising or tracking cookies, do not use
+        third-party cookies, and do not build a profile that follows you across
+        other sites. Visitors are counted using an anonymized hash of the
+        incoming request that is discarded within 24 hours, not a persistent
+        identifier. The data is aggregate (page, referrer, approximate
+        city-level region, device and browser type) and is not used to identify
+        you.
+      </p>
+      <p>
+        Because we set no advertising or cross-site tracking cookies, sell
+        nothing, and share nothing for advertising, there is no consent banner to
+        click through. There is nothing to consent to. If we ever add technology
+        that would change this, we will update this policy and ask first.
+      </p>
+
       <h2>De-identified research (separate opt-in, off by default)</h2>
       <p>
         Pawdex is building an optional program to contribute de-identified,
@@ -123,18 +142,18 @@ export default function PrivacyPage() {
       </p>
       <ul>
         <li>
-          <strong>Vercel</strong> — application hosting and delivery.
+          <strong>Vercel</strong>:application hosting and delivery.
         </li>
         <li>
-          <strong>Supabase</strong> — database, authentication, and document
+          <strong>Supabase</strong>:database, authentication, and document
           storage.
         </li>
         <li>
-          <strong>OpenRouter</strong> — access to the AI models that read and
+          <strong>OpenRouter</strong>:access to the AI models that read and
           structure your documents.
         </li>
         <li>
-          <strong>Resend</strong> — sending and receiving email (reminders,
+          <strong>Resend</strong>:sending and receiving email (reminders,
           transactional messages, and forwarded vet records).
         </li>
       </ul>
@@ -196,6 +215,18 @@ export default function PrivacyPage() {
         delete it.
       </p>
 
+      <h2>Where Pawdex is offered</h2>
+      <p>
+        Pawdex is offered in the United States and is not directed to, or
+        marketed in, the European Economic Area, the United Kingdom, or other
+        regions with their own data-transfer regimes. We do not target those
+        markets during early access. If you access Pawdex from outside the United
+        States, you do so on your own initiative, and your information is
+        processed on infrastructure located in the United States. When we open
+        Pawdex to those regions, we will update this policy with the additional
+        rights and disclosures those laws require.
+      </p>
+
       <h2>Changes to this policy</h2>
       <p>
         If we make a material change to this policy, we will update the effective
@@ -209,6 +240,14 @@ export default function PrivacyPage() {
         Questions, requests, or concerns about privacy go to{" "}
         <a href="mailto:privacy@pawdex.co">privacy@pawdex.co</a>. We read every
         one.
+      </p>
+
+      <h2>Change log</h2>
+      <p>
+        July 10, 2026: Added an Analytics section documenting our cookieless
+        analytics and why no cookie-consent banner is needed, and a note that
+        Pawdex is offered in the United States and not directed to the EEA or UK
+        during early access.
       </p>
     </LegalShell>
   );

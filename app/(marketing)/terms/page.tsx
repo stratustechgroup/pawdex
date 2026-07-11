@@ -14,7 +14,7 @@ export default function TermsPage() {
     <LegalShell
       eyebrow="Legal"
       title="Terms of Service"
-      updated="Effective July 2026"
+      updated="Effective July 10, 2026"
     >
       <p className="mk-legal-lead">
         These terms govern your use of Pawdex. They are meant to be fair and
@@ -51,6 +51,56 @@ export default function TermsPage() {
         <a href="mailto:support@pawdex.co">support@pawdex.co</a> if you suspect
         unauthorized use. You must be old enough to form a binding contract to
         use Pawdex, and the service is not directed to children under 13.
+      </p>
+
+      <h2>Subscriptions, billing, and cancellation</h2>
+      <p>
+        Pawdex has a free tier that stays free. The core of the product, keeping
+        your pets&apos; records organized, searchable, and exportable, does not
+        require a paid plan, and we do not ask for a card to use it.
+      </p>
+      <p>
+        If you choose a paid plan, here is how billing works. A paid plan
+        renews automatically at the end of each billing period (monthly or
+        annual, whichever you pick) at the price shown when you subscribed,
+        until you cancel. We show the renewal terms and the exact amount next to
+        where you confirm, and we send you a confirmation after you subscribe
+        that repeats the plan, the amount, the billing date, and how to cancel.
+        You are charged to the payment method you provide.
+      </p>
+      <p>
+        You can cancel at any time, online, from your account settings. There is
+        no phone call and no email to write. Cancellation is at least as easy as
+        signing up was. When you cancel, your paid features stay active through
+        the end of the period you already paid for, and then your account moves
+        to the free tier. It does not lock.
+      </p>
+      <p>
+        Your records are never held hostage to a subscription. Viewing your
+        pets&apos; records and exporting your full data stay available for free,
+        forever, including after you cancel a paid plan, downgrade, or let a plan
+        lapse. A paid plan adds features; it is never the key to your own data.
+      </p>
+      <p>
+        Refunds: monthly plans are not pro-rated, so if you cancel mid-month you
+        keep access until the period ends and are not billed again. For annual
+        plans we offer a 14-day cooling-off period: if you cancel within 14 days
+        of the initial charge or a renewal, we refund that charge in full.
+        Outside those windows, payments are non-refundable except where the law
+        requires otherwise.
+      </p>
+      <p>
+        If we ever raise the price of a plan you are on, we will tell you before
+        the change takes effect, no fewer than seven and no more than thirty days
+        ahead, in a message you can keep, and we will tell you how to cancel if
+        you do not want to continue at the new price. A price increase never
+        applies to a period you have already paid for.
+      </p>
+      <p>
+        Early-access members who join before general availability keep the plan
+        and price they signed up at for as long as they stay subscribed, even if
+        our public pricing later goes up. If you leave and come back, current
+        pricing applies.
       </p>
 
       <h2>Acceptable use</h2>
@@ -143,6 +193,14 @@ export default function TermsPage() {
       <p>
         Questions about these terms go to{" "}
         <a href="mailto:support@pawdex.co">support@pawdex.co</a>.
+      </p>
+
+      <h2>Change log</h2>
+      <p>
+        July 10, 2026: Added the Subscriptions, billing, and cancellation
+        section covering auto-renewal, online cancellation, the permanent free
+        tier, the commitment that records viewing and export stay free forever,
+        refunds, price-change notice, and early-access grandfathering.
       </p>
     </LegalShell>
   );
