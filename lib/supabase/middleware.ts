@@ -13,6 +13,7 @@ const PUBLIC_PATHS = [
   "/auth/callback",
   "/",
   "/home",
+  "/pricing",
   "/privacy",
   "/terms",
   "/accessibility",

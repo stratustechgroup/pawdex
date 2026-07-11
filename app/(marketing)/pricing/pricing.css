@@ -1,0 +1,180 @@
+/* Pricing page, scoped under .mk, inherits the marketing design tokens.
+   Only styles unique to the pricing surface live here; everything shared
+   (buttons, cards, type) reuses the mk-* primitives. */
+
+.mk .pr-hero {
+  padding-block: clamp(56px, 8vw, 104px) clamp(28px, 4vw, 52px);
+  text-align: center;
+}
+
+.mk .pr-banner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 28px;
+  padding: 14px 20px;
+  border-radius: 999px;
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent-fg-on-soft);
+  font: 500 13.5px var(--mk-body);
+  max-width: 620px;
+  margin-inline: auto;
+}
+
+/* Monthly / annual toggle */
+.mk .pr-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 28px auto 0;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--pw-border-strong);
+  background: var(--pw-surface);
+}
+.mk .pr-toggle button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font: 600 13px var(--mk-body);
+  color: var(--pw-text-secondary);
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.mk .pr-toggle button[data-active="true"] {
+  background: var(--pw-accent);
+  color: #f6f4ee;
+}
+.mk .pr-toggle .pr-save {
+  font: 600 11px var(--mk-mono);
+  letter-spacing: 0.04em;
+  color: var(--mk-amber);
+  padding-right: 8px;
+}
+
+/* Tier grid */
+.mk .pr-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 40px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .mk .pr-grid {
+    grid-template-columns: 1fr;
+    max-width: 440px;
+    margin-inline: auto;
+  }
+}
+
+.mk .pr-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px 24px;
+  height: 100%;
+}
+.mk .pr-card--featured {
+  border-color: var(--pw-accent);
+  box-shadow:
+    0 1px 2px rgba(20, 24, 27, 0.05),
+    0 20px 48px -24px color-mix(in srgb, var(--pw-accent) 55%, transparent);
+}
+
+.mk .pr-tier-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mk-display);
+  font-weight: 540;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  color: var(--pw-text);
+}
+.mk .pr-badge {
+  font: 600 10px var(--mk-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f6f4ee;
+  background: var(--pw-accent);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.mk .pr-tagline {
+  font: 400 13.5px/1.5 var(--mk-body);
+  color: var(--pw-text-secondary);
+  min-height: 40px;
+}
+
+.mk .pr-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.mk .pr-price .pr-amount {
+  font-family: var(--mk-display);
+  font-weight: 560;
+  font-size: 42px;
+  letter-spacing: -0.02em;
+  color: var(--pw-text);
+}
+.mk .pr-price .pr-per {
+  font: 400 13.5px var(--mk-body);
+  color: var(--pw-text-muted);
+}
+.mk .pr-price-note {
+  font: 400 12px var(--mk-body);
+  color: var(--pw-text-muted);
+  min-height: 16px;
+}
+
+.mk .pr-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex: 1;
+}
+.mk .pr-feature {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font: 400 13px/1.45 var(--mk-body);
+  color: var(--pw-text);
+}
+.mk .pr-feature--off {
+  color: var(--pw-text-subtle);
+}
+.mk .pr-feature--off span {
+  text-decoration: line-through;
+}
+.mk .pr-check {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--pw-accent);
+}
+.mk .pr-feature--off .pr-check {
+  color: var(--pw-text-subtle);
+}
+
+.mk .pr-disclosure {
+  font: 400 11px/1.5 var(--mk-body);
+  color: var(--pw-text-muted);
+  border-top: 1px solid var(--pw-border);
+  padding-top: 12px;
+}
+
+/* FAQ + CTA reuse the mk-faq / mk-final primitives; only the pricing waitlist
+   anchor spacing is local. */
+.mk .pr-cta {
+  text-align: center;
+  padding-block: clamp(56px, 8vw, 96px);
+}
