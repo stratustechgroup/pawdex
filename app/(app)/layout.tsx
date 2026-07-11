@@ -1,4 +1,6 @@
 import { requireSession } from "@/lib/auth/household";
+import { CommandPalette } from "@/components/pawdex/cockpit/command-palette";
+import { listPetsForNav } from "@/lib/db/cockpit";
 import { TopNavClient } from "./top-nav-client";
 
 export default async function AppLayout({
@@ -7,6 +9,7 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const session = await requireSession();
+  const navPets = await listPetsForNav(session.householdId);
 
   const userInitials = (() => {
     const seed = (session.displayName || session.email?.split("@")[0] || "?").trim();
@@ -37,6 +40,10 @@ export default async function AppLayout({
       <main id="main" style={{ flex: 1 }}>
         {children}
       </main>
+      <CommandPalette
+        pets={navPets}
+        isBreeder={session.householdKind === "breeder"}
+      />
     </div>
   );
 }

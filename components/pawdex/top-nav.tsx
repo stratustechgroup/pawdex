@@ -10,7 +10,14 @@ import {
   HouseholdSwitcher,
   type SwitcherHousehold,
 } from "@/components/pawdex/household-switcher";
+import { OPEN_PALETTE_EVENT } from "@/components/pawdex/cockpit/command-palette";
 import { cn } from "@/lib/utils";
+
+function openPalette() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(OPEN_PALETTE_EVENT));
+  }
+}
 
 type NavLink = { label: string; href: string };
 
@@ -168,6 +175,55 @@ export function TopNav({
         })}
       </nav>
       <div style={{ flex: 1 }} />
+      {/* Command palette trigger. Desktop shows a labelled search pill; mobile
+          collapses to the icon button below. Both dispatch the same event the
+          palette listens for (alongside Cmd/Ctrl-K). */}
+      <button
+        type="button"
+        onClick={openPalette}
+        aria-label="Search (Command K)"
+        title="Search"
+        className="hidden md:inline-flex hover:border-[var(--pw-border-focus)]"
+        style={{
+          alignItems: "center",
+          gap: 8,
+          height: 32,
+          padding: "0 8px 0 10px",
+          borderRadius: 8,
+          border: "1px solid var(--pw-border-strong)",
+          background: "var(--pw-surface-2)",
+          color: "var(--pw-text-secondary)",
+          font: "400 13px var(--font-inter)",
+          cursor: "pointer",
+        }}
+      >
+        <Icon name="search" size={14} />
+        <span>Search</span>
+        <span style={{ display: "inline-flex", gap: 2 }}>
+          <span className="pw-kbd">⌘</span>
+          <span className="pw-kbd">K</span>
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={openPalette}
+        aria-label="Search"
+        title="Search"
+        className="inline-flex md:hidden hover:bg-[var(--pw-surface-2)] hover:text-[var(--pw-text)]"
+        style={{
+          width: 32,
+          height: 32,
+          alignItems: "center",
+          justifyContent: "center",
+          background: "transparent",
+          border: 0,
+          borderRadius: 6,
+          color: "var(--pw-text-secondary)",
+          cursor: "pointer",
+        }}
+      >
+        <Icon name="search" size={16} />
+      </button>
       <button
         type="button"
         // Mobile-only. Display is class-driven ("inline-flex" base, hidden at
@@ -281,6 +337,9 @@ export function TopNav({
             />
             <AccountMenuLink href="/settings/account" icon="user" label="Account settings" />
             <AccountMenuLink href="/settings/household" icon="home" label="Household settings" />
+            <AccountMenuLink href="/settings/authorizations" icon="shieldCheck" label="Authorizations" />
+            <AccountMenuLink href="/settings/activity" icon="activity" label="Account activity" />
+            <AccountMenuLink href="/settings/billing" icon="receipt" label="Billing & plan" />
             <div
               style={{
                 height: 1,

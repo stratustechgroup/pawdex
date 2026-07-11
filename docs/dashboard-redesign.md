@@ -1,4 +1,100 @@
-# Dashboard redesign proposal
+# Dashboard cockpit — as-built
+
+The cockpit shipped. This document leads with what is in the code now, then keeps
+the original proposal below as the rationale it was built from. No em-dashes by
+house rule.
+
+## As-built (shipped)
+
+Scope delivered: the authenticated home at `app/(app)/page.tsx` was rebuilt from a
+passive status board into an active cockpit that answers "what needs doing, for
+which pet, and let me do it here." Every action is a NAVIGATION into an existing
+capture route (no new mutations, no server actions, no writes), because this pass
+only added read helpers.
+
+### Elements shipped
+
+1. **Action strip** (`components/pawdex/cockpit/action-strip.tsx`, fed by
+   `listActionItems` in `lib/db/cockpit.ts`). Severity-ordered cards (overdue,
+   due-soon, needs-a-look) for overdue/near-term vaccines and renewals (from
+   `listExpiringForHousehold`, the single source), documents extracted and waiting
+   for review, and outgoing transfers still pending. Each card deep-links to the
+   route where the owner acts (vaccine to `/pets/[id]/vaccines`, renewal to
+   `/insurance`, doc to the review route or `/inbox`, transfer to
+   `/pets/[id]/transfer`). Empty state is an earned "All caught up" band, not a
+   blank.
+2. **Pet health tiles** (`components/pawdex/cockpit/pet-tile.tsx`, data from
+   `listPetVitals`). Each pet is a rich tile: photo with a status-colored ring, a
+   top status accent bar, age/breed/sex, latest weight in lb with a direction
+   arrow and an inline hand-rolled SVG **sparkline** (`sparkline.tsx`, no charting
+   dep), active medication count, an insurance badge when a policy exists, the
+   status badge, and the next-due line. Weight, meds, and the pet name are
+   separate deep links into the matching pet-page sections. Breeder households get
+   their tiles grouped by litter (`listPetLitterLabels`); personal households
+   render a flat grid untouched.
+3. **Activity feed** (`activity-feed.tsx`, `lib/db/activity.ts`). A quiet timeline
+   of household events with actor names and deep links. Deduplicated by canonical
+   source: `documents` owns the document lifecycle (added, then reviewed-and-saved
+   once confirmed), `audit_log` owns member joins, `animal_transfers` owns
+   completed handoffs. A confirmed document is the record-commit moment, so it is
+   never also pulled from the `commit_extraction` audit row (no double counting).
+4. **Cited insights** (`insight-card.tsx`, `lib/db/insights.ts`). Deterministic,
+   descriptive, and cited to the exact records. Currently weight movement:
+   a loss of >=5 percent surfaces for any pet; a gain of >=10 percent surfaces
+   only for adults (>=12 months), because a growing puppy or kitten gaining weight
+   is expected, not a signal. Requires >=2 readings spanning >=21 days, cites the
+   two endpoints and the number of weigh-ins, links to `/pets/[id]/weight`, and is
+   hidden entirely when there is nothing true to say. Never prescriptive.
+5. **Quick add** (`quick-add.tsx`). A persistent "+" in the greeting header. Add a
+   pet goes straight to `/pets/new`; the pet-scoped items (upload, log a weight,
+   log a medication) open a pet-picker sub-step when the household has more than
+   one pet, go straight through with exactly one pet, and fall back to `/pets/new`
+   with none.
+6. **Command palette** (`command-palette.tsx`, mounted once in the app layout).
+   Real search, reinstated: Cmd/Ctrl-K and a visible top-nav Search button open a
+   focus-trapped `role="dialog"` combobox over pets, every nav destination, and
+   quick actions (static data from the server shell, no backend search this pass).
+   Fully keyboard navigable: arrow keys move an `aria-activedescendant` selection
+   over a `role="listbox"`, Enter navigates, Tab is trapped, Escape closes and
+   restores focus to the trigger. Verified axe-clean and by keyboard-only walk.
+7. **Navigation audit.** Every feature is reachable within two interactions on
+   desktop and mobile. Top nav carries the primary destinations; the account menu
+   now also lists Household, Authorizations, Activity, and a Billing link (another
+   agent owns that page); the palette reaches everything by name; quick add covers
+   capture; the mobile hamburger and a mobile Search icon carry the same set.
+8. **Rail/expiring consistency.** The right-hand "Upcoming" rail and the action
+   strip both read from `listExpiringForHousehold`, so they can never diverge.
+
+### Client-navigation note
+
+The palette and quick-add navigate with `router.push` and then close via a
+`usePathname` effect (mirroring the top-nav) rather than tearing the overlay down
+in the same tick as the push. A same-tick teardown intermittently aborted the App
+Router client navigation; decoupling it made navigation reliable (verified 3/3 per
+flow).
+
+### Quality loop run
+
+Screenshot-driven with the CDP harness (`scripts/test-cockpit-cdp.mjs`) against a
+seeded ZZTEST household (`scripts/test-cockpit-e2e.mjs`: 3 pets, weight history,
+a due-soon and an overdue vaccine, a policy, a med, a document to review), in
+light and dark, desktop and mobile, empty and populated. axe-core: 0
+serious/critical on the dashboard (empty AND populated) and on the open palette,
+in both themes. Keyboard-only walk of the palette confirmed (open via Ctrl-K,
+arrow select, Tab trap, Enter navigate, Escape restores focus) and of quick-add
+(Tab through items, Escape closes and restores focus to the trigger). The insight
+direction/age rule was checked live: an adult pet losing weight surfaced with a
+citation while a growing kitten gaining weight correctly produced no insight.
+
+Activity feed: the `documents` branch and the `audit_log` member-join branch
+(with actor-name resolution) were both verified rendering on the seeded
+household; the `animal_transfers` completed-handoff branch is code-complete but
+was not exercised with a live seeded transfer this pass. ZZTEST data deleted and
+count-verified after.
+
+---
+
+# Dashboard redesign proposal (originating rationale)
 
 Scope: the authenticated home at `app/(app)/page.tsx`, the first screen an owner
 sees after login. This proposal is grounded in driving the real UI end to end

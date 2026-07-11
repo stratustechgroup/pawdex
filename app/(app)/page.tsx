@@ -2,16 +2,29 @@ import Link from "next/link";
 import { format } from "date-fns";
 
 import { Icon } from "@/components/brand/icon";
-import { PawdexPetCard } from "@/components/pawdex/pet-card";
 import { PetPhoto } from "@/components/pawdex/pet-photo";
 import { SectionHead } from "@/components/pawdex/chips";
+import { ActionStrip } from "@/components/pawdex/cockpit/action-strip";
+import { ActivityFeed } from "@/components/pawdex/cockpit/activity-feed";
+import { InsightCards } from "@/components/pawdex/cockpit/insight-card";
+import { PetTile } from "@/components/pawdex/cockpit/pet-tile";
+import { QuickAdd } from "@/components/pawdex/cockpit/quick-add";
 import { requireSession } from "@/lib/auth/household";
 import { firstNameFrom } from "@/lib/auth/profile";
-import { listPetsForHousehold, type PetWithStatus } from "@/lib/db/pets";
+import {
+  cleanTitle,
+  listActionItems,
+  listPetLitterLabels,
+  listPetVitals,
+  type NavPet,
+  type PetVitals,
+} from "@/lib/db/cockpit";
+import { listRecentActivity } from "@/lib/db/activity";
+import { listInsightsForHousehold } from "@/lib/db/insights";
 import { listExpiringForHousehold } from "@/lib/db/expiring";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Dashboard — Pawdex" };
+export const metadata = { title: "Dashboard · Pawdex" };
 
 type ReminderItemView = {
   id: string;
@@ -24,15 +37,27 @@ type ReminderItemView = {
 
 export default async function DashboardPage() {
   const session = await requireSession();
-  const pets = await listPetsForHousehold(session.householdId);
+  const isBreeder = session.householdKind === "breeder";
+
+  const [vitals, actionItems, activity, insights, expiringItems, litterLabels] =
+    await Promise.all([
+      listPetVitals(session.householdId),
+      listActionItems(session.householdId),
+      listRecentActivity(session.householdId),
+      listInsightsForHousehold(session.householdId),
+      listExpiringForHousehold(session.householdId),
+      isBreeder
+        ? listPetLitterLabels(session.householdId)
+        : Promise.resolve(new Map<string, string>()),
+    ]);
 
   const supabase = await createClient();
 
-  // Sign URLs for pet photos in one batch
+  // Sign URLs for pet photos in one batch.
   const photoMap = new Map<string, string>();
-  const photoPaths = pets
-    .filter((p) => p.photo_storage_path)
-    .map((p) => ({ id: p.id, path: p.photo_storage_path! }));
+  const photoPaths = vitals
+    .filter((v) => v.pet.photo_storage_path)
+    .map((v) => ({ id: v.pet.id, path: v.pet.photo_storage_path! }));
   if (photoPaths.length > 0) {
     const { data } = await supabase.storage
       .from("pet-photos")
@@ -42,19 +67,12 @@ export default async function DashboardPage() {
       );
     if (data) {
       for (let i = 0; i < data.length; i++) {
-        const signed = data[i];
-        if (signed.signedUrl) photoMap.set(photoPaths[i].id, signed.signedUrl);
+        const signed = data[i].signedUrl;
+        if (signed) photoMap.set(photoPaths[i].id, signed);
       }
     }
   }
 
-  // Upcoming reminders. Reuse the same aggregation that powers /expiring so
-  // the rail can never diverge from the radar. That helper dedups vaccines to
-  // the latest dose per family (so a superseded, expired cert never shows as a
-  // false "overdue") and includes insurance renewals, both of which the old
-  // inline vaccinations-only query got wrong. Keep the "next 60 days" horizon
-  // by dropping the "ok" bucket (everything > 60 days out).
-  const expiringItems = await listExpiringForHousehold(session.householdId);
   const reminders: ReminderItemView[] = expiringItems
     .filter((item) => item.status !== "ok")
     .slice(0, 8)
@@ -62,225 +80,95 @@ export default async function DashboardPage() {
       id: `${item.kind}:${item.entity_id}`,
       petName: item.pet_name ?? "Whole household",
       petId: item.pet_id ?? "",
-      title: item.title,
+      title: cleanTitle(item.title),
       due: new Date(item.expires_on),
       daysUntil: item.days_until,
     }));
 
-  // Recent documents
-  const { data: docRows } = await supabase
-    .from("documents")
-    .select(
-      "id, original_filename, doc_type, processing_status, uploaded_at, pet_id",
-    )
-    .eq("household_id", session.householdId)
-    .order("uploaded_at", { ascending: false })
-    .limit(3);
-  const recentDocs = docRows ?? [];
+  const navPets: NavPet[] = vitals.map((v) => ({
+    id: v.pet.id,
+    name: v.pet.name,
+    species: v.pet.species,
+  }));
+
+  const overdueCount = actionItems.filter((a) => a.severity === "overdue").length;
 
   return (
-    <div
-      style={{
-        maxWidth: 1320,
-        margin: "0 auto",
-        padding: "32px 24px 56px",
-      }}
-    >
-      <Greeting session={session} pets={pets} reminders={reminders} />
+    <div style={{ maxWidth: 1320, margin: "0 auto", padding: "32px 24px 56px" }}>
+      <Greeting
+        session={session}
+        petCount={vitals.length}
+        overdueCount={overdueCount}
+        actionCount={actionItems.length}
+        navPets={navPets}
+      />
+
+      <ActionStrip items={actionItems} />
+
+      <section style={{ marginBottom: 28 }}>
+        <SectionHead
+          title="Your pets"
+          sub={
+            vitals.length === 0
+              ? "Add your first pet to get started."
+              : `${vitals.length} ${vitals.length === 1 ? "pet" : "pets"} in ${session.householdName}.`
+          }
+          right={
+            <Link href="/pets/new" className="pw-ghost-btn">
+              <Icon name="plus" size={13} />
+              Add pet
+            </Link>
+          }
+        />
+        {vitals.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <PetTileGrid
+            vitals={vitals}
+            photoMap={photoMap}
+            litterLabels={litterLabels}
+          />
+        )}
+      </section>
 
       <div className="dashboard-grid">
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <section>
-            <SectionHead
-              title="Your pets"
-              sub={
-                pets.length === 0
-                  ? "Add your first pet to get started."
-                  : `${pets.length} ${pets.length === 1 ? "pet" : "pets"} in ${session.householdName}.`
-              }
-              right={
-                <Link
-                  href="/pets/new"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    height: 30,
-                    padding: "0 10px",
-                    borderRadius: 6,
-                    border: "1px solid var(--pw-border-strong)",
-                    background: "var(--pw-surface)",
-                    color: "var(--pw-text)",
-                    font: "500 12.5px var(--font-inter)",
-                    textDecoration: "none",
-                  }}
-                >
-                  <Icon name="plus" size={13} />
-                  Add pet
-                </Link>
-              }
-            />
-            {pets.length === 0 ? (
-              <EmptyState />
-            ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                  gap: 14,
-                }}
-              >
-                {pets.map((pet) => (
-                  <PawdexPetCard
-                    key={pet.id}
-                    pet={pet}
-                    photoUrl={photoMap.get(pet.id) ?? null}
-                  />
-                ))}
-                <AddPetCard />
-              </div>
-            )}
-          </section>
+          {insights.length > 0 && (
+            <section>
+              <SectionHead
+                title="Worth a look"
+                sub="Derived from your records, cited to the source."
+              />
+              <InsightCards insights={insights} />
+            </section>
+          )}
 
           <section>
             <SectionHead
               title="Recent activity"
-              sub="Documents ingested this week"
+              sub="Everything happening across the household"
               right={
-                <Link
-                  href="/documents"
-                  style={{
-                    font: "500 12.5px var(--font-inter)",
-                    color: "var(--pw-text-muted)",
-                    textDecoration: "none",
-                  }}
-                >
-                  View all →
+                <Link href="/documents" className="pw-viewall">
+                  View all
+                  <Icon name="arrowRight" size={12} />
                 </Link>
               }
             />
-            <div className="pw-card" style={{ padding: "4px 0" }}>
-              {recentDocs.length === 0 ? (
-                <div
-                  style={{
-                    padding: "20px 16px",
-                    font: "400 13px var(--font-inter)",
-                    color: "var(--pw-text-muted)",
-                  }}
-                >
-                  Documents you upload or forward will appear here.
-                </div>
-              ) : (
-                recentDocs.map((d, i) => {
-                  const petName = pets.find((p) => p.id === d.pet_id)?.name;
-                  return (
-                    <div
-                      key={d.id}
-                      style={{
-                        padding: "14px 16px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                        borderTop: i === 0 ? "none" : "1px solid var(--pw-border)",
-                      }}
-                    >
-                      <DocThumb />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            font: "500 13px var(--font-inter)",
-                            color: "var(--pw-text)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {petName ? `${petName} · ` : ""}
-                          {d.original_filename ?? "Untitled document"}
-                        </div>
-                        <div
-                          style={{
-                            font: "400 12px var(--font-inter)",
-                            color: "var(--pw-text-muted)",
-                            marginTop: 3,
-                          }}
-                        >
-                          {prettyDocType(d.doc_type)} ·{" "}
-                          {prettyStatus(d.processing_status)}
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          font: "400 12px var(--font-inter)",
-                          color: "var(--pw-text-muted)",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {format(new Date(d.uploaded_at), "MMM d")}
-                      </div>
-                      {d.processing_status === "extracted" && d.pet_id && (
-                        <Link
-                          href={`/pets/${d.pet_id}/documents/${d.id}/review`}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            height: 26,
-                            padding: "0 10px",
-                            borderRadius: 6,
-                            background: "var(--pw-status-due-bg)",
-                            color: "var(--pw-status-due-fg)",
-                            border: "1px solid var(--pw-status-due-dot)",
-                            font: "500 11.5px var(--font-inter)",
-                            textDecoration: "none",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          Review
-                        </Link>
-                      )}
-                      {d.processing_status === "confirmed" && d.pet_id && (
-                        <Link
-                          href={`/pets/${d.pet_id}/documents/${d.id}`}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            height: 26,
-                            padding: "0 10px",
-                            borderRadius: 6,
-                            background: "var(--pw-surface-2)",
-                            color: "var(--pw-text-secondary)",
-                            border: "1px solid var(--pw-border-strong)",
-                            font: "500 11.5px var(--font-inter)",
-                            textDecoration: "none",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          Open
-                        </Link>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
+            <ActivityFeed items={activity} />
           </section>
         </div>
 
         <aside style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <section>
             <SectionHead
-              title="Reminders"
+              title="Upcoming"
               sub="Next 60 days"
               right={
                 reminders.length > 0 ? (
-                  <span
-                    style={{
-                      font: "500 11.5px var(--font-inter)",
-                      color: "var(--pw-text-muted)",
-                    }}
-                  >
-                    {reminders.length}
-                  </span>
+                  <Link href="/expiring" className="pw-viewall">
+                    Radar
+                    <Icon name="arrowRight" size={12} />
+                  </Link>
                 ) : undefined
               }
             />
@@ -293,8 +181,8 @@ export default async function DashboardPage() {
                     color: "var(--pw-text-muted)",
                   }}
                 >
-                  No upcoming reminders. We&apos;ll surface vaccines as expiration
-                  approaches.
+                  Nothing on the horizon. We&apos;ll surface vaccines and renewals
+                  as they approach.
                 </div>
               ) : (
                 reminders.map((r, i) => (
@@ -314,53 +202,137 @@ export default async function DashboardPage() {
   );
 }
 
+function PetTileGrid({
+  vitals,
+  photoMap,
+  litterLabels,
+}: {
+  vitals: PetVitals[];
+  photoMap: Map<string, string>;
+  litterLabels: Map<string, string>;
+}) {
+  const grouped = litterLabels.size > 0;
+
+  if (!grouped) {
+    return (
+      <div className="pw-tile-grid">
+        {vitals.map((v) => (
+          <PetTile key={v.pet.id} vitals={v} photoUrl={photoMap.get(v.pet.id) ?? null} />
+        ))}
+      </div>
+    );
+  }
+
+  // Breeder view: group tiles under their litter, ungrouped pets last.
+  const byLitter = new Map<string, PetVitals[]>();
+  const ungrouped: PetVitals[] = [];
+  for (const v of vitals) {
+    const litter = litterLabels.get(v.pet.id);
+    if (litter) {
+      const arr = byLitter.get(litter) ?? [];
+      arr.push(v);
+      byLitter.set(litter, arr);
+    } else {
+      ungrouped.push(v);
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {Array.from(byLitter.entries()).map(([litter, members]) => (
+        <div key={litter}>
+          <div className="pw-litter-head">
+            <Icon name="paw" size={13} style={{ color: "var(--pw-accent)" }} />
+            {litter}
+            <span style={{ color: "var(--pw-text-subtle)" }}>
+              · {members.length}
+            </span>
+          </div>
+          <div className="pw-tile-grid">
+            {members.map((v) => (
+              <PetTile key={v.pet.id} vitals={v} photoUrl={photoMap.get(v.pet.id) ?? null} />
+            ))}
+          </div>
+        </div>
+      ))}
+      {ungrouped.length > 0 && (
+        <div>
+          <div className="pw-litter-head">
+            <Icon name="paw" size={13} style={{ color: "var(--pw-text-muted)" }} />
+            Other pets
+          </div>
+          <div className="pw-tile-grid">
+            {ungrouped.map((v) => (
+              <PetTile key={v.pet.id} vitals={v} photoUrl={photoMap.get(v.pet.id) ?? null} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Greeting({
   session,
-  pets,
-  reminders,
+  petCount,
+  overdueCount,
+  actionCount,
+  navPets,
 }: {
   session: { email: string | null; displayName: string | null; householdName: string };
-  pets: PetWithStatus[];
-  reminders: ReminderItemView[];
+  petCount: number;
+  overdueCount: number;
+  actionCount: number;
+  navPets: NavPet[];
 }) {
-  const overdue = reminders.filter((r) => r.daysUntil < 0).length;
-  const dueSoon = reminders.filter((r) => r.daysUntil >= 0 && r.daysUntil <= 30).length;
   const name = firstNameFrom(session.displayName, session.email);
   const greeting = pickGreeting();
 
-  let sub = `${pets.length} ${pets.length === 1 ? "pet" : "pets"} in ${session.householdName}.`;
-  if (overdue > 0) {
-    sub = `${pets.length} ${pets.length === 1 ? "pet" : "pets"} · ${overdue} overdue ${overdue === 1 ? "reminder" : "reminders"} this week.`;
-  } else if (dueSoon > 0) {
-    sub = `${pets.length} ${pets.length === 1 ? "pet" : "pets"} · ${dueSoon} ${dueSoon === 1 ? "reminder" : "reminders"} due in the next 30 days.`;
-  } else if (pets.length === 0) {
+  let sub = `${petCount} ${petCount === 1 ? "pet" : "pets"} in ${session.householdName}.`;
+  if (overdueCount > 0) {
+    sub = `${overdueCount} overdue ${overdueCount === 1 ? "item needs" : "items need"} your attention.`;
+  } else if (actionCount > 0) {
+    sub = `${actionCount} ${actionCount === 1 ? "thing" : "things"} to look at across ${petCount} ${petCount === 1 ? "pet" : "pets"}.`;
+  } else if (petCount === 0) {
     sub = "Let's add your first pet to get started.";
   }
 
   return (
-    <div style={{ marginBottom: 28 }}>
-      <h1
-        className="serif"
-        style={{
-          fontSize: 32,
-          fontWeight: 400,
-          lineHeight: 1.15,
-          letterSpacing: "-0.015em",
-          margin: 0,
-          color: "var(--pw-text)",
-        }}
-      >
-        {greeting}, {cap(name)}.
-      </h1>
-      <p
-        style={{
-          margin: "8px 0 0",
-          font: "400 14px var(--font-inter)",
-          color: "var(--pw-text-muted)",
-        }}
-      >
-        {sub}
-      </p>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "space-between",
+        gap: 16,
+        flexWrap: "wrap",
+        marginBottom: 28,
+      }}
+    >
+      <div>
+        <h1
+          className="serif"
+          style={{
+            fontSize: 32,
+            fontWeight: 400,
+            lineHeight: 1.15,
+            letterSpacing: "-0.015em",
+            margin: 0,
+            color: "var(--pw-text)",
+          }}
+        >
+          {greeting}, {cap(name)}.
+        </h1>
+        <p
+          style={{
+            margin: "8px 0 0",
+            font: "400 14px var(--font-inter)",
+            color: "var(--pw-text-muted)",
+          }}
+        >
+          {sub}
+        </p>
+      </div>
+      <QuickAdd pets={navPets} />
     </div>
   );
 }
@@ -401,14 +373,8 @@ function ReminderRow({
         dot: "var(--pw-status-overdue-dot)",
       };
     if (urgency === "due")
-      return {
-        fg: "var(--pw-status-due-fg)",
-        dot: "var(--pw-status-due-dot)",
-      };
-    return {
-      fg: "var(--pw-text-muted)",
-      dot: "var(--pw-text-subtle)",
-    };
+      return { fg: "var(--pw-status-due-fg)", dot: "var(--pw-status-due-dot)" };
+    return { fg: "var(--pw-text-muted)", dot: "var(--pw-text-subtle)" };
   })();
 
   const dueLabel = overdue
@@ -420,17 +386,8 @@ function ReminderRow({
   const monthLabel = format(item.due, "MMM").toUpperCase();
   const dayLabel = format(item.due, "d");
 
-  return (
-    <div
-      style={{
-        padding: "12px",
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        borderRadius: 10,
-        borderTop: isFirst ? "none" : "1px solid var(--pw-border)",
-      }}
-    >
+  const row = (
+    <>
       <div style={{ width: 32, textAlign: "center", flexShrink: 0 }}>
         <div
           style={{
@@ -481,95 +438,26 @@ function ReminderRow({
           </span>
         </div>
       </div>
-    </div>
+    </>
   );
-}
 
-function DocThumb() {
-  return (
-    <div
-      style={{
-        width: 32,
-        height: 40,
-        borderRadius: 4,
-        background: "var(--pw-surface)",
-        border: "1px solid var(--pw-border-strong)",
-        flexShrink: 0,
-        position: "relative",
-        overflow: "hidden",
-      }}
-      aria-hidden
-    >
-      {[14, 28, 42].map((top) => (
-        <div
-          key={top}
-          style={{
-            position: "absolute",
-            inset: `${top}% 16% auto 16%`,
-            height: 1.5,
-            background: top === 14 ? "var(--pw-border-strong)" : "var(--pw-border)",
-          }}
-        />
-      ))}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 3,
-          left: 3,
-          padding: "1px 4px",
-          borderRadius: 2,
-          background: "#B23A3A",
-          color: "#fff",
-          font: "700 7px var(--font-jetbrains)",
-          letterSpacing: 0.5,
-        }}
-      >
-        PDF
-      </div>
-    </div>
-  );
-}
+  const commonStyle: React.CSSProperties = {
+    padding: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    borderRadius: 10,
+    borderTop: isFirst ? "none" : "1px solid var(--pw-border)",
+    textDecoration: "none",
+  };
 
-function AddPetCard() {
-  return (
-    <Link
-      href="/pets/new"
-      className="pw-card"
-      style={{
-        padding: 18,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        gap: 8,
-        border: "1px dashed var(--pw-border-strong)",
-        background: "transparent",
-        textDecoration: "none",
-        color: "var(--pw-text-secondary)",
-        minHeight: 130,
-      }}
-    >
-      <span
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: "50%",
-          background: "var(--pw-surface-2)",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--pw-text)",
-        }}
-      >
-        <Icon name="plus" size={16} />
-      </span>
-      <span style={{ font: "500 13px var(--font-inter)", color: "var(--pw-text)" }}>
-        Add another pet
-      </span>
-      <span style={{ font: "400 12px var(--font-inter)", color: "var(--pw-text-muted)" }}>
-        Or forward records to your household inbox
-      </span>
+  return item.petId ? (
+    <Link href={`/pets/${item.petId}`} style={commonStyle} className="pw-reminder-row">
+      {row}
+    </Link>
+  ) : (
+    <Link href="/expiring" style={commonStyle} className="pw-reminder-row">
+      {row}
     </Link>
   );
 }
@@ -616,25 +504,4 @@ function EmptyState() {
       </Link>
     </div>
   );
-}
-
-function prettyDocType(t: string) {
-  return t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function prettyStatus(s: string) {
-  switch (s) {
-    case "pending":
-      return "Awaiting processing";
-    case "extracting":
-      return "Extracting";
-    case "extracted":
-      return "Needs review";
-    case "confirmed":
-      return "Confirmed";
-    case "failed":
-      return "Failed";
-    default:
-      return s;
-  }
 }
