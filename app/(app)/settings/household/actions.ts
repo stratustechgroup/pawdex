@@ -6,6 +6,9 @@ import { Resend } from "resend";
 import { requireSession } from "@/lib/auth/household";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createHousehold } from "@/lib/auth/households";
+import { switchHousehold } from "@/lib/auth/switch-household";
+import type { HouseholdKind } from "@/lib/auth/active-household";
 import {
   generateInvitationToken,
   invitationExpiry,
@@ -13,6 +16,117 @@ import {
 import { recordAudit } from "@/lib/db/audit";
 
 type Result = { ok: true } | { ok: false; error: string };
+
+// Guardrail against runaway creation. Counts households the user OWNS (created),
+// not every membership, so being invited into several households never blocks a
+// user from spinning up their own.
+const MAX_OWNED_HOUSEHOLDS = 5;
+const MAX_NAME_LENGTH = 60;
+
+/**
+ * Creates a new household with the caller as owner, then switches the active
+ * household to it and redirects to the dashboard. On validation failure it
+ * returns a friendly error; on success it never returns (switchHousehold
+ * redirects). The redirect must stay outside any try/catch so its control-flow
+ * throw is not mistaken for a creation error.
+ */
+export async function createHouseholdAction(
+  rawName: string,
+  rawKind: string,
+): Promise<Result> {
+  const session = await requireSession();
+
+  const name = rawName.trim();
+  if (!name) {
+    return { ok: false, error: "Give the household a name." };
+  }
+  if (name.length > MAX_NAME_LENGTH) {
+    return {
+      ok: false,
+      error: `Keep the name under ${MAX_NAME_LENGTH} characters.`,
+    };
+  }
+
+  const kind: HouseholdKind = rawKind === "breeder" ? "breeder" : "personal";
+
+  const ownedCount = session.households.filter((h) => h.role === "owner").length;
+  if (ownedCount >= MAX_OWNED_HOUSEHOLDS) {
+    return {
+      ok: false,
+      error: `You can own up to ${MAX_OWNED_HOUSEHOLDS} households. Remove or leave one before creating another.`,
+    };
+  }
+
+  let householdId: string;
+  try {
+    ({ householdId } = await createHousehold({
+      userId: session.userId,
+      name,
+      kind,
+    }));
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Could not create the household.",
+    };
+  }
+
+  await recordAudit({
+    householdId,
+    actorId: session.userId,
+    action: "create",
+    entityType: "household",
+    entityId: householdId,
+    diff: { after: { name, kind } },
+  });
+
+  // Redirects to "/". Kept outside the try above so its NEXT_REDIRECT throw is
+  // never swallowed as a creation failure.
+  await switchHousehold(householdId);
+  return { ok: true };
+}
+
+/**
+ * Flips the ACTIVE household between personal and breeder. Owner-only: kind
+ * decides whether breeder surfaces (litters, placement, transfers) are exposed,
+ * so it's an ownership-level decision. Non-destructive in both directions:
+ * flipping breeder→personal only hides those surfaces, it never deletes breeder
+ * data, so a mistaken flip is fully recoverable by flipping back.
+ */
+export async function setHouseholdKindAction(rawKind: string): Promise<Result> {
+  const session = await requireSession();
+  if (session.role !== "owner") {
+    return { ok: false, error: "Only the household owner can change the type." };
+  }
+
+  const kind: HouseholdKind = rawKind === "breeder" ? "breeder" : "personal";
+  if (kind === session.householdKind) {
+    return { ok: true };
+  }
+
+  // Owner already verified above; use the service client so the write doesn't
+  // depend on has_household_write (which also admits non-owner members).
+  const service = createServiceClient();
+  const { error } = await service
+    .from("households")
+    .update({ kind })
+    .eq("id", session.householdId);
+  if (error) return { ok: false, error: error.message };
+
+  await recordAudit({
+    householdId: session.householdId,
+    actorId: session.userId,
+    action: "update",
+    entityType: "household",
+    entityId: session.householdId,
+    diff: { before: { kind: session.householdKind }, after: { kind } },
+  });
+
+  // Revalidate the whole app: the nav's breeder-only surfaces key off kind.
+  revalidatePath("/", "layout");
+  revalidatePath("/settings/household");
+  return { ok: true };
+}
 
 function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -38,7 +152,7 @@ export async function sendHouseholdInvitation(
   const supabase = await createClient();
 
   // If a pending invitation exists for this email already, revoke it and
-  // create a new one — keeps things simple and gives the invitee a fresh link.
+  // create a new one; keeps things simple and gives the invitee a fresh link.
   await supabase
     .from("household_invitations")
     .update({ revoked_at: new Date().toISOString() })
@@ -93,12 +207,12 @@ export async function sendHouseholdInvitation(
       });
     } catch (err) {
       console.error("invitation send failed:", err);
-      // Don't surface the error — the invitation is created; the owner can
+      // Don't surface the error; the invitation is created; the owner can
       // copy the link from the pending-invitations list as a fallback.
     }
   } else {
     console.warn(
-      `[invitations] RESEND_API_KEY not set — paste this URL into the invitee's email manually:\n  ${acceptUrl}`,
+      `[invitations] RESEND_API_KEY not set. Paste this URL into the invitee's email manually:\n  ${acceptUrl}`,
     );
   }
 
@@ -152,7 +266,7 @@ export async function removeHouseholdMember(
   if (userId === session.userId) {
     return {
       ok: false,
-      error: "You're the owner — transfer ownership before removing yourself.",
+      error: "You're the owner; transfer ownership before removing yourself.",
     };
   }
 

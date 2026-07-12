@@ -9,14 +9,22 @@ import {
   listPendingInvitations,
 } from "@/lib/db/household-members";
 
+import { HouseholdTypeControl } from "./household-type-control";
 import { InviteForm } from "./invite-form";
 import { MembersList } from "./members-list";
+import { NewHouseholdForm } from "./new-household-form";
 
 export const metadata = { title: "Household · Pawdex" };
 export const dynamic = "force-dynamic";
 
-export default async function HouseholdSettingsPage() {
+export default async function HouseholdSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await requireSession();
+  const kindParam = (await searchParams).kind;
+  const defaultKind = kindParam === "breeder" ? "breeder" : "personal";
   const [members, invitations] = await Promise.all([
     listHouseholdMembers(session.householdId, session.userId),
     listPendingInvitations(session.householdId),
@@ -77,6 +85,16 @@ export default async function HouseholdSettingsPage() {
           People with access to this household&apos;s pets, records, and reminders.
         </p>
       </header>
+
+      {isOwner && (
+        <section className="pw-card" style={{ padding: 20 }}>
+          <SectionHead
+            title="Household type"
+            sub="Personal households track your own pets. Breeder households add litters, placement, and transfer tools."
+          />
+          <HouseholdTypeControl kind={session.householdKind} />
+        </section>
+      )}
 
       {session.households.length > 1 && (
         <section className="pw-card" style={{ padding: 20 }}>
@@ -197,6 +215,14 @@ export default async function HouseholdSettingsPage() {
           </ul>
         </section>
       )}
+
+      <section id="new-household" className="pw-card" style={{ padding: 20, scrollMarginTop: 80 }}>
+        <SectionHead
+          title="New household"
+          sub="Run a separate space with its own pets, records, and reminders. You become its owner and can switch to it from the household menu any time. Pick Breeder to keep a breeding operation apart from your personal pets."
+        />
+        <NewHouseholdForm defaultKind={defaultKind} />
+      </section>
 
       {isOwner && (
         <section className="pw-card" style={{ padding: 20 }}>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Icon } from "@/components/brand/icon";
@@ -20,9 +21,11 @@ const ROLE_LABEL: Record<SwitcherHousehold["role"], string> = {
 };
 
 /**
- * Household chooser mounted in the top nav. With one household it renders an
- * inert label (no dropdown, no affordance). With more than one it becomes a
- * compact dropdown that switches the active household via a server action.
+ * Household chooser mounted in the top nav. Always a menu, even for a
+ * single-household user: it shows the active household, lists every membership
+ * (name, role, kind badge, active check), and offers "New household" so a
+ * second space is always one click away. Switching runs through a server
+ * action that redirects, which refreshes the whole tree.
  */
 export function HouseholdSwitcher({
   households,
@@ -35,7 +38,6 @@ export function HouseholdSwitcher({
 
   const active =
     households.find((h) => h.isActive) ?? households[0] ?? null;
-  const multiple = households.length > 1;
 
   useEffect(() => {
     if (!open) return;
@@ -71,10 +73,10 @@ export function HouseholdSwitcher({
     <div ref={rootRef} style={{ position: "relative", flexShrink: 0 }}>
       <button
         type="button"
-        onClick={() => multiple && setOpen((v) => !v)}
+        onClick={() => setOpen((v) => !v)}
         title={active.name}
-        aria-haspopup={multiple ? "menu" : undefined}
-        aria-expanded={multiple ? open : undefined}
+        aria-haspopup="menu"
+        aria-expanded={open}
         style={{
           display: "inline-flex",
           alignItems: "center",
@@ -84,7 +86,7 @@ export function HouseholdSwitcher({
           background: open ? "var(--pw-surface-2)" : "transparent",
           border: 0,
           borderRadius: 6,
-          cursor: multiple ? "pointer" : "default",
+          cursor: "pointer",
           padding: "5px 7px",
           margin: "0 -7px",
         }}
@@ -105,16 +107,14 @@ export function HouseholdSwitcher({
           {active.name}
         </span>
         {active.kind === "breeder" && <KindBadge kind="breeder" />}
-        {multiple && (
-          <Icon
-            name="chevronDown"
-            size={13}
-            style={{ color: "var(--pw-text-muted)" }}
-          />
-        )}
+        <Icon
+          name="chevronDown"
+          size={13}
+          style={{ color: "var(--pw-text-muted)" }}
+        />
       </button>
 
-      {open && multiple && (
+      {open && (
         <div
           role="menu"
           style={{
@@ -204,6 +204,36 @@ export function HouseholdSwitcher({
               )}
             </button>
           ))}
+          <div
+            style={{
+              height: 1,
+              background: "var(--pw-border)",
+              margin: "6px 4px",
+            }}
+          />
+          <Link
+            href="/settings/household#new-household"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 8px",
+              borderRadius: 6,
+              color: "var(--pw-text-secondary)",
+              font: "500 13px var(--font-inter)",
+              textDecoration: "none",
+            }}
+            className="hover:bg-[var(--pw-surface-2)]"
+          >
+            <Icon
+              name="plus"
+              size={15}
+              style={{ color: "var(--pw-text-muted)", flexShrink: 0 }}
+            />
+            New household…
+          </Link>
         </div>
       )}
     </div>
