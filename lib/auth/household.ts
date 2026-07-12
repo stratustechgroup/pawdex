@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -44,8 +45,13 @@ type MemberRowWithHousehold = MembershipRow & {
  * names a household the user can reach; otherwise it falls back to the earliest
  * accepted membership (see resolveActiveMembership). The same fallback backs
  * bootstrapHousehold so both agree on the "primary" household.
+ *
+ * Wrapped in React cache() so the layout, the page, and any nav component that
+ * all call it during one render resolve the session ONCE per request instead of
+ * re-running getUser + the DB reads for each. cache() memoizes per request only
+ * (never across users/requests), so this is pure dedup with no behavior change.
  */
-export async function requireSession(): Promise<Session> {
+export const requireSession = cache(async function requireSession(): Promise<Session> {
   const supabase = await createClient();
 
   const {
@@ -56,28 +62,30 @@ export async function requireSession(): Promise<Session> {
     redirect("/login");
   }
 
-  const { data: memberRows, error: memberErr } = await supabase
-    .from("household_members")
-    .select("household_id, role, accepted_at, invited_at, households(id, name, kind)")
-    .eq("user_id", user.id);
+  // The memberships (with their households) and the profile display name both
+  // key off user.id and don't depend on each other, so fetch them in parallel:
+  // one cross-region round trip instead of two. The profile read stays
+  // best-effort — a missing row (before the 0030 backfill lands in a given DB)
+  // or an unset name both fall back to email downstream, so a null is never
+  // fatal.
+  const [memberRes, profileRes] = await Promise.all([
+    supabase
+      .from("household_members")
+      .select("household_id, role, accepted_at, invited_at, households(id, name, kind)")
+      .eq("user_id", user.id),
+    supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
+  ]);
 
-  if (memberErr) {
-    throw new Error(`requireSession member: ${memberErr.message}`);
+  if (memberRes.error) {
+    throw new Error(`requireSession member: ${memberRes.error.message}`);
   }
 
-  const rows = (memberRows ?? []) as unknown as MemberRowWithHousehold[];
+  const rows = (memberRes.data ?? []) as unknown as MemberRowWithHousehold[];
   if (rows.length === 0) {
     redirect("/onboarding");
   }
 
-  // Display name is a best-effort second read: a missing profile row (before
-  // the 0030 backfill lands in a given DB) or an unset name both fall back to
-  // email downstream, so a null here is never fatal.
-  const { data: profileRow } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", user.id)
-    .maybeSingle();
+  const profileRow = profileRes.data;
 
   const cookieStore = await cookies();
   const cookieHouseholdId = cookieStore.get(ACTIVE_HOUSEHOLD_COOKIE)?.value;
@@ -111,4 +119,4 @@ export async function requireSession(): Promise<Session> {
     householdKind: active.households.kind,
     households,
   };
-}
+});
