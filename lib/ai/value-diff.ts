@@ -40,6 +40,7 @@ export type CommittedDraft = {
     started_on: string;
     ended_on: string | null;
     duration_days: number | null;
+    total_doses?: number | null;
     medication_context:
       | "prescribed_takehome"
       | "intraoperative"

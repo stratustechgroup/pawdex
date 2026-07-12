@@ -178,6 +178,86 @@ neutral value and we did not add one (no migration in this pass), so silence is
 the honest option for an uncorrected commit. Explicit user ratings are always
 recorded, unchanged.
 
+## Ingestion v2 (prompt v7.1.0)
+
+Four capabilities added on top of the v7.0 core, all diagnosed against the
+founder's real imported history first.
+
+### Invoice costs
+
+The extractor threw away the billing block. Now a nullable `invoice` section
+(`extraction-schema.ts`) captures `invoice_date`, `total_amount`, and
+`line_items[]` (description, dollar `amount`, `category` in
+exam/vaccine/medication/procedure/lab/other). The prompt draws the line between
+a CHARGE and the clinical event it pays for: the exam is one `medical_event`,
+its "$68 Comprehensive Exam" line is one invoice item. Discount/credit lines are
+NOT emitted (Pawdex sums charges, not net, so a positive discount would inflate
+spending); tax is a real charge and is kept.
+
+Review renders an editable costs table (amount + category + per-row skip) in
+`review-extensions.tsx`. Commit converts dollars to integer cents and writes
+`invoice_items` (migration 0032). The pet medical page shows a year-to-date and
+all-time total plus a per-visit "· $X" beside the event on that date. The full
+spending dashboard and the cost↔event link (`invoice_items.medical_event_id`,
+left null in v1) are future work.
+
+### Course-duration expiry
+
+`medications.duration_days` → `ended_on` already computed at commit, but marked
+nothing as estimated, so the UI couldn't distinguish a vet-stated end from a
+guess. Now:
+
+- the schema gains `total_doses` (a dispensed count, "#30", "6 doses"), and the
+  pure helper `lib/clinical/course-duration.ts` estimates an end from
+  `duration_days`, or from `total_doses` + `frequency` (parsing SID/BID/TID/QID,
+  qNh, "every 8-12 hours", spelled-out counts). Behavioral test:
+  `scripts/test-course-duration.ts`.
+- migration 0032 adds `medications.ended_estimated`. Commit sets it `true` only
+  when Pawdex COMPUTED the end (the model gave no explicit `ended_on`), `false`
+  when the document stated it.
+- the meds page labels an estimated end "(est.)" and, once it's in the past
+  (course rolled off Active), offers a "still taking it" correction
+  (`markStillTaking`) that clears the estimate. We never expire a med without the
+  estimated marker and this override.
+
+### Procedure meds — reconciliation, not a new column
+
+The brief proposed an `administration_context` ('in_clinic'|'dispensed') column.
+It was NOT added: the existing `medication_context` enum (migration 0005) already
+encodes this at finer granularity — `intraoperative` + `injection_in_office` ARE
+the in-clinic cases — and the meds page already filters Active to
+`prescribed_takehome`. So in-clinic drugs stay `medications` rows with the right
+context and are simply excluded from Active; they are NOT written to
+`medication_administrations` (which requires a NOT NULL `medication_id` and so
+can't hold a standalone dose). The fix is a sharper prompt (in-clinic vs
+dispensed) plus the existing review-UI context override. In Finn's real data this
+failure is largely latent — anesthesia is rolled into the surgery event summary
+and take-home meds are already classified correctly.
+
+### Same-visit dedup (SOAP note + itemized invoice)
+
+The matchers compare candidates only against COMMITTED rows and, for events, need
+≥2 shared non-stopword title tokens. The founder's real duplication (2025-08-15:
+22 events across two documents at one clinic; "Office Visit - Professional
+Consultation" in both) slipped through three different gaps, fixed at three
+layers:
+
+1. **Clinic-aware event matching** (`extraction-dedup-match.ts`): same day + same
+   clinic + same event type makes a match `strong` even with no token overlap —
+   but ONLY for `exam` (the one event type that's singleton-per-visit). Distinct
+   same-day labs and a neuter-plus-dental are deliberately left alone.
+2. **Intra-batch dedup** (`findIntraBatchDuplicateEvents`): one document that
+   repeats an event ("Patient check-in" ×5) — candidate-vs-candidate within the
+   batch, never covered before. Later copies are default-skipped.
+3. **Two-pending banner** (`findSiblingPendingVisits`): when a SOAP note and its
+   invoice are BOTH awaiting review, neither is committed so neither matcher sees
+   the other. The review page surfaces "another document awaiting review looks
+   like the same visit" so the reviewer commits them in sequence.
+
+All three preserve the sacred invariants: reversible default-skip, `loose` never
+pre-skipped, never auto-delete. New fixtures pin the behavior (and its guards) in
+`scripts/test-extraction-dedup.ts` (S10a–S10d, IB1–IB4).
+
 ## Insurance-policy path (separate)
 
 The policy path is deliberately distinct from the medical-records ladder:

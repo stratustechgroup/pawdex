@@ -77,6 +77,38 @@ export function daysAbs(a: string, b: string): number {
   return Math.abs(ma - mb) / 86_400_000;
 }
 
+/**
+ * Normalize a clinic name for same-visit comparison. Lowercases, strips
+ * punctuation, collapses whitespace. Used to decide whether two rows are from
+ * the same clinic even when one string is a fuller form of the other
+ * ("Hillcrest Animal Hospital" vs "Hillcrest Animal Hosp").
+ */
+export function normalizeClinic(s: string | null | undefined): string {
+  if (!s) return "";
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(animal|hospital|veterinary|vet|clinic|care|center|centre|the|of|and)\b/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * True when two clinic names plausibly refer to the same clinic: equal after
+ * normalization, or one normalized form contains the other (both non-empty).
+ * Substring tolerance handles "Cleveland Park Animal Hospital" vs "Cleveland
+ * Park Animal Hospital Simpsonville".
+ */
+export function sameClinic(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  const na = normalizeClinic(a);
+  const nb = normalizeClinic(b);
+  if (!na || !nb) return false;
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
 export function normalizeMedName(s: string): string {
   return (
     s
@@ -235,6 +267,13 @@ export type MedicalEventCandidate = {
   occurred_on: string;
   title: string;
   event_type: string;
+  // Clinic this event was attributed to on the incoming document. Enables
+  // same-visit awareness: a SOAP note and its matching invoice describe the
+  // same visit at the same clinic on the same day, but phrase the events
+  // differently ("Office Visit - Professional Consultation" vs "Annual exam"),
+  // so token overlap alone misses them. Null when the document didn't name a
+  // clinic. Added in ingestion v2.
+  clinic_name?: string | null;
 };
 
 export type ExistingMedicalEvent = {
@@ -256,6 +295,16 @@ export type MedicalEventMatch = ExistingMedicalEvent & {
 export const EVENT_DATE_WINDOW_DAYS = 1;
 export const MIN_TITLE_TOKEN_OVERLAP = 2;
 
+// Event types where a visit produces at most ONE row. For these, same day +
+// same clinic is enough to call it the same visit even when the titles share no
+// meaningful tokens (an "Office Visit - Professional Consultation" line and an
+// "Annual wellness exam" line are the same exam worded two ways). Deliberately
+// NARROW: lab_result, imaging, surgery, dental, and parasite_prevention all
+// legitimately recur within one visit (three lab panels, a neuter AND a dental),
+// so collapsing them by clinic+type would hide distinct records. Those still
+// require real title-token overlap to match.
+const SINGLETON_PER_VISIT_EVENT_TYPES = new Set(["exam"]);
+
 export function matchMedicalEvents(
   candidates: MedicalEventCandidate[],
   existing: ExistingMedicalEvent[],
@@ -265,7 +314,10 @@ export function matchMedicalEvents(
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
     const candTokens = new Set(tokens(c.title));
-    if (candTokens.size === 0) continue;
+    // An all-stopword title ("Annual Wellness Exam") yields zero tokens. It can
+    // still match via the same-visit signal (clinic + day + exam type), so only
+    // bail early when there's also no clinic to fall back on.
+    if (candTokens.size === 0 && !c.clinic_name) continue;
 
     const matches: MedicalEventMatch[] = [];
     for (const e of existing) {
@@ -277,13 +329,31 @@ export function matchMedicalEvents(
       for (const t of candTokens) {
         if (existingTokens.has(t)) overlap.push(t);
       }
-      if (overlap.length < MIN_TITLE_TOKEN_OVERLAP) continue;
+
+      // Same-visit signal: same calendar day + same clinic + same event
+      // category. A SOAP note and its itemized invoice describe the same visit
+      // but word the events differently, so token overlap alone (which drops
+      // "exam"/"visit"/"office" as stopwords) misses them. When all three
+      // agree, treat it as the same visit even below the token threshold.
+      const sameVisit =
+        dist < 1 &&
+        c.event_type === e.event_type &&
+        SINGLETON_PER_VISIT_EVENT_TYPES.has(c.event_type) &&
+        sameClinic(c.clinic_name, e.vet_clinic_name);
+
+      if (overlap.length < MIN_TITLE_TOKEN_OVERLAP && !sameVisit) continue;
 
       // Strength: same day + ≥3 shared tokens → exact. Same day + 2 tokens, or
-      // ≥3 tokens within window → strong. Otherwise loose.
+      // ≥3 tokens within window → strong. A same-visit match (clinic+day+type)
+      // is strong even without token overlap — it's the SOAP/invoice pair.
+      // Otherwise loose.
       let strength: MatchStrength;
       if (dist < 1 && overlap.length >= 3) strength = "exact";
-      else if ((dist < 1 && overlap.length >= 2) || overlap.length >= 3)
+      else if (
+        (dist < 1 && overlap.length >= 2) ||
+        overlap.length >= 3 ||
+        sameVisit
+      )
         strength = "strong";
       else strength = "loose";
 
@@ -306,6 +376,60 @@ export function matchMedicalEvents(
     }
   }
   return out;
+}
+
+/**
+ * Intra-batch event dedup: candidate-vs-candidate WITHIN a single extraction.
+ *
+ * The cross-record matchers above compare candidates against COMMITTED rows,
+ * never against each other — so when one document emits the same event several
+ * times (a real, observed failure: a PIMS export that repeats "Patient check-in"
+ * on every page, or lists "DECIDUOUS TEETH, RETAINED" once per tooth), every
+ * copy is inserted. This finds those in-batch repeats.
+ *
+ * Returns Map<laterIndex, earlierIndex>: the later copy duplicates the earlier
+ * one. The review UI default-skips the later copies (reversible — still shown,
+ * still includable), keeping the first occurrence selected. Two candidates are
+ * the same in-batch event when they share a calendar day AND either:
+ *   - identical normalized titles, or
+ *   - same clinic + same event category (the same-visit signal).
+ */
+export function findIntraBatchDuplicateEvents(
+  candidates: MedicalEventCandidate[],
+): Map<number, number> {
+  const dupeOf = new Map<number, number>();
+  for (let i = 0; i < candidates.length; i++) {
+    const later = candidates[i];
+    const laterTitle = normalizeEventTitle(later.title);
+    for (let j = 0; j < i; j++) {
+      if (dupeOf.has(j)) continue; // chain to the original, not a mid dupe
+      const earlier = candidates[j];
+      if (daysAbs(later.occurred_on, earlier.occurred_on) >= 1) continue;
+
+      const sameTitle =
+        !!laterTitle && laterTitle === normalizeEventTitle(earlier.title);
+      const sameVisit =
+        later.event_type === earlier.event_type &&
+        SINGLETON_PER_VISIT_EVENT_TYPES.has(later.event_type) &&
+        sameClinic(later.clinic_name, earlier.clinic_name);
+
+      if (sameTitle || sameVisit) {
+        dupeOf.set(i, j);
+        break;
+      }
+    }
+  }
+  return dupeOf;
+}
+
+/** Normalize an event title for exact intra-batch comparison. */
+function normalizeEventTitle(s: string | null | undefined): string {
+  if (!s) return "";
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 // ── medications ─────────────────────────────────────────────────────

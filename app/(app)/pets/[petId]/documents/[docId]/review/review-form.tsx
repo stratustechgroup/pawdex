@@ -14,6 +14,7 @@ import {
   computeExpiryFromFamily,
   inferFamilyFromType,
 } from "@/lib/clinical/vaccine-catalog";
+import { estimateCourseEnd } from "@/lib/clinical/course-duration";
 
 import {
   isHighConfidence,
@@ -101,6 +102,7 @@ type MedicationDraft = {
   started_on: string;
   ended_on: string;
   duration_days: string;
+  total_doses: number | null;
   medication_context: MedicationContext;
   prescriber: string;
   indication: string;
@@ -170,6 +172,8 @@ export function ReviewForm({
   petAttributeDiffs,
   vaccineDupes,
   eventDupes,
+  eventIntraDupes,
+  siblingPendingVisits,
   medDupes,
   weightDupes,
   labDupes,
@@ -188,6 +192,15 @@ export function ReviewForm({
   // Present index = "this row looks like something already on file."
   vaccineDupes: Record<number, VaccineMatch[]>;
   eventDupes: Record<number, MedicalEventMatch[]>;
+  // Intra-batch event dupes: index → the earlier index in THIS document it
+  // repeats. The later copies are default-skipped.
+  eventIntraDupes: Record<number, number>;
+  // Other documents still in review that describe one of the same visits.
+  siblingPendingVisits: Array<{
+    id: string;
+    filename: string | null;
+    sharedDates: string[];
+  }>;
   medDupes: Record<number, MedicationMatch[]>;
   weightDupes: Record<number, WeightMatch[]>;
   labDupes: Record<number, LabValueMatch[]>;
@@ -232,6 +245,7 @@ export function ReviewForm({
           ended_on: asString(m.ended_on),
           duration_days:
             m.duration_days != null ? String(m.duration_days) : "",
+          total_doses: m.total_doses ?? null,
           medication_context: ctx,
           prescriber: asString(m.prescriber),
           indication: asString(m.indication),
@@ -249,8 +263,13 @@ export function ReviewForm({
         // and clean rows follow the confidence rule.
         const billing = detectBillingLine(e.title ?? "");
         const dupe = hasHighConfidenceDupe(eventDupes[i]);
+        // A repeat of an earlier row in THIS same document (PIMS export that
+        // lists the same line on every page) — default-skip the later copies.
+        const intraDupe = eventIntraDupes[i] !== undefined;
         const skip =
-          billing.kind === "strong" || dupe ? true : e.confidence < 0.5;
+          billing.kind === "strong" || dupe || intraDupe
+            ? true
+            : e.confidence < 0.5;
         return {
           skip,
           event_type: e.event_type,
@@ -294,6 +313,7 @@ export function ReviewForm({
       labValues: [],
       upcomingReminders: [],
       petAttributeAccepts: {},
+      invoiceItems: [],
     },
   );
 
@@ -406,6 +426,7 @@ export function ReviewForm({
             started_on: m.started_on,
             ended_on: blankIfNull(m.ended_on),
             duration_days: Number.isFinite(durNum) && durNum > 0 ? durNum : null,
+            total_doses: m.total_doses,
             medication_context: m.medication_context,
             prescriber: blankIfNull(m.prescriber),
             indication: blankIfNull(m.indication),
@@ -442,6 +463,13 @@ export function ReviewForm({
           title: r.title,
           due_on: r.due_on,
           entity_type: r.entity_type,
+        })),
+        invoice_items: extensionsState.invoiceItems.map((c) => ({
+          skip: c.skip,
+          description: c.description,
+          amount: c.amount,
+          category: c.category,
+          incurred_on: c.incurred_on,
         })),
         pet_attribute_updates: extensionsState.petAttributeAccepts,
       });
@@ -840,6 +868,56 @@ export function ReviewForm({
         </div>
       )}
 
+      {siblingPendingVisits.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            padding: "10px 14px",
+            marginBottom: 16,
+            borderRadius: 8,
+            background: "var(--pw-status-due-bg)",
+            border: "1px solid var(--pw-status-due-dot)",
+          }}
+        >
+          <span style={{ color: "var(--pw-status-due-fg)", marginTop: 1 }}>
+            <Icon name="copy" size={15} />
+          </span>
+          <div
+            style={{
+              flex: 1,
+              font: "400 12.5px var(--font-inter)",
+              color: "var(--pw-text-secondary)",
+              lineHeight: 1.5,
+            }}
+          >
+            <span style={{ fontWeight: 600, color: "var(--pw-status-due-fg)" }}>
+              Another document awaiting review looks like the same visit.
+            </span>{" "}
+            {siblingPendingVisits.map((s, i) => (
+              <span key={s.id}>
+                {i > 0 && "; "}
+                <Link
+                  href={`/pets/${petId}/documents/${s.id}/review`}
+                  style={{
+                    color: "var(--pw-status-due-fg)",
+                    textDecoration: "underline",
+                    textUnderlineOffset: 2,
+                  }}
+                >
+                  {s.filename ?? "another document"}
+                </Link>{" "}
+                (shares {s.sharedDates.join(", ")})
+              </span>
+            ))}
+            . These are often a SOAP note and its invoice for the same visit —
+            commit this one, then review that one so duplicates are caught
+            automatically.
+          </div>
+        </div>
+      )}
+
       <ReviewExtensions
         labValues={extraction.lab_values ?? []}
         labDupes={labDupes}
@@ -847,6 +925,7 @@ export function ReviewForm({
         petAttributes={extraction.pet_attributes ?? null}
         excludedBoilerplate={extraction.excluded_boilerplate ?? []}
         petAttributeDiffs={petAttributeDiffs}
+        invoice={extraction.invoice ?? null}
         onChange={setExtensionsState}
       />
 
@@ -1324,6 +1403,13 @@ export function ReviewForm({
                       Historical — won&apos;t appear under &ldquo;Active medications.&rdquo;
                     </p>
                   )}
+                  <CourseEndHint
+                    startedOn={m.started_on}
+                    endedOn={m.ended_on}
+                    durationDays={m.duration_days}
+                    totalDoses={m.total_doses}
+                    frequency={m.frequency}
+                  />
                 </DraftCard>
               ))}
             </Section>
@@ -1347,7 +1433,10 @@ export function ReviewForm({
                       rows.map((r, j) => (j === i ? { ...r, skip: !r.skip } : r)),
                     )
                   }
-                  conflict={eventConflict(eventDupes[i])}
+                  conflict={
+                    eventConflict(eventDupes[i]) ??
+                    intraBatchConflict(eventIntraDupes[i])
+                  }
                   citation={{
                     quote: extraction.medical_events[i]?.source_quote ?? null,
                     page: extraction.medical_events[i]?.source_page ?? null,
@@ -2169,6 +2258,17 @@ function vaccineConflict(matches: VaccineMatch[] | undefined): React.ReactNode {
   );
 }
 
+function intraBatchConflict(dupeOfIndex: number | undefined): React.ReactNode {
+  if (dupeOfIndex === undefined) return null;
+  return (
+    <ConflictBanner
+      strength="strong"
+      summary="Repeat of an earlier row in this document"
+      detail={`This document lists the same event more than once (matches row ${dupeOfIndex + 1} above).`}
+    />
+  );
+}
+
 function eventConflict(matches: MedicalEventMatch[] | undefined): React.ReactNode {
   if (!matches || matches.length === 0) return null;
   const m = matches[0];
@@ -2277,6 +2377,50 @@ const inputStyle: React.CSSProperties = {
   textTransform: "none",
   outline: "none",
 };
+
+/**
+ * Inline hint under a medication card when no explicit end date is set but the
+ * course (duration in days, or a dose count + frequency) implies one. Mirrors
+ * how the commit path will compute ended_on and mark it estimated, so the user
+ * sees the roll-off date before saving. Silent when there's an explicit end or
+ * nothing to estimate (an ongoing med).
+ */
+function CourseEndHint({
+  startedOn,
+  endedOn,
+  durationDays,
+  totalDoses,
+  frequency,
+}: {
+  startedOn: string;
+  endedOn: string;
+  durationDays: string;
+  totalDoses: number | null;
+  frequency: string;
+}) {
+  if (endedOn.trim()) return null;
+  const durNum = durationDays.trim() ? Number.parseInt(durationDays, 10) : NaN;
+  const estimate = estimateCourseEnd({
+    started_on: startedOn,
+    duration_days: Number.isFinite(durNum) ? durNum : null,
+    total_doses: totalDoses,
+    frequency: frequency || null,
+  });
+  if (!estimate) return null;
+  return (
+    <p
+      style={{
+        margin: "8px 0 0",
+        font: "400 11.5px var(--font-inter)",
+        color: "var(--pw-text-muted)",
+      }}
+    >
+      Estimated course end <strong>{estimate.ended_on}</strong> — will roll off
+      &ldquo;Active&rdquo; then (you can correct it later if the course
+      continues).
+    </p>
+  );
+}
 
 /**
  * Inline hint surfaced under the Expires field on a vaccine card. When the

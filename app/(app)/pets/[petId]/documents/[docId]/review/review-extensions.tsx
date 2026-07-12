@@ -5,10 +5,21 @@ import { useState } from "react";
 import { Icon } from "@/components/brand/icon";
 import type {
   ExtractedBoilerplateBlock,
+  ExtractedInvoice,
   ExtractedLabValue,
   ExtractedPetAttributes,
   ExtractedUpcomingReminder,
 } from "@/lib/ai/extraction-schema";
+
+const INVOICE_CATEGORIES = [
+  "exam",
+  "vaccine",
+  "medication",
+  "procedure",
+  "lab",
+  "other",
+] as const;
+type InvoiceCategory = (typeof INVOICE_CATEGORIES)[number];
 
 // Drafts exposed back to the parent review form via `onChange` so they
 // can ride along on the commitExtraction() call.
@@ -48,10 +59,20 @@ export type PetAttributeDiff = {
   extracted: unknown;
 };
 
+export type InvoiceItemDraft = {
+  skip: boolean;
+  description: string;
+  // Dollars in the UI; the commit path converts to integer cents.
+  amount: number;
+  category: InvoiceCategory;
+  incurred_on: string | null;
+};
+
 export type ReviewExtensionsState = {
   labValues: LabValueDraft[];
   upcomingReminders: UpcomingReminderDraft[];
   petAttributeAccepts: PetAttributesAccept;
+  invoiceItems: InvoiceItemDraft[];
 };
 
 const FIELD_LABEL: Record<keyof PetAttributesAccept, string> = {
@@ -78,6 +99,7 @@ export function ReviewExtensions({
   petAttributes,
   excludedBoilerplate,
   petAttributeDiffs,
+  invoice,
   onChange,
 }: {
   labValues: ExtractedLabValue[];
@@ -94,6 +116,7 @@ export function ReviewExtensions({
   petAttributes: ExtractedPetAttributes;
   excludedBoilerplate: ExtractedBoilerplateBlock[];
   petAttributeDiffs: PetAttributeDiff[];
+  invoice: ExtractedInvoice;
   onChange: (state: ReviewExtensionsState) => void;
 }) {
   const [labs, setLabs] = useState<LabValueDraft[]>(() =>
@@ -124,13 +147,33 @@ export function ReviewExtensions({
     })),
   );
   const [accepts, setAccepts] = useState<PetAttributesAccept>({});
+  const [costs, setCosts] = useState<InvoiceItemDraft[]>(() =>
+    (invoice?.line_items ?? []).map((c) => ({
+      // Default-skip only very low-confidence / zero-amount lines. Costs are
+      // additive data — over-skipping loses the visit total.
+      skip: c.confidence < 0.4 || !Number.isFinite(c.amount) || c.amount <= 0,
+      description: c.description,
+      amount: Number.isFinite(c.amount) ? c.amount : 0,
+      category: INVOICE_CATEGORIES.includes(c.category as InvoiceCategory)
+        ? (c.category as InvoiceCategory)
+        : "other",
+      incurred_on: invoice?.invoice_date ?? null,
+    })),
+  );
 
   function emit(next: Partial<ReviewExtensionsState>) {
     onChange({
       labValues: next.labValues ?? labs,
       upcomingReminders: next.upcomingReminders ?? reminders,
       petAttributeAccepts: next.petAttributeAccepts ?? accepts,
+      invoiceItems: next.invoiceItems ?? costs,
     });
+  }
+
+  function updateCost(i: number, patch: Partial<InvoiceItemDraft>) {
+    const next = costs.map((c, j) => (i === j ? { ...c, ...patch } : c));
+    setCosts(next);
+    emit({ invoiceItems: next });
   }
 
   function toggleLab(i: number, skip: boolean) {
@@ -159,12 +202,156 @@ export function ReviewExtensions({
     labs.length > 0 ||
     reminders.length > 0 ||
     petAttributeDiffs.length > 0 ||
-    excludedBoilerplate.length > 0;
+    excludedBoilerplate.length > 0 ||
+    costs.length > 0;
 
   if (!hasAny) return null;
 
+  const costTotalCents = costs
+    .filter((c) => !c.skip)
+    .reduce((sum, c) => sum + Math.round((c.amount || 0) * 100), 0);
+  const statedTotalCents =
+    invoice?.total_amount != null
+      ? Math.round(invoice.total_amount * 100)
+      : null;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 20 }}>
+      {/* ── Invoice costs panel ──────────────────────────────────── */}
+      {costs.length > 0 && (
+        <section
+          className="pw-card"
+          style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10 }}
+        >
+          <header style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Icon name="receipt" size={13} style={{ color: "var(--pw-text-muted)" }} />
+            <h3
+              style={{
+                margin: 0,
+                font: "600 13.5px var(--font-inter)",
+                color: "var(--pw-text)",
+              }}
+            >
+              Costs on this invoice
+            </h3>
+            <span
+              style={{
+                marginLeft: "auto",
+                font: "500 12px var(--font-inter)",
+                color: "var(--pw-text)",
+              }}
+            >
+              {formatUsd(costTotalCents)} selected
+            </span>
+          </header>
+          {statedTotalCents !== null && statedTotalCents !== costTotalCents && (
+            <p
+              style={{
+                margin: 0,
+                font: "400 11.5px var(--font-inter)",
+                color: "var(--pw-text-muted)",
+              }}
+            >
+              Document total reads {formatUsd(statedTotalCents)}. The difference
+              is usually tax, a discount, or a skipped line — adjust below if a
+              charge is wrong.
+            </p>
+          )}
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                font: "400 12px var(--font-inter)",
+              }}
+            >
+              <thead>
+                <tr style={{ background: "var(--pw-surface-muted)" }}>
+                  <th style={th}></th>
+                  <th style={th}>Description</th>
+                  <th style={th}>Category</th>
+                  <th style={{ ...th, textAlign: "right" }}>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {costs.map((c, i) => (
+                  <tr
+                    key={i}
+                    style={{
+                      borderTop: "1px solid var(--pw-border)",
+                      opacity: c.skip ? 0.5 : 1,
+                    }}
+                  >
+                    <td style={td}>
+                      <input
+                        type="checkbox"
+                        checked={!c.skip}
+                        onChange={(e) => updateCost(i, { skip: !e.target.checked })}
+                        style={{ accentColor: "var(--pw-accent)" }}
+                      />
+                    </td>
+                    <td style={{ ...td, color: "var(--pw-text)" }}>
+                      {c.description}
+                    </td>
+                    <td style={td}>
+                      <select
+                        value={c.category}
+                        onChange={(e) =>
+                          updateCost(i, {
+                            category: e.target.value as InvoiceCategory,
+                          })
+                        }
+                        style={{
+                          height: 28,
+                          padding: "0 6px",
+                          borderRadius: 5,
+                          border: "1px solid var(--pw-border-strong)",
+                          background: "var(--pw-surface)",
+                          color: "var(--pw-text)",
+                          font: "400 12px var(--font-inter)",
+                        }}
+                      >
+                        {INVOICE_CATEGORIES.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td style={{ ...td, textAlign: "right" }}>
+                      <span style={{ color: "var(--pw-text-muted)" }}>$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={c.amount}
+                        onChange={(e) =>
+                          updateCost(i, {
+                            amount: Number.parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        className="tnum"
+                        style={{
+                          width: 84,
+                          height: 28,
+                          padding: "0 8px",
+                          borderRadius: 5,
+                          border: "1px solid var(--pw-border-strong)",
+                          background: "var(--pw-surface)",
+                          color: "var(--pw-text)",
+                          font: "400 12px var(--font-inter)",
+                          textAlign: "right",
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {/* ── Pet attribute reconciliation banner ────────────────── */}
       {petAttributeDiffs.length > 0 && (
         <section
@@ -538,6 +725,13 @@ const td: React.CSSProperties = {
   padding: "6px 8px",
   verticalAlign: "middle",
 };
+
+function formatUsd(cents: number): string {
+  return (cents / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+}
 
 function pillButton(active: boolean): React.CSSProperties {
   return {

@@ -18,6 +18,8 @@ import {
   matchMedications,
   matchWeights,
   matchLabValues,
+  findIntraBatchDuplicateEvents,
+  sameClinic,
   isHighConfidence,
   canonicalVaccineFamily,
   VACCINE_DATE_WINDOW_DAYS,
@@ -374,6 +376,199 @@ check(
     res.size === 0,
     `S10: expected 0 matches (all tokens are stopwords), got ${res.size}`,
   );
+}
+
+// ── ingestion v2: same-visit awareness (SOAP note + itemized invoice) ──
+//
+// The founder's real 2025-08-15 duplication: the same visit arrived as a SOAP
+// note AND an itemized invoice, both at Hillcrest Animal Hospital. The exam is
+// worded "Office Visit - Professional Consultation" on one and "Annual physical"
+// on the other — zero shared non-stopword tokens — so token overlap alone
+// missed it. Same day + same clinic + exam type now makes it "strong".
+
+// Scenario 10a — same wording gap as S10, but now WITH a matching clinic on
+// both sides → same-visit → strong (was 0 in S10).
+{
+  const existing = [
+    existingEvent({
+      event_type: "exam",
+      title: "Office Visit - Professional Consultation",
+      occurred_on: "2025-08-15",
+      vet_clinic_name: "Hillcrest Animal Hospital",
+    }),
+  ];
+  const candidates: MedicalEventCandidate[] = [
+    {
+      event_type: "exam",
+      title: "Annual Wellness Exam",
+      occurred_on: "2025-08-15",
+      clinic_name: "Hillcrest Animal Hospital",
+    },
+  ];
+  const res = matchMedicalEvents(candidates, existing);
+  const m = res.get(0);
+  check(m?.length === 1, `S10a: expected 1 same-visit match, got ${m?.length}`);
+  check(
+    m?.[0]?.match_strength === "strong",
+    `S10a: expected "strong" (clinic+day+exam), got "${m?.[0]?.match_strength}"`,
+  );
+  check(
+    !!m && isHighConfidence(m[0].match_strength),
+    `S10a: same-visit match should be high-confidence (pre-skipped)`,
+  );
+}
+
+// Scenario 10b — GUARD: distinct lab panels the same day at the same clinic
+// (IDEXX CBC vs 4Dx) are NOT duplicates. lab_result is not singleton-per-visit,
+// and titles don't overlap → no match. This is the over-collapse we must avoid.
+{
+  const existing = [
+    existingEvent({
+      event_type: "lab_result",
+      title: "IDEXX CBC",
+      occurred_on: "2025-08-15",
+      vet_clinic_name: "Hillcrest Animal Hospital",
+    }),
+  ];
+  const candidates: MedicalEventCandidate[] = [
+    {
+      event_type: "lab_result",
+      title: "LAB 4Dx PLUS",
+      occurred_on: "2025-08-15",
+      clinic_name: "Hillcrest Animal Hospital",
+    },
+  ];
+  const res = matchMedicalEvents(candidates, existing);
+  check(
+    res.size === 0,
+    `S10b: distinct same-day labs must NOT collapse, got ${res.size}`,
+  );
+}
+
+// Scenario 10c — GUARD: a neuter and a dental extraction the same day at the
+// same clinic are distinct procedures. Different types + no token overlap → no
+// match even with same clinic + same day.
+{
+  const existing = [
+    existingEvent({
+      event_type: "surgery",
+      title: "Neuter Canine",
+      occurred_on: "2025-10-01",
+      vet_clinic_name: "Hillcrest Animal Hospital",
+    }),
+  ];
+  const candidates: MedicalEventCandidate[] = [
+    {
+      event_type: "dental",
+      title: "Dental Extractions",
+      occurred_on: "2025-10-01",
+      clinic_name: "Hillcrest Animal Hospital",
+    },
+  ];
+  const res = matchMedicalEvents(candidates, existing);
+  check(
+    res.size === 0,
+    `S10c: distinct same-day procedures must NOT collapse, got ${res.size}`,
+  );
+}
+
+// Scenario 10d — same-visit requires the SAME clinic. Same day, exam type, no
+// token overlap, but DIFFERENT clinics → no match (a second-opinion visit).
+{
+  const existing = [
+    existingEvent({
+      event_type: "exam",
+      title: "Office Visit - Professional Consultation",
+      occurred_on: "2025-08-15",
+      vet_clinic_name: "Hillcrest Animal Hospital",
+    }),
+  ];
+  const candidates: MedicalEventCandidate[] = [
+    {
+      event_type: "exam",
+      title: "Annual Wellness Exam",
+      occurred_on: "2025-08-15",
+      clinic_name: "Cleveland Park Animal Hospital",
+    },
+  ];
+  const res = matchMedicalEvents(candidates, existing);
+  check(
+    res.size === 0,
+    `S10d: same-visit needs same clinic; different clinics → no match, got ${res.size}`,
+  );
+}
+
+// sameClinic helper — substring tolerance for fuller clinic names.
+check(
+  sameClinic("Cleveland Park Animal Hospital", "Cleveland Park Animal Hospital Simpsonville"),
+  `sameClinic: fuller name variant should match`,
+);
+check(
+  !sameClinic("Hillcrest Animal Hospital", "Cleveland Park Animal Hospital"),
+  `sameClinic: distinct clinics should not match`,
+);
+check(
+  !sameClinic(null, "Hillcrest Animal Hospital"),
+  `sameClinic: null clinic never matches`,
+);
+
+// ── ingestion v2: intra-batch dedup (one document repeats an event) ────
+//
+// Real failure: a single PIMS export emitted "Patient check-in" 5x and
+// "DECIDUOUS TEETH, RETAINED" 3x. The cross-record matchers never compare
+// candidates against each other, so all copies were inserted.
+
+// IB1 — "Patient check-in" x5 (exam) → indices 1..4 all duplicate index 0.
+{
+  const candidates: MedicalEventCandidate[] = Array.from({ length: 5 }, () => ({
+    event_type: "exam",
+    title: "Patient check-in",
+    occurred_on: "2025-08-15",
+    clinic_name: "Hillcrest Animal Hospital",
+  }));
+  const dupes = findIntraBatchDuplicateEvents(candidates);
+  check(dupes.size === 4, `IB1: expected 4 in-batch dupes, got ${dupes.size}`);
+  check(
+    dupes.get(1) === 0 && dupes.get(4) === 0,
+    `IB1: later copies should chain to the first (index 0)`,
+  );
+  check(!dupes.has(0), `IB1: the first occurrence is kept (not a dupe)`);
+}
+
+// IB2 — "DECIDUOUS TEETH, RETAINED" x3 (dental), identical titles → dupes via
+// title equality even though dental is not singleton-per-visit.
+{
+  const candidates: MedicalEventCandidate[] = Array.from({ length: 3 }, () => ({
+    event_type: "dental",
+    title: "DECIDUOUS TEETH, RETAINED",
+    occurred_on: "2025-08-15",
+    clinic_name: "Hillcrest Animal Hospital",
+  }));
+  const dupes = findIntraBatchDuplicateEvents(candidates);
+  check(dupes.size === 2, `IB2: expected 2 in-batch dupes, got ${dupes.size}`);
+}
+
+// IB3 — GUARD: distinct lab panels in one batch (CBC, 4Dx, chem), same day +
+// clinic, different titles → NO intra-batch dupes.
+{
+  const candidates: MedicalEventCandidate[] = [
+    { event_type: "lab_result", title: "IDEXX CBC", occurred_on: "2025-08-15", clinic_name: "Hillcrest" },
+    { event_type: "lab_result", title: "LAB 4Dx PLUS", occurred_on: "2025-08-15", clinic_name: "Hillcrest" },
+    { event_type: "lab_result", title: "Pre-Anesthetic Chem Panel", occurred_on: "2025-08-15", clinic_name: "Hillcrest" },
+  ];
+  const dupes = findIntraBatchDuplicateEvents(candidates);
+  check(dupes.size === 0, `IB3: distinct same-day labs must NOT collapse in-batch, got ${dupes.size}`);
+}
+
+// IB4 — two exams, one visit, worded differently (SOAP+invoice merged into one
+// upload) → the later exam duplicates the earlier via the same-visit signal.
+{
+  const candidates: MedicalEventCandidate[] = [
+    { event_type: "exam", title: "Office Visit - Professional Consultation", occurred_on: "2025-08-15", clinic_name: "Hillcrest Animal Hospital" },
+    { event_type: "exam", title: "Annual physical", occurred_on: "2025-08-15", clinic_name: "Hillcrest Animal Hospital" },
+  ];
+  const dupes = findIntraBatchDuplicateEvents(candidates);
+  check(dupes.get(1) === 0, `IB4: second exam should duplicate the first (same visit)`);
 }
 
 // ════════════════════════════════════════════════════════════════════

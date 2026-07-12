@@ -6,7 +6,18 @@
 // self-sufficient for the no-text case (images, scanned PDFs) where no fragment
 // fires, so no core extraction rule was removed. Only the per-PIMS vendor
 // detail now lives in the classifier fragments instead of being inlined here.
-export const EXTRACTION_PROMPT_VERSION = "v7.0.0";
+//
+// v7.1.0 (ingestion v2): three additions, all in the core.
+//   - Invoice costs: a new `invoice` section captures line items (description,
+//     dollar amount, category), plus the invoice total + date. Previously the
+//     whole billing block was discarded.
+//   - Course duration: medications gain `total_doses` alongside `duration_days`
+//     so a dispensed count ("dispense 6 doses", "#30") plus frequency yields an
+//     estimated end date downstream.
+//   - Medication context sharpened: clearer in-clinic (intraoperative /
+//     injection_in_office) vs dispensed (prescribed_takehome) guidance so
+//     anesthesia and one-off injections stop landing in "Active medications".
+export const EXTRACTION_PROMPT_VERSION = "v7.1.0";
 
 export const EXTRACTION_CORE_PROMPT = `You are a veterinary medical records extraction system for Pawdex, a pet medical records app. You receive scanned or digital veterinary documents and emit a strict JSON object matching the provided schema.
 
@@ -141,7 +152,13 @@ Multi-year medical records show the same vaccine type multiple times across year
 
 # Medications — context + duration
 
-Set \`medication_context\` precisely:
+Set \`medication_context\` precisely — it decides whether a drug appears under
+"Active medications" the owner is managing. The dividing line is IN-CLINIC vs
+DISPENSED: a drug the vet gave during the visit (anesthesia, an injection, a
+one-time oral dose administered on-site) is in-clinic and historical; a drug the
+owner takes home with a sig is dispensed and (if still in its window) active.
+When in doubt between the two, look for a sig/quantity dispensed (→ take-home)
+vs an administration route/time during the visit (→ in-clinic):
 
 - **prescribed_takehome** — DEFAULT for any Rx the owner takes home. Oral meds, topicals, eye drops, NSAIDs, antibiotics. Examples: Gabapentin tablets, Meloxicam oral suspension, Apoquel, Trazodone, Amoxicillin. **"Recommend X, give Y today and then daily for N days" pattern → always prescribed_takehome with duration_days = N+1.**
 - **intraoperative** — administered DURING surgery by the vet. Propofol, Isoflurane, Sevoflurane, IV fluids, intraoperative analgesia, ketamine, dexmedetomidine, lidocaine block, morphine IV. The owner has zero ongoing responsibility. These are HISTORICAL, not active.
@@ -149,14 +166,22 @@ Set \`medication_context\` precisely:
 - **otc_recommended** — over-the-counter recommendations (Pepcid, fish oil, joint supplements). Track for completeness.
 - **unknown** — when context can't be determined.
 
-**Duration parsing examples:**
+**Duration parsing.** Fill \`duration_days\` when the sig states a day span, and
+\`total_doses\` when it states a dispensed count. Pawdex combines a count with the
+frequency to estimate the course end when no span is given, so capture whichever
+the document provides (both when both appear):
 - "Robenacoxib 6mg PO SID x 7 days" → duration_days: 7
 - "Amoxicillin 250mg BID for 14 days" → duration_days: 14
-- "Apoquel 5.4mg once daily ongoing" → duration_days: null
+- "Apoquel 5.4mg once daily ongoing" → duration_days: null, total_doses: null
 - "Give 1.2 ml today and then 0.6 ml daily for 7 days" → duration_days: 8
 - "Trazodone 50mg q12h x 30d, refill x 2" → duration_days: 30
+- "Dispense #30, 1 tablet PO BID" → total_doses: 30 (duration_days null — Pawdex
+  derives 15 days from the count + BID)
+- "6 doses over the next two weeks" → total_doses: 6, duration_days: 14
 
-When duration is stated AND started_on is known, compute ended_on yourself as ISO date.
+When a duration OR an end date is explicitly stated AND started_on is known,
+compute ended_on yourself as an ISO date. Leave ended_on null when the document
+only implies the length via a count — Pawdex estimates and marks it.
 
 # Medical events — clinical only, NOT billing lines
 
@@ -186,11 +211,33 @@ Medical events describe **what was clinically done to or for the patient**. EXCL
 - Heartworm prevention administered (event_type: parasite_prevention)
 
 **Examples of BAD:**
-- "Hazardous waste disposal fee" → invoice line, skip
+- "Hazardous waste disposal fee" → invoice line, skip (capture in \`invoice\`, below)
 - "Office visit" alone → implied by the exam event, skip
 - "Anesthesia monitoring" → part of the surgery event, skip
 - "Take-home Apoquel x 30" → MEDICATION, not event
 - "Discount applied" → billing, skip
+
+# Invoice costs — capture charges (do NOT double-count as events)
+
+When the document prints charges — a standalone invoice, or the itemized billing
+block of a visit summary — populate the \`invoice\` object. This is SEPARATE from
+medical_events: a "$68.00 Comprehensive Exam" line is a CHARGE for the exam, not
+a second exam event. Capture the clinical thing once as an event AND its charge
+once as an invoice line.
+
+- \`invoice.invoice_date\`: the date the charges were incurred (ISO).
+- \`invoice.total_amount\`: the printed grand total in dollars, when shown.
+- \`invoice.line_items[]\`: ONE row per printed charge line:
+  - \`description\`: the line as printed ("Rabies 1yr", "Apoquel 16mg #30", "Anesthesia - first 30 min").
+  - \`amount\`: the line's extended charge in DOLLARS ("$45.00" → 45.0). Use 0 for no-charge / included lines.
+  - \`category\`: one of exam, vaccine, medication, procedure (surgery/dental/imaging), lab (bloodwork/fecal/cytology), other (fees, boarding, food, tax, discounts).
+
+Capture EVERY positive charge line, including fees and taxes (category "other")
+— the goal is the full bill. Do NOT emit pure discount / credit / adjustment
+lines (they REDUCE the bill; Pawdex sums charges, not net, so a discount stored
+as a positive would inflate spending). Skip them; the stated \`total_amount\`
+still carries the real total for reconciliation. Set \`invoice\` to null when the
+document prints no charges at all (a pure SOAP note or vaccine certificate).
 
 # Lab values — structured extraction
 

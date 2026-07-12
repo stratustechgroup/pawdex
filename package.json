@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "pnpm dlx tsx scripts/test-extraction-dedup.ts && pnpm dlx tsx scripts/test-pims-classifier.ts && pnpm dlx tsx scripts/test-form51-anchor.ts && pnpm dlx tsx scripts/test-pec-prefilter.ts && pnpm dlx tsx scripts/test-transfer-logic.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-email-unsub-token.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-insurance-calculator.ts && pnpm dlx tsx scripts/test-first-year.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-billing-entitlements.ts",
+    "test": "pnpm dlx tsx scripts/test-extraction-dedup.ts && pnpm dlx tsx scripts/test-course-duration.ts && pnpm dlx tsx scripts/test-pims-classifier.ts && pnpm dlx tsx scripts/test-form51-anchor.ts && pnpm dlx tsx scripts/test-pec-prefilter.ts && pnpm dlx tsx scripts/test-transfer-logic.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-email-unsub-token.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-insurance-calculator.ts && pnpm dlx tsx scripts/test-first-year.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-billing-entitlements.ts",
     "check": "tsc --noEmit && pnpm test",
     "test:live": "bash scripts/run-email-webhook-tests.sh && pnpm dlx tsx scripts/test-insurance-live.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-waitlist-ratelimit.ts && bash scripts/run-billing-webhook-tests.sh"
   },

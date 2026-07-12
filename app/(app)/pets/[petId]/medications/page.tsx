@@ -8,6 +8,7 @@ import type { MedicationContext } from "@/lib/supabase/types";
 
 import { MedicationDialog } from "./medication-dialog";
 import { TodayPanel } from "./today-panel";
+import { StillTakingButton } from "./still-taking-button";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ type Row = {
   frequency: string | null;
   started_on: string;
   ended_on: string | null;
+  ended_estimated: boolean;
   duration_days: number | null;
   medication_context: MedicationContext;
   prescriber: string | null;
@@ -46,7 +48,7 @@ export default async function MedicationsPage({
     supabase
       .from("medications")
       .select(
-        "id, name, dose, frequency, started_on, ended_on, duration_days, medication_context, prescriber",
+        "id, name, dose, frequency, started_on, ended_on, ended_estimated, duration_days, medication_context, prescriber",
       )
       .eq("household_id", session.householdId)
       .eq("pet_id", petId)
@@ -222,9 +224,15 @@ function MedTable({
               </Td>
               <Td>
                 {r.ended_on ? (
-                  <span className="tnum" style={{ color: "var(--pw-text-secondary)" }}>
-                    {format(new Date(r.ended_on), "MMM d, yyyy")}
-                  </span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <span className="tnum" style={{ color: "var(--pw-text-secondary)" }}>
+                      {format(new Date(r.ended_on), "MMM d, yyyy")}
+                      {r.ended_estimated ? " (est.)" : ""}
+                    </span>
+                    {r.ended_estimated && variant === "history" && (
+                      <StillTakingButton petId={petId} medicationId={r.id} />
+                    )}
+                  </div>
                 ) : variant === "active" ? (
                   <span style={{ color: "var(--pw-text-muted)" }}>Ongoing</span>
                 ) : (

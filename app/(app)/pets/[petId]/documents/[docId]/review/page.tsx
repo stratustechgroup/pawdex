@@ -8,6 +8,7 @@ import {
   getDocument,
   getDocumentSignedUrl,
   countReviewQueue,
+  findSiblingPendingVisits,
 } from "@/lib/db/documents";
 import {
   getLatestExtraction,
@@ -22,6 +23,7 @@ import {
   findCandidateDuplicateWeights,
   findCandidateDuplicateLabValues,
 } from "@/lib/db/extraction-dedup";
+import { findIntraBatchDuplicateEvents } from "@/lib/db/extraction-dedup-match";
 import { inferFamilyFromType } from "@/lib/clinical/vaccine-catalog";
 
 import { ReviewForm } from "./review-form";
@@ -286,7 +288,17 @@ export default async function ReviewPage({
     occurred_on: asDateString(e.occurred_on),
     title: e.title ?? "",
     event_type: e.event_type,
+    // Clinic the event is attributed to — the document's per-event clinic_name
+    // when present, else the document's letterhead clinic. Powers same-visit
+    // (SOAP + invoice) dedup, which is invisible to token overlap alone.
+    clinic_name: e.clinic_name ?? result.vet_clinic?.name ?? null,
   }));
+  // Intra-batch dedup: this single document repeats the same event (a PIMS
+  // export that lists "Patient check-in" on every page). Later copies are
+  // default-skipped in the form; the first stays selected.
+  const eventIntraDupes = Object.fromEntries(
+    findIntraBatchDuplicateEvents(eventCandidates),
+  );
   const medCandidates = result.medications.map((m) => ({
     name: m.name ?? "",
     generic_name: m.generic_name ?? null,
@@ -304,6 +316,13 @@ export default async function ReviewPage({
     value: l.value,
   }));
 
+  // Visit fingerprints (date + clinic) for this document, to detect a sibling
+  // document still in review that describes the same visit.
+  const currentVisits = eventCandidates.map((e) => ({
+    date: e.occurred_on,
+    clinic: e.clinic_name,
+  }));
+
   const [
     signedUrl,
     queueTotal,
@@ -313,6 +332,7 @@ export default async function ReviewPage({
     medDupes,
     weightDupes,
     labDupes,
+    siblingPendingVisits,
   ] = await Promise.all([
     getDocumentSignedUrl(doc),
     countReviewQueue(session.householdId, petId),
@@ -334,6 +354,7 @@ export default async function ReviewPage({
     findCandidateDuplicateMedications(session.householdId, petId, medCandidates),
     findCandidateDuplicateWeights(session.householdId, petId, weightCandidates),
     findCandidateDuplicateLabValues(session.householdId, petId, labCandidates),
+    findSiblingPendingVisits(session.householdId, petId, docId, currentVisits),
   ]);
 
   return (
@@ -359,6 +380,8 @@ export default async function ReviewPage({
       // objects keyed by candidate index.
       vaccineDupes={Object.fromEntries(vaccineDupes)}
       eventDupes={Object.fromEntries(eventDupes)}
+      eventIntraDupes={eventIntraDupes}
+      siblingPendingVisits={siblingPendingVisits}
       medDupes={Object.fromEntries(medDupes)}
       weightDupes={Object.fromEntries(weightDupes)}
       labDupes={Object.fromEntries(labDupes)}

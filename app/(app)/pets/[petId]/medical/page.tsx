@@ -31,16 +31,44 @@ export default async function MedicalPage({
   const session = await requireSession();
   const supabase = await createClient();
 
-  const { data } = await supabase
-    .from("medical_events")
-    .select(
-      "id, event_type, occurred_on, title, diagnosis, vet_clinic_id, vet_clinics(name, email)",
-    )
-    .eq("household_id", session.householdId)
-    .eq("pet_id", petId)
-    .order("occurred_on", { ascending: false });
+  const [{ data }, { data: costData }] = await Promise.all([
+    supabase
+      .from("medical_events")
+      .select(
+        "id, event_type, occurred_on, title, diagnosis, vet_clinic_id, vet_clinics(name, email)",
+      )
+      .eq("household_id", session.householdId)
+      .eq("pet_id", petId)
+      .order("occurred_on", { ascending: false }),
+    supabase
+      .from("invoice_items")
+      .select("amount_cents, incurred_on")
+      .eq("household_id", session.householdId)
+      .eq("pet_id", petId),
+  ]);
 
   const rows = (data ?? []) as unknown as Row[];
+
+  // Costs: an all-time total, a year-to-date total, and a per-day rollup so we
+  // can show "· $X this visit" next to the event on that date. Modest by design
+  // — the full spending dashboard is future work.
+  const costs = (costData ?? []) as { amount_cents: number; incurred_on: string | null }[];
+  const currentYear = new Date().getFullYear();
+  let costTotalCents = 0;
+  let costYtdCents = 0;
+  const costByDate = new Map<string, number>();
+  for (const c of costs) {
+    costTotalCents += c.amount_cents;
+    if (c.incurred_on) {
+      if (Number(c.incurred_on.slice(0, 4)) === currentYear)
+        costYtdCents += c.amount_cents;
+      costByDate.set(
+        c.incurred_on,
+        (costByDate.get(c.incurred_on) ?? 0) + c.amount_cents,
+      );
+    }
+  }
+  const hasCosts = costs.length > 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -77,6 +105,66 @@ export default async function MedicalPage({
         </div>
         <MedicalEventDialog petId={petId} />
       </div>
+
+      {hasCosts && (
+        <div
+          className="pw-card"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 24,
+            padding: "12px 16px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                font: "500 10.5px var(--font-inter)",
+                color: "var(--pw-text-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+              }}
+            >
+              Spent in {currentYear}
+            </div>
+            <div
+              className="tnum"
+              style={{ font: "600 18px var(--font-inter)", color: "var(--pw-text)" }}
+            >
+              {formatUsd(costYtdCents)}
+            </div>
+          </div>
+          <div>
+            <div
+              style={{
+                font: "500 10.5px var(--font-inter)",
+                color: "var(--pw-text-muted)",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+              }}
+            >
+              All time
+            </div>
+            <div
+              className="tnum"
+              style={{ font: "600 18px var(--font-inter)", color: "var(--pw-text-secondary)" }}
+            >
+              {formatUsd(costTotalCents)}
+            </div>
+          </div>
+          <span
+            style={{
+              font: "400 11.5px var(--font-inter)",
+              color: "var(--pw-text-muted)",
+              maxWidth: 320,
+            }}
+          >
+            Captured from invoices you&apos;ve uploaded. Per-visit costs show
+            beside the event on that date.
+          </span>
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <div
@@ -142,6 +230,19 @@ export default async function MedicalPage({
                     <span style={{ color: "var(--pw-text)", fontWeight: 500 }}>
                       {r.title}
                     </span>
+                    {costByDate.has(r.occurred_on) && (
+                      <span
+                        className="tnum"
+                        style={{
+                          marginLeft: 8,
+                          font: "500 11.5px var(--font-inter)",
+                          color: "var(--pw-text-muted)",
+                        }}
+                        title="Total invoiced on this date"
+                      >
+                        · {formatUsd(costByDate.get(r.occurred_on)!)}
+                      </span>
+                    )}
                   </Td>
                   <Td className="hidden sm:table-cell">
                     <span style={{ color: "var(--pw-text-muted)" }}>
@@ -179,6 +280,13 @@ export default async function MedicalPage({
       )}
     </div>
   );
+}
+
+function formatUsd(cents: number): string {
+  return (cents / 100).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
 }
 
 function Th({

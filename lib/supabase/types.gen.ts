@@ -1194,6 +1194,77 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          amount_cents: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          document_id: string | null
+          household_id: string
+          id: string
+          incurred_on: string | null
+          medical_event_id: string | null
+          pet_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          document_id?: string | null
+          household_id: string
+          id?: string
+          incurred_on?: string | null
+          medical_event_id?: string | null
+          pet_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          document_id?: string | null
+          household_id?: string
+          id?: string
+          incurred_on?: string | null
+          medical_event_id?: string | null
+          pet_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_medical_event_id_fkey"
+            columns: ["medical_event_id"]
+            isOneToOne: false
+            referencedRelation: "medical_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lab_values: {
         Row: {
           analyte: string
@@ -1553,6 +1624,7 @@ export type Database = {
           document_id: string | null
           dose: string
           duration_days: number | null
+          ended_estimated: boolean
           ended_on: string | null
           frequency: string | null
           generic_name: string | null
@@ -1575,6 +1647,7 @@ export type Database = {
           document_id?: string | null
           dose: string
           duration_days?: number | null
+          ended_estimated?: boolean
           ended_on?: string | null
           frequency?: string | null
           generic_name?: string | null
@@ -1597,6 +1670,7 @@ export type Database = {
           document_id?: string | null
           dose?: string
           duration_days?: number | null
+          ended_estimated?: boolean
           ended_on?: string | null
           frequency?: string | null
           generic_name?: string | null

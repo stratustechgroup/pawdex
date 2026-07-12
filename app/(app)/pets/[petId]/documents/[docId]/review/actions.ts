@@ -18,6 +18,7 @@ import {
   computeExpiryFromFamily,
   inferFamilyFromType,
 } from "@/lib/clinical/vaccine-catalog";
+import { estimateCourseEnd } from "@/lib/clinical/course-duration";
 import { recordAudit } from "@/lib/db/audit";
 import { maybeScheduleRecordsRequest } from "@/lib/outbound/records-request-schedule";
 import { normalizePhone } from "@/lib/utils/phone";
@@ -86,6 +87,15 @@ type CommitInput = {
     flag: string | null;
     collected_on: string;
     lab: string | null;
+  }>;
+  /** Cost line items from an invoice / itemized visit summary (prompt v7.1+).
+   *  amount is in DOLLARS as the user reviewed it; converted to cents here. */
+  invoice_items?: Array<{
+    skip?: boolean;
+    description: string;
+    amount: number;
+    category: "exam" | "vaccine" | "medication" | "procedure" | "lab" | "other";
+    incurred_on: string | null;
   }>;
   /** Forward-looking due dates extracted from the document (prompt v6+). */
   upcoming_reminders?: Array<{
@@ -282,16 +292,34 @@ export async function commitExtraction(input: CommitInput): Promise<CommitResult
   const medRows = input.medications
     .filter((m) => !m.skip && m.name.trim() && m.dose.trim() && m.started_on)
     .map((m) => {
-      // When ended_on isn't explicit but a duration_days was extracted, compute
-      // it from started_on. This is what turns "x 7 days" prescriptions into
-      // medications that auto-roll-off as active.
+      // ended_on + ended_estimated. An end is "estimated" whenever it derives
+      // from a COURSE LENGTH (a duration or a dispensed count), never from a
+      // vet-stated stop date:
+      //   - end present AND a course length present → the model computed the end
+      //     from "x 7 days" / "#14 BID"; still an estimate.
+      //   - no end but a course length → we compute it here; estimate.
+      //   - end present with NO course length → an explicit stop date; NOT
+      //     estimated (the vet wrote "discontinue on ...").
+      // Estimated ends drive the "course likely finished (est.)" label + the
+      // "still taking it" override; we never expire a med without that marker.
+      const hasCourseLength =
+        (m.duration_days != null && m.duration_days > 0) ||
+        (m.total_doses != null && m.total_doses > 0);
       let endedOn = m.ended_on;
-      if (!endedOn && m.duration_days && m.duration_days > 0 && m.started_on) {
-        const start = new Date(m.started_on);
-        if (!Number.isNaN(start.getTime())) {
-          start.setDate(start.getDate() + m.duration_days);
-          endedOn = start.toISOString().slice(0, 10);
+      let endedEstimated = false;
+      if (!endedOn) {
+        const estimate = estimateCourseEnd({
+          started_on: m.started_on,
+          duration_days: m.duration_days,
+          total_doses: m.total_doses ?? null,
+          frequency: m.frequency,
+        });
+        if (estimate) {
+          endedOn = estimate.ended_on;
+          endedEstimated = true;
         }
+      } else if (hasCourseLength) {
+        endedEstimated = true;
       }
       return {
         household_id: session.householdId,
@@ -301,6 +329,7 @@ export async function commitExtraction(input: CommitInput): Promise<CommitResult
         frequency: m.frequency,
         started_on: m.started_on,
         ended_on: endedOn,
+        ended_estimated: endedEstimated,
         duration_days: m.duration_days,
         medication_context: m.medication_context as MedicationContext,
         prescriber: m.prescriber,
@@ -492,6 +521,32 @@ export async function commitExtraction(input: CommitInput): Promise<CommitResult
       console.error("upcoming_reminders insert failed", error.message);
     } else {
       remindersInserted = data?.length ?? 0;
+    }
+  }
+
+  // ── Invoice cost items (prompt v7.1) ──────────────────────────
+  // Persist per-line charges into invoice_items. Amounts arrive in dollars and
+  // are stored as integer cents. Skip rows and non-positive amounts are dropped
+  // (a $0.00 / included line carries no spending signal). medical_event_id is
+  // left null in v1 — the cost<>event link is future work.
+  const invoiceRows = (input.invoice_items ?? [])
+    .filter(
+      (c) => !c.skip && c.description.trim() && Number.isFinite(c.amount) && c.amount > 0,
+    )
+    .map((c) => ({
+      household_id: session.householdId,
+      pet_id: input.petId,
+      document_id: input.documentId,
+      description: c.description.trim(),
+      amount_cents: Math.round(c.amount * 100),
+      category: c.category,
+      incurred_on: c.incurred_on,
+      created_by: session.userId,
+    }));
+  if (invoiceRows.length > 0) {
+    const { error } = await supabase.from("invoice_items").insert(invoiceRows);
+    if (error) {
+      console.error("invoice_items insert failed", error.message);
     }
   }
 

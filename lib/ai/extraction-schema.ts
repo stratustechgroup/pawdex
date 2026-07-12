@@ -111,6 +111,11 @@ const medicationSchema = z.object({
   // Duration in days when the document specifies one ("x 7 days", "for 14 days",
   // "BID x 10d"). Used to compute ended_on when ended_on isn't explicit.
   duration_days: z.number().int().nullable(),
+  // Total number of doses dispensed when the sig states a count rather than a
+  // day span ("dispense 6 tablets", "6 doses over the next two weeks", "#20").
+  // Combined with frequency, lib/clinical/course-duration.ts turns this into an
+  // estimated ended_on when duration_days is absent. Null when not stated.
+  total_doses: z.number().int().nullable(),
   started_on: z.string().nullable(),
   ended_on: z.string().nullable(),
   prescriber: z.string().nullable(),
@@ -274,6 +279,47 @@ const boilerplateBlockSchema = z.object({
   ),
 });
 
+// Cost line items from an invoice or the billing block of an itemized visit
+// summary. Distinct from medical_events — a "$45.00 Comprehensive Exam" line is
+// a CHARGE, while the exam itself is the clinical event. Pawdex captures both:
+// the event feeds medical history, the line item feeds the spending view. One
+// row per printed charge line. Amounts are in DOLLARS as printed; the commit
+// path converts to integer cents.
+const invoiceLineItemSchema = z.object({
+  description: z.string().describe(
+    "The charge description as printed — 'Comprehensive Physical Exam', 'Rabies 1yr', 'Apoquel 16mg #30'.",
+  ),
+  amount: z.number().describe(
+    "The line's charge amount in dollars (extended/total for the line, not unit price). '$45.00' → 45.0. Use 0 for no-charge / included lines.",
+  ),
+  category: z
+    .enum(["exam", "vaccine", "medication", "procedure", "lab", "other"])
+    .describe(
+      "Best-guess bucket: exam (office visit / consult), vaccine, medication (dispensed drugs), procedure (surgery, dental, imaging), lab (bloodwork, fecal, cytology), other (fees, boarding, food, tax).",
+    ),
+  ...citationShape,
+  confidence: z.number().describe("Confidence in [0, 1]."),
+});
+
+// The invoice/billing view of a document. Null unless the document actually
+// prints charges (a pure SOAP note has no invoice). total_amount is the
+// document's stated grand total when present, used to sanity-check the sum of
+// line items in review. Discounts/credits/tax may make the two differ — that's
+// expected and surfaced, not reconciled automatically.
+const invoiceSchema = z
+  .object({
+    invoice_date: z
+      .string()
+      .nullable()
+      .describe("ISO YYYY-MM-DD date the charges were incurred / invoiced."),
+    total_amount: z
+      .number()
+      .nullable()
+      .describe("Stated invoice grand total in dollars, when printed."),
+    line_items: z.array(invoiceLineItemSchema),
+  })
+  .nullable();
+
 // Single flat schema (not a discriminated union — Gemini's structured output
 // handles unions poorly). `documentType` is a plain enum field; downstream
 // switches on it normally.
@@ -298,6 +344,9 @@ export const extractionResultSchema = z.object({
   // New in v6 — patient-education boilerplate the model recognized and
   // excluded from medical_events. Surfaces in the review UI.
   excluded_boilerplate: z.array(boilerplateBlockSchema),
+  // New in v7.1 — invoice/billing costs. Null when the document prints no
+  // charges. Feeds invoice_items + the pet spending view.
+  invoice: invoiceSchema,
   vet_clinic: vetClinicSchema,
   owner_contact: ownerContactSchema,
   notes: z.string(),
@@ -316,3 +365,5 @@ export type ExtractedLabValue = z.infer<typeof labValueSchema>;
 export type ExtractedUpcomingReminder = z.infer<typeof upcomingReminderSchema>;
 export type ExtractedPetAttributes = z.infer<typeof petAttributesSchema>;
 export type ExtractedBoilerplateBlock = z.infer<typeof boilerplateBlockSchema>;
+export type ExtractedInvoice = z.infer<typeof invoiceSchema>;
+export type ExtractedInvoiceLineItem = z.infer<typeof invoiceLineItemSchema>;
