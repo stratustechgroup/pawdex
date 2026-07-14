@@ -17,6 +17,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletions: {
+        Row: {
+          created_at: string
+          mode: string
+          purge_after: string
+          requested_at: string
+          requested_email: string | null
+          sole_owned_households: Json
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          mode: string
+          purge_after: string
+          requested_at?: string
+          requested_email?: string | null
+          sole_owned_households?: Json
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          mode?: string
+          purge_after?: string
+          requested_at?: string
+          requested_email?: string | null
+          sole_owned_households?: Json
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       animal_transfers: {
         Row: {
           accepted_at: string | null
@@ -649,6 +685,45 @@ export type Database = {
         }
         Relationships: []
       }
+      deletion_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_user_id: string | null
+          created_at: string
+          details: Json
+          household_id: string | null
+          id: string
+          legal_basis: string
+          scope: string
+          subject_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json
+          household_id?: string | null
+          id?: string
+          legal_basis: string
+          scope: string
+          subject_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json
+          household_id?: string | null
+          id?: string
+          legal_basis?: string
+          scope?: string
+          subject_id?: string | null
+        }
+        Relationships: []
+      }
       document_extractions: {
         Row: {
           committed_at: string | null
@@ -1074,6 +1149,8 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           kind: Database["public"]["Enums"]["household_kind"]
           name: string
@@ -1083,6 +1160,8 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["household_kind"]
           name: string
@@ -1092,6 +1171,8 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["household_kind"]
           name?: string
@@ -1900,6 +1981,8 @@ export type Database = {
           created_by: string | null
           current_weight_kg: number | null
           date_of_birth: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           dob_is_estimated: boolean
           household_id: string
           id: string
@@ -1925,6 +2008,8 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_weight_kg?: number | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           date_of_birth?: string | null
           dob_is_estimated?: boolean
           household_id: string
@@ -1952,6 +2037,8 @@ export type Database = {
           created_by?: string | null
           current_weight_kg?: number | null
           date_of_birth?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           dob_is_estimated?: boolean
           household_id?: string
           id?: string

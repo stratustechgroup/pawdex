@@ -76,6 +76,7 @@ export default async function SharedPacketPage({
         "id, household_id, name, species, breed, sex, altered, date_of_birth, color, markings, microchip_number, microchip_registry, current_weight_kg",
       )
       .eq("id", link.pet_id)
+      .is("deleted_at", null)
       .maybeSingle(),
     supabase
       .from("vaccinations")
@@ -87,13 +88,17 @@ export default async function SharedPacketPage({
       .order("administered_on", { ascending: false }),
     supabase
       .from("households")
-      .select("id, name")
+      .select("id, name, deleted_at")
       .eq("id", link.household_id)
       .maybeSingle(),
   ]);
 
   const pet = petRes.data as PetRow | null;
+  // A public share link stops resolving the moment its pet or household is
+  // soft-deleted, so a shared packet can never outlive a deletion.
   if (!pet) notFound();
+  const householdDeleted = (householdRes.data as { deleted_at: string | null } | null)?.deleted_at;
+  if (householdDeleted) notFound();
 
   const allVaccines = (vaccRes.data ?? []) as VaccinationRow[];
 

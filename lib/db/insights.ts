@@ -73,7 +73,8 @@ export async function listInsightsForHousehold(
       .from("pets")
       .select("id, name, date_of_birth")
       .eq("household_id", householdId)
-      .is("archived_at", null),
+      .is("archived_at", null)
+      .is("deleted_at", null),
     supabase
       .from("weight_log")
       .select("pet_id, recorded_on, weight_kg")

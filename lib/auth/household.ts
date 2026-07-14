@@ -34,7 +34,12 @@ export type Session = {
 };
 
 type MemberRowWithHousehold = MembershipRow & {
-  households: { id: string; name: string; kind: HouseholdKind } | null;
+  households: {
+    id: string;
+    name: string;
+    kind: HouseholdKind;
+    deleted_at: string | null;
+  } | null;
 };
 
 /**
@@ -68,20 +73,43 @@ export const requireSession = cache(async function requireSession(): Promise<Ses
   // best-effort — a missing row (before the 0030 backfill lands in a given DB)
   // or an unset name both fall back to email downstream, so a null is never
   // fatal.
-  const [memberRes, profileRes] = await Promise.all([
+  const [memberRes, profileRes, deletionRes] = await Promise.all([
     supabase
       .from("household_members")
-      .select("household_id, role, accepted_at, invited_at, households(id, name, kind)")
+      .select("household_id, role, accepted_at, invited_at, households(id, name, kind, deleted_at)")
       .eq("user_id", user.id),
     supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
+    // Grace-period gate: a pending account deletion freezes the user to the
+    // deletion-scheduled screen (and keeps a stranded, soft-deleted-only user
+    // from being bounced into onboarding + a fresh bootstrapped household).
+    supabase
+      .from("account_deletions")
+      .select("status")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .maybeSingle(),
   ]);
 
   if (memberRes.error) {
     throw new Error(`requireSession member: ${memberRes.error.message}`);
   }
 
-  const rows = (memberRes.data ?? []) as unknown as MemberRowWithHousehold[];
+  if (deletionRes.data) {
+    redirect("/account-deletion");
+  }
+
+  const allRows = (memberRes.data ?? []) as unknown as MemberRowWithHousehold[];
+  // Soft-deleted households disappear from the session entirely, which hides all
+  // of their nested content everywhere at once (nothing can reach a household
+  // the switcher won't surface).
+  const rows = allRows.filter((r) => !r.households || r.households.deleted_at === null);
   if (rows.length === 0) {
+    // If the only reason there are no active households is a soft delete the
+    // user can still undo, send them somewhere they can restore rather than
+    // minting a brand-new household in onboarding.
+    if (allRows.some((r) => r.households && r.households.deleted_at !== null)) {
+      redirect("/account-deletion");
+    }
     redirect("/onboarding");
   }
 

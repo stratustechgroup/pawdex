@@ -18,6 +18,7 @@ export async function listPetsForHousehold(
     .select("*")
     .eq("household_id", householdId)
     .is("archived_at", null)
+    .is("deleted_at", null)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -121,6 +122,7 @@ export async function getPet(
     .select("*")
     .eq("household_id", householdId)
     .eq("id", petId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error) throw new Error(`getPet: ${error.message}`);

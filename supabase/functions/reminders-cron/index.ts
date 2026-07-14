@@ -133,10 +133,17 @@ async function computeReminders(args: {
     return { inserted: 0, skipped: 0 };
   }
 
+  // Soft-deleted pets and households are on their way to being purged, so never
+  // compute new reminders for them.
+  const deleted = await loadDeletedSets(supabase);
+
   let inserted = 0;
   let skipped = 0;
 
   for (const v of (vaccRows ?? []) as (VaccinationRow & { reminder_lead_days: number[] })[]) {
+    if (deleted.pets.has(v.pet_id) || deleted.households.has(v.household_id)) {
+      continue;
+    }
     // Use the per-row lead days if set, otherwise the household default.
     const leads = v.reminder_lead_days?.length
       ? v.reminder_lead_days
@@ -205,7 +212,27 @@ async function sendDueReminders(args: {
     return { count: 0, failures: 0 };
   }
 
-  const due = (dueRows ?? []) as ReminderRow[];
+  const dueAll = (dueRows ?? []) as ReminderRow[];
+  if (dueAll.length === 0) return { count: 0, failures: 0 };
+
+  // Drop (and mark skipped) any reminder whose pet or household was soft-deleted
+  // after the reminder was scheduled, so a deletion silences pending mail.
+  const deleted = await loadDeletedSets(supabase);
+  const due: ReminderRow[] = [];
+  const suppressed: ReminderRow[] = [];
+  for (const r of dueAll) {
+    if ((r.pet_id && deleted.pets.has(r.pet_id)) || deleted.households.has(r.household_id)) {
+      suppressed.push(r);
+    } else {
+      due.push(r);
+    }
+  }
+  if (suppressed.length > 0) {
+    await markReminders(supabase, suppressed, {
+      status: "skipped",
+      error_message: "Pet or household deleted",
+    });
+  }
   if (due.length === 0) return { count: 0, failures: 0 };
 
   // Group by (household, pet) so one pet's reminders go in one email.
@@ -381,6 +408,23 @@ async function markReminders(
 // ============================================================
 // Helpers
 // ============================================================
+
+// Load the set of soft-deleted pet ids and household ids. Reminders are a
+// non-session, service-role path, so the query-helper filters that hide
+// soft-deleted rows in the app don't apply here, so this reproduces them.
+async function loadDeletedSets(
+  supabase: any,
+): Promise<{ pets: Set<string>; households: Set<string> }> {
+  const [petsRes, hhRes] = await Promise.all([
+    supabase.from("pets").select("id").not("deleted_at", "is", null),
+    supabase.from("households").select("id").not("deleted_at", "is", null),
+  ]);
+  const pets = new Set<string>((petsRes.data ?? []).map((p: { id: string }) => p.id));
+  const households = new Set<string>(
+    (hhRes.data ?? []).map((h: { id: string }) => h.id),
+  );
+  return { pets, households };
+}
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {

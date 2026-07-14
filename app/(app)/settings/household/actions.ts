@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { Resend } from "resend";
 
@@ -8,12 +9,20 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createHousehold } from "@/lib/auth/households";
 import { switchHousehold } from "@/lib/auth/switch-household";
-import type { HouseholdKind } from "@/lib/auth/active-household";
+import {
+  ACTIVE_HOUSEHOLD_COOKIE,
+  type HouseholdKind,
+} from "@/lib/auth/active-household";
 import {
   generateInvitationToken,
   invitationExpiry,
 } from "@/lib/auth/invitations";
 import { recordAudit } from "@/lib/db/audit";
+import {
+  sendReverificationCode,
+  verifyReverificationCode,
+} from "@/lib/auth/reverify";
+import { hardPurgeHousehold, writeDeletionLog } from "@/lib/deletion/purge";
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -290,6 +299,157 @@ export async function removeHouseholdMember(
   });
 
   revalidatePath("/settings/household");
+  return { ok: true };
+}
+
+/**
+ * Confirmation ladder rung 2, step 1: send the email OTP for household deletion.
+ * Owner-only. The code goes to the owner's own address (enforced in reverify).
+ */
+export async function sendHouseholdDeletionCodeAction(): Promise<
+  { ok: true; sentTo: string } | { ok: false; error: string }
+> {
+  const session = await requireSession();
+  if (session.role !== "owner") {
+    return { ok: false, error: "Only the household owner can delete it." };
+  }
+  return sendReverificationCode();
+}
+
+/**
+ * Delete the active household. Confirmation ladder rung 2: the owner types the
+ * household name AND confirms the emailed OTP. Soft-deletes by default (hidden
+ * everywhere, restorable for 30 days, then hard-purged); `immediate` runs the
+ * full hard purge now to satisfy a CCPA-style erasure request.
+ */
+export async function deleteHouseholdAction(input: {
+  typedName: string;
+  code: string;
+  immediate?: boolean;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await requireSession();
+  if (session.role !== "owner") {
+    return { ok: false, error: "Only the household owner can delete it." };
+  }
+  if (input.typedName.trim().toLowerCase() !== session.householdName.trim().toLowerCase()) {
+    return { ok: false, error: `Type "${session.householdName}" exactly to confirm.` };
+  }
+
+  const verified = await verifyReverificationCode(input.code);
+  if (!verified.ok) return verified;
+
+  const service = createServiceClient();
+
+  if (input.immediate) {
+    const purged = await hardPurgeHousehold(service, {
+      householdId: session.householdId,
+      actorUserId: session.userId,
+      actorEmail: session.email,
+      legalBasis: "ccpa_immediate",
+    });
+    if (!purged.ok) {
+      return { ok: false, error: purged.error ?? "Purge failed." };
+    }
+  } else {
+    const now = new Date().toISOString();
+    const { error } = await service
+      .from("households")
+      .update({ deleted_at: now, deleted_by: session.userId })
+      .eq("id", session.householdId);
+    if (error) return { ok: false, error: error.message };
+
+    await recordAudit({
+      householdId: session.householdId,
+      actorId: session.userId,
+      action: "delete",
+      entityType: "household",
+      entityId: session.householdId,
+      diff: { after: { deleted_at: now, mode: "soft" } },
+    });
+    await writeDeletionLog(service, {
+      scope: "household",
+      subjectId: session.householdId,
+      householdId: session.householdId,
+      actorUserId: session.userId,
+      actorEmail: session.email,
+      legalBasis: "user_request",
+      action: "soft_delete",
+      details: { household_name: session.householdName },
+    });
+  }
+
+  // The active household just vanished. Drop the cookie so requireSession falls
+  // back to another membership (or /onboarding) on the next request.
+  const jar = await cookies();
+  jar.delete(ACTIVE_HOUSEHOLD_COOKIE);
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/**
+ * Restore a soft-deleted household the caller owns, within its retention
+ * window. Deliberately resolves the user via getUser rather than requireSession:
+ * when the household being restored is the user's ONLY household, they have no
+ * active household and requireSession would bounce them to the grace screen
+ * before this could run. Ownership is verified directly.
+ */
+export async function restoreHouseholdAction(
+  householdId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const service = createServiceClient();
+
+  // Verify the caller owns this (soft-deleted) household.
+  const { data: membership } = await service
+    .from("household_members")
+    .select("role")
+    .eq("household_id", householdId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!membership || membership.role !== "owner") {
+    return { ok: false, error: "Only the owner can restore this household." };
+  }
+
+  const { data: hh } = await service
+    .from("households")
+    .select("id, name, deleted_at")
+    .eq("id", householdId)
+    .maybeSingle();
+  if (!hh) return { ok: false, error: "Household not found." };
+  if (!hh.deleted_at) return { ok: true };
+
+  const { error } = await service
+    .from("households")
+    .update({ deleted_at: null, deleted_by: null })
+    .eq("id", householdId);
+  if (error) return { ok: false, error: error.message };
+
+  await recordAudit({
+    householdId,
+    actorId: user.id,
+    action: "update",
+    entityType: "household",
+    entityId: householdId,
+    diff: { after: { restored: true } },
+  });
+  await writeDeletionLog(service, {
+    scope: "household",
+    subjectId: householdId,
+    householdId,
+    actorUserId: user.id,
+    actorEmail: user.email ?? null,
+    legalBasis: "user_request",
+    action: "restore",
+    details: { household_name: hh.name },
+  });
+
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 

@@ -6,6 +6,10 @@ import { requireSession } from "@/lib/auth/household";
 import { getExternalProviders } from "@/lib/auth/auth-settings";
 import { createClient } from "@/lib/supabase/server";
 
+import { DeleteAccountDialog } from "@/components/deletion/delete-account-dialog";
+import { RecentlyDeleted } from "@/components/deletion/recently-deleted";
+import { listDeletedHouseholdsOwnedBy } from "@/lib/deletion/recently-deleted";
+
 import { ProfileForm } from "./profile-form";
 import { EmailForm } from "./email-form";
 import { PasswordForm } from "./password-form";
@@ -30,6 +34,8 @@ export default async function AccountSettingsPage() {
       createdAt: i.created_at ?? null,
     }),
   );
+
+  const deletedHouseholds = await listDeletedHouseholdsOwnedBy(session.userId);
 
   return (
     <div
@@ -110,6 +116,8 @@ export default async function AccountSettingsPage() {
         />
       </section>
 
+      <RecentlyDeleted households={deletedHouseholds} />
+
       <section
         className="pw-card"
         style={{
@@ -117,25 +125,13 @@ export default async function AccountSettingsPage() {
           borderColor: "var(--pw-border)",
         }}
       >
-        <SectionHead title="Delete account" sub="Permanently remove your account and data." />
-        <p
-          style={{
-            margin: 0,
-            font: "400 12.5px var(--font-inter)",
-            color: "var(--pw-text-muted)",
-            lineHeight: 1.55,
-          }}
-        >
-          Account deletion isn&apos;t self-serve yet. To close your account and
-          erase your data, email{" "}
-          <a
-            href="mailto:support@pawdex.co"
-            style={{ color: "var(--pw-accent)", textDecoration: "underline" }}
-          >
-            support@pawdex.co
-          </a>{" "}
-          and we&apos;ll take care of it.
-        </p>
+        <SectionHead
+          title="Delete account"
+          sub="Permanently remove your account and data. Records stay exportable for free before you do."
+        />
+        <div style={{ marginTop: 12 }}>
+          <DeleteAccountDialog />
+        </div>
       </section>
     </div>
   );

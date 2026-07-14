@@ -45,7 +45,7 @@ export default async function RemindersPage() {
 
   const [petsRes, vacRes] = await Promise.all([
     petIds.length > 0
-      ? supabase.from("pets").select("id, name").in("id", petIds)
+      ? supabase.from("pets").select("id, name").in("id", petIds).is("deleted_at", null)
       : Promise.resolve({ data: [] }),
     vacIds.length > 0
       ? supabase
@@ -64,9 +64,12 @@ export default async function RemindersPage() {
     vacType.set(v.id, v.vaccine_type);
   }
 
-  const upcoming = rows.filter((r) => r.status === "scheduled");
-  const sent = rows.filter((r) => r.status === "sent");
-  const failed = rows.filter((r) => r.status === "failed");
+  // Reminders for a soft-deleted pet (deleted within its retention window)
+  // stay in the table but must not surface: petName only holds live pets.
+  const visibleRows = rows.filter((r) => !r.pet_id || petName.has(r.pet_id));
+  const upcoming = visibleRows.filter((r) => r.status === "scheduled");
+  const sent = visibleRows.filter((r) => r.status === "sent");
+  const failed = visibleRows.filter((r) => r.status === "failed");
 
   return (
     <div
@@ -91,7 +94,7 @@ export default async function RemindersPage() {
         <SectionHead
           title="Reminders"
           sub={
-            rows.length === 0
+            visibleRows.length === 0
               ? "Once you've logged a vaccine with an expiry date, scheduled reminders will land here."
               : `${upcoming.length} scheduled · ${sent.length} sent · ${failed.length} failed (last 200)`
           }

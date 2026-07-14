@@ -101,7 +101,8 @@ export async function answerHouseholdQuestion(input: {
     const { data: pets } = await supabase
       .from("pets")
       .select("id, name")
-      .in("id", petIds);
+      .in("id", petIds)
+      .is("deleted_at", null);
     for (const p of pets ?? []) petNameById.set(p.id, p.name);
   }
 

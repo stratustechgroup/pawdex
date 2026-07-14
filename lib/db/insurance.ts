@@ -29,14 +29,19 @@ export async function listInsurancePolicies(
     const { data: pets } = await supabase
       .from("pets")
       .select("id, name")
-      .in("id", petIds);
+      .in("id", petIds)
+      .is("deleted_at", null);
     for (const p of pets ?? []) petNameById.set(p.id, p.name);
   }
 
-  return rows.map((r) => ({
-    ...r,
-    pet_name: r.pet_id ? (petNameById.get(r.pet_id) ?? null) : null,
-  }));
+  return rows
+    // Drop policies attached to a soft-deleted pet; household-level policies
+    // (no pet_id) always stay.
+    .filter((r) => !r.pet_id || petNameById.has(r.pet_id))
+    .map((r) => ({
+      ...r,
+      pet_name: r.pet_id ? (petNameById.get(r.pet_id) ?? null) : null,
+    }));
 }
 
 export async function getInsurancePolicy(

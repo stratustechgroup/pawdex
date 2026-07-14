@@ -9,6 +9,10 @@ import {
   listPendingInvitations,
 } from "@/lib/db/household-members";
 
+import { DeleteHouseholdDialog } from "@/components/deletion/delete-household-dialog";
+import { RecentlyDeleted } from "@/components/deletion/recently-deleted";
+import { listDeletedPets } from "@/lib/deletion/recently-deleted";
+
 import { HouseholdTypeControl } from "./household-type-control";
 import { InviteForm } from "./invite-form";
 import { MembersList } from "./members-list";
@@ -25,9 +29,10 @@ export default async function HouseholdSettingsPage({
   const session = await requireSession();
   const kindParam = (await searchParams).kind;
   const defaultKind = kindParam === "breeder" ? "breeder" : "personal";
-  const [members, invitations] = await Promise.all([
+  const [members, invitations, deletedPets] = await Promise.all([
     listHouseholdMembers(session.householdId, session.userId),
     listPendingInvitations(session.householdId),
+    listDeletedPets(session.householdId),
   ]);
   const isOwner = session.role === "owner";
   const ROLE_LABEL: Record<typeof session.role, string> = {
@@ -261,6 +266,23 @@ export default async function HouseholdSettingsPage({
         >
           Only the household owner can invite or remove members.
         </div>
+      )}
+
+      <RecentlyDeleted pets={deletedPets} />
+
+      {isOwner && (
+        <section
+          className="pw-card"
+          style={{ padding: 20, borderColor: "var(--pw-danger-border, var(--pw-border))" }}
+        >
+          <SectionHead
+            title="Delete this household"
+            sub="Removes every pet, document, and record here. Reversible for 30 days, then permanently purged. Export anything you want to keep first."
+          />
+          <div style={{ marginTop: 12 }}>
+            <DeleteHouseholdDialog householdName={session.householdName} />
+          </div>
+        </section>
       )}
     </div>
   );

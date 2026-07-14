@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 import { differenceInCalendarDays, parseISO } from "date-fns";
 
@@ -35,7 +36,15 @@ function statusForDays(days: number): ExpiringStatus {
  * Future: USDA APHIS 7001 certs, microchip registration renewals, license
  * renewals, treatment courses with hard end dates.
  */
-export async function listExpiringForHousehold(
+/**
+ * Wrapped in React cache() because the dashboard renders it twice per request:
+ * once directly (for the "Upcoming" rail) and once inside listActionItems (which
+ * derives its overdue/due items from the same source). cache() memoizes on
+ * householdId within a single request only, so the two callers now share one
+ * resolution instead of issuing the same cross-region query twice. No behavior
+ * change: same args, same result.
+ */
+export const listExpiringForHousehold = cache(async function listExpiringForHousehold(
   householdId: string,
 ): Promise<ExpiringItem[]> {
   const supabase = await createClient();
@@ -90,13 +99,17 @@ export async function listExpiringForHousehold(
     const { data: pets } = await supabase
       .from("pets")
       .select("id, name")
-      .in("id", petIds);
+      .in("id", petIds)
+      .is("deleted_at", null);
     for (const p of pets ?? []) petNameById.set(p.id, p.name);
   }
 
   const items: ExpiringItem[] = [];
 
   for (const v of latestPerFamily.values()) {
+    // Soft-deleted pet: its vaccination rows linger during the retention window
+    // but must not surface. petNameById only holds live pets, so a miss = hidden.
+    if (!petNameById.has(v.pet_id)) continue;
     const days = differenceInCalendarDays(parseISO(v.expires_on), today);
     items.push({
       kind: "vaccine",
@@ -119,6 +132,9 @@ export async function listExpiringForHousehold(
     plan_name: string | null;
     renews_on: string;
   }>) {
+    // Pet-scoped policy on a soft-deleted pet is hidden too; household-level
+    // policies (pet_id null) are unaffected.
+    if (p.pet_id && !petNameById.has(p.pet_id)) continue;
     const days = differenceInCalendarDays(parseISO(p.renews_on), today);
     items.push({
       kind: "policy_renewal",
@@ -136,4 +152,4 @@ export async function listExpiringForHousehold(
 
   items.sort((a, b) => a.days_until - b.days_until);
   return items;
-}
+});

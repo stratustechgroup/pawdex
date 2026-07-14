@@ -39,6 +39,7 @@ export default async function LitterDetailPage({
       .from("pets")
       .select("id, animal_id")
       .eq("household_id", session.householdId)
+      .is("deleted_at", null)
       .in(
         "animal_id",
         puppies.map((p) => p.id),

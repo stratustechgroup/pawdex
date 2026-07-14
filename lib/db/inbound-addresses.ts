@@ -78,8 +78,13 @@ export async function findHouseholdBySlug(
   const supabase = createServiceClient();
   const { data } = await supabase
     .from("household_inbound_addresses")
-    .select("household_id")
+    .select("household_id, households(deleted_at)")
     .eq("slug", slug.toLowerCase())
     .maybeSingle();
-  return (data?.household_id as string | undefined) ?? null;
+  if (!data) return null;
+  // Inbound mail into a soft-deleted household is dropped: no new records should
+  // land in a household that is on its way to being purged.
+  const household = data.households as unknown as { deleted_at: string | null } | null;
+  if (household?.deleted_at) return null;
+  return (data.household_id as string | undefined) ?? null;
 }

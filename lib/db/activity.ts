@@ -83,7 +83,8 @@ export async function listRecentActivity(
     supabase
       .from("pets")
       .select("id, name, animal_id")
-      .eq("household_id", householdId),
+      .eq("household_id", householdId)
+      .is("deleted_at", null),
   ]);
 
   const pets = petsRes.data ?? [];
@@ -97,6 +98,8 @@ export async function listRecentActivity(
   const items: ActivityItem[] = [];
 
   for (const d of docsRes.data ?? []) {
+    // A document tied to a soft-deleted pet is hidden with the pet.
+    if (d.pet_id && !petNameById.has(d.pet_id)) continue;
     const petName = d.pet_id ? (petNameById.get(d.pet_id) ?? null) : null;
     const label = DOC_TYPE_LABEL[d.doc_type] ?? "Document";
     const filename = d.original_filename ?? "Untitled document";

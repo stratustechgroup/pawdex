@@ -26,10 +26,15 @@ const SPARK_MAX_POINTS = 16;
 
 export async function listPetVitals(householdId: string): Promise<PetVitals[]> {
   const supabase = await createClient();
-  const pets = await listPetsForHousehold(householdId);
-  if (pets.length === 0) return [];
 
-  const [weightRes, medsRes, policyRes] = await Promise.all([
+  // The weight/meds/policy reads are household-scoped, not pet-scoped, so they
+  // don't depend on the pets list — run all four together instead of blocking
+  // the three aggregates behind listPetsForHousehold. (Trade-off: a household
+  // with zero pets now issues three empty reads instead of short-circuiting,
+  // which is negligible and rare next to the round trip saved on every loaded
+  // dashboard.)
+  const [pets, weightRes, medsRes, policyRes] = await Promise.all([
+    listPetsForHousehold(householdId),
     supabase
       .from("weight_log")
       .select("pet_id, recorded_on, weight_kg")
@@ -45,6 +50,8 @@ export async function listPetVitals(householdId: string): Promise<PetVitals[]> {
       .eq("household_id", householdId)
       .is("archived_at", null),
   ]);
+
+  if (pets.length === 0) return [];
 
   const weightByPet = new Map<string, { on: string; kg: number }[]>();
   for (const w of weightRes.data ?? []) {
@@ -150,7 +157,8 @@ export async function listActionItems(householdId: string): Promise<ActionItem[]
     supabase
       .from("pets")
       .select("id, name, animal_id")
-      .eq("household_id", householdId),
+      .eq("household_id", householdId)
+      .is("deleted_at", null),
   ]);
 
   const petIdByAnimalId = new Map<string, { id: string; name: string }>();
@@ -245,6 +253,7 @@ export async function listPetLitterLabels(
     .select("id, animal_id")
     .eq("household_id", householdId)
     .is("archived_at", null)
+    .is("deleted_at", null)
     .not("animal_id", "is", null);
 
   const animalIds = (pets ?? [])
@@ -293,6 +302,7 @@ export async function listPetsForNav(householdId: string): Promise<NavPet[]> {
     .select("id, name, species")
     .eq("household_id", householdId)
     .is("archived_at", null)
+    .is("deleted_at", null)
     .order("created_at", { ascending: true });
   return (data ?? []) as NavPet[];
 }

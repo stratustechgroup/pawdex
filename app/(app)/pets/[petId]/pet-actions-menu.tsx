@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Icon } from "@/components/brand/icon";
@@ -11,15 +12,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DeletePetDialog } from "@/components/deletion/delete-pet-dialog";
 
 /**
  * Overflow menu for the pet detail header. Houses everything that didn't
  * earn a primary slot — Briefing (pre-visit sheet), EU travel readiness,
- * Emergency ID card, and Edit. Wrapped in a Radix DropdownMenu so keyboard
- * nav + focus return work for free.
+ * Emergency ID card, Edit, and Delete. Wrapped in a Radix DropdownMenu so
+ * keyboard nav + focus return work for free.
  */
-export function PetActionsMenu({ petId }: { petId: string }) {
+export function PetActionsMenu({
+  petId,
+  petName,
+}: {
+  petId: string;
+  petName: string;
+}) {
   const router = useRouter();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const items: Array<
     | { kind: "item"; label: string; icon: Parameters<typeof Icon>[0]["name"]; href: string; tooltip?: string }
@@ -56,42 +65,59 @@ export function PetActionsMenu({ petId }: { petId: string }) {
   ];
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label="More actions"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 32,
-          height: 32,
-          borderRadius: 6,
-          border: "1px solid var(--pw-border-strong)",
-          background: "var(--pw-surface)",
-          color: "var(--pw-text)",
-          cursor: "pointer",
-        }}
-      >
-        <Icon name="moreH" size={15} />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6} className="w-56">
-        <DropdownMenuLabel>More for this pet</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {items.map((it, i) =>
-          it.kind === "separator" ? (
-            <DropdownMenuSeparator key={`sep-${i}`} />
-          ) : (
-            <DropdownMenuItem
-              key={it.label}
-              onSelect={() => router.push(it.href)}
-              title={it.tooltip}
-            >
-              <Icon name={it.icon} size={14} />
-              <span>{it.label}</span>
-            </DropdownMenuItem>
-          ),
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label="More actions"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 32,
+            height: 32,
+            borderRadius: 6,
+            border: "1px solid var(--pw-border-strong)",
+            background: "var(--pw-surface)",
+            color: "var(--pw-text)",
+            cursor: "pointer",
+          }}
+        >
+          <Icon name="moreH" size={15} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" sideOffset={6} className="w-56">
+          <DropdownMenuLabel>More for this pet</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {items.map((it, i) =>
+            it.kind === "separator" ? (
+              <DropdownMenuSeparator key={`sep-${i}`} />
+            ) : (
+              <DropdownMenuItem
+                key={it.label}
+                onSelect={() => router.push(it.href)}
+                title={it.tooltip}
+              >
+                <Icon name={it.icon} size={14} />
+                <span>{it.label}</span>
+              </DropdownMenuItem>
+            ),
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => setDeleteOpen(true)}
+            style={{ color: "var(--pw-danger, #B4231F)" }}
+          >
+            <Icon name="alert" size={14} />
+            <span>Delete pet</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DeletePetDialog
+        petId={petId}
+        petName={petName}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
+    </>
   );
 }
