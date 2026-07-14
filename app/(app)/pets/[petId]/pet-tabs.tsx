@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { PrefetchLink } from "@/components/pawdex/prefetch-link";
 
 // NOTE: "Risk" tab intentionally removed pending an editorial process for
 // veterinary medical claims. The /breed-risk route + lib/clinical/breed-risk.ts
@@ -40,7 +41,7 @@ export function PetTabs({
             : pathname === href || pathname.startsWith(`${href}/`);
         const count = counts[t.label];
         return (
-          <Link
+          <PrefetchLink
             key={t.label}
             href={href}
             aria-current={isActive ? "page" : undefined}
@@ -50,7 +51,7 @@ export function PetTabs({
             {count !== undefined && count > 0 && (
               <span className="tab-count">{count}</span>
             )}
-          </Link>
+          </PrefetchLink>
         );
       })}
     </nav>

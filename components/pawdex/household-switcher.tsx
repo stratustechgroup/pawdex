@@ -64,6 +64,13 @@ export function HouseholdSwitcher({
       setOpen(false);
       return;
     }
+    // Close the menu the instant a different household is picked and let the
+    // trigger's `pending` spinner (below) carry the immediate feedback, instead
+    // of leaving a dimmed, still-open dropdown hanging over the old page. The
+    // server action's redirect("/") then drives a client navigation to the
+    // dashboard, which paints its route-level loading skeleton once the shared
+    // (app) layout re-resolves.
+    setOpen(false);
     startTransition(async () => {
       await switchHousehold(id);
     });
@@ -71,22 +78,27 @@ export function HouseholdSwitcher({
 
   return (
     <div ref={rootRef} style={{ position: "relative", flexShrink: 0 }}>
+      {/* Scoped spin keyframe for the switching indicator, so the trigger gives
+          immediate feedback the instant a household is picked without depending
+          on a shared stylesheet another agent may be editing. */}
+      <style>{"@keyframes pw-switch-spin{to{transform:rotate(360deg)}}"}</style>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         title={active.name}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-busy={pending}
         style={{
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
           font: "500 13px var(--font-inter)",
           color: "var(--pw-text-secondary)",
-          background: open ? "var(--pw-surface-2)" : "transparent",
+          background: open || pending ? "var(--pw-surface-2)" : "transparent",
           border: 0,
           borderRadius: 6,
-          cursor: "pointer",
+          cursor: pending ? "default" : "pointer",
           padding: "5px 7px",
           margin: "0 -7px",
         }}
@@ -108,9 +120,14 @@ export function HouseholdSwitcher({
         </span>
         {active.kind === "breeder" && <KindBadge kind="breeder" />}
         <Icon
-          name="chevronDown"
+          name={pending ? "refresh" : "chevronDown"}
           size={13}
-          style={{ color: "var(--pw-text-muted)" }}
+          style={{
+            color: "var(--pw-text-muted)",
+            animation: pending
+              ? "pw-switch-spin 0.7s linear infinite"
+              : undefined,
+          }}
         />
       </button>
 

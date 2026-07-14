@@ -23,20 +23,18 @@ export default async function PetLayout({
 }) {
   const { petId } = await params;
   const session = await requireSession();
-  const pet = await getPet(session.householdId, petId);
-  if (!pet) notFound();
-
-  // Pull status + counts for the tab badges in parallel with the stat-strip
-  // queries below — every read is keyed by (household_id, pet_id) so RLS
-  // covers the cross-household isolation for free.
-  const all = await listPetsForHousehold(session.householdId);
-  const withStatus = all.find((p) => p.id === pet.id);
-  const status = (withStatus?.status as StatusKind) ?? "incomplete";
-
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
 
+  // One parallel phase for everything keyed by (household_id, petId): the pet
+  // row itself, the household roster (for the status badge), and all tab/stat
+  // counts. None depends on another, so they resolve in a single round trip
+  // rather than the old getPet -> listPets -> counts chain. RLS covers the
+  // cross-household isolation for free. The count queries use petId directly
+  // (identical to pet.id) so they don't have to wait on getPet.
   const [
+    pet,
+    all,
     vacCount,
     eventCount,
     medCount,
@@ -45,32 +43,34 @@ export default async function PetLayout({
     lastVisitRes,
     weightHistRes,
   ] = await Promise.all([
+    getPet(session.householdId, petId),
+    listPetsForHousehold(session.householdId),
     supabase
       .from("vaccinations")
       .select("id", { head: true, count: "exact" })
       .eq("household_id", session.householdId)
-      .eq("pet_id", pet.id),
+      .eq("pet_id", petId),
     supabase
       .from("medical_events")
       .select("id", { head: true, count: "exact" })
       .eq("household_id", session.householdId)
-      .eq("pet_id", pet.id),
+      .eq("pet_id", petId),
     supabase
       .from("medications")
       .select("id", { head: true, count: "exact" })
       .eq("household_id", session.householdId)
-      .eq("pet_id", pet.id),
+      .eq("pet_id", petId),
     supabase
       .from("documents")
       .select("id", { head: true, count: "exact" })
       .eq("household_id", session.householdId)
-      .eq("pet_id", pet.id),
+      .eq("pet_id", petId),
     // Next due vaccine — soonest expiry that isn't already overdue.
     supabase
       .from("vaccinations")
       .select("id, vaccine_type, vaccine_family, expires_on")
       .eq("household_id", session.householdId)
-      .eq("pet_id", pet.id)
+      .eq("pet_id", petId)
       .not("expires_on", "is", null)
       .gte("expires_on", today)
       .order("expires_on", { ascending: true })
@@ -82,7 +82,7 @@ export default async function PetLayout({
       .from("medical_events")
       .select("id, occurred_on, vet_clinic_id")
       .eq("household_id", session.householdId)
-      .eq("pet_id", pet.id)
+      .eq("pet_id", petId)
       .order("occurred_on", { ascending: false })
       .limit(1),
     // Weight delta — last two readings drive "↗ +0.8 lb" in the stat strip.
@@ -90,32 +90,38 @@ export default async function PetLayout({
       .from("weight_log")
       .select("weight_kg, recorded_on")
       .eq("household_id", session.householdId)
-      .eq("pet_id", pet.id)
+      .eq("pet_id", petId)
       .order("recorded_on", { ascending: false })
       .limit(2),
   ]);
 
-  // Resolve the latest clinic name (one extra round trip — cheap and avoids
-  // the unreliable embedded join via Supabase Relationships:[]).
-  let lastVisitClinic: string | null = null;
-  const lastVisit = lastVisitRes.data?.[0] ?? null;
-  if (lastVisit?.vet_clinic_id) {
-    const { data: clinic } = await supabase
-      .from("vet_clinics")
-      .select("name")
-      .eq("household_id", session.householdId)
-      .eq("id", lastVisit.vet_clinic_id)
-      .maybeSingle();
-    lastVisitClinic = clinic?.name ?? null;
-  }
+  if (!pet) notFound();
 
-  let photoUrl: string | null = null;
-  if (pet.photo_storage_path) {
-    const { data } = await supabase.storage
-      .from("pet-photos")
-      .createSignedUrl(pet.photo_storage_path, 60 * 60);
-    photoUrl = data?.signedUrl ?? null;
-  }
+  const withStatus = all.find((p) => p.id === petId);
+  const status = (withStatus?.status as StatusKind) ?? "incomplete";
+
+  // Second parallel phase: the two lookups that depend on phase-one results.
+  // The clinic name needs the latest visit's clinic id; the signed photo URL
+  // needs the pet's storage path. They're independent of each other, so resolve
+  // them together instead of back to back.
+  const lastVisit = lastVisitRes.data?.[0] ?? null;
+  const [lastVisitClinic, photoUrl] = await Promise.all([
+    lastVisit?.vet_clinic_id
+      ? supabase
+          .from("vet_clinics")
+          .select("name")
+          .eq("household_id", session.householdId)
+          .eq("id", lastVisit.vet_clinic_id)
+          .maybeSingle()
+          .then((r) => r.data?.name ?? null)
+      : Promise.resolve<string | null>(null),
+    pet.photo_storage_path
+      ? supabase.storage
+          .from("pet-photos")
+          .createSignedUrl(pet.photo_storage_path, 60 * 60)
+          .then((r) => r.data?.signedUrl ?? null)
+      : Promise.resolve<string | null>(null),
+  ]);
 
   // ---- Stat-strip derivations ----
   const age = ageFromDob(pet.date_of_birth);
@@ -408,7 +414,7 @@ export default async function PetLayout({
             <Icon name="download" size={13} />
             Export record
           </Link>
-          <PetActionsMenu petId={pet.id} />
+          <PetActionsMenu petId={pet.id} petName={pet.name} />
         </div>
       </div>
 

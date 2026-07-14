@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Icon } from "@/components/brand/icon";
+import { PrefetchLink } from "@/components/pawdex/prefetch-link";
 import { PetPhoto } from "@/components/pawdex/pet-photo";
 import { StatusBadge, type StatusKind } from "@/components/pawdex/status-badge";
 import { Sparkline } from "@/components/pawdex/cockpit/sparkline";
@@ -54,7 +55,7 @@ export function PetTile({
       className="pw-tile"
       style={{ ["--pw-tile-accent" as string]: ring }}
     >
-      <Link href={`/pets/${pet.id}`} className="pw-tile-head">
+      <PrefetchLink href={`/pets/${pet.id}`} className="pw-tile-head">
         <span
           style={{
             borderRadius: "50%",
@@ -105,7 +106,7 @@ export function PetTile({
             {meta || capitalize(pet.species)}
           </span>
         </span>
-      </Link>
+      </PrefetchLink>
 
       <div className="pw-tile-vitals">
         <Link href={`/pets/${pet.id}/weight`} className="pw-vital" aria-label="Weight">
@@ -211,7 +212,7 @@ export function PetTile({
         </Link>
       </div>
 
-      <Link href={`/pets/${pet.id}`} className="pw-tile-foot">
+      <PrefetchLink href={`/pets/${pet.id}`} className="pw-tile-foot">
         <Icon
           name={kind === "overdue" ? "alert" : "clock"}
           size={13}
@@ -252,7 +253,7 @@ export function PetTile({
           size={14}
           style={{ color: "var(--pw-text-subtle)" }}
         />
-      </Link>
+      </PrefetchLink>
     </div>
   );
 }

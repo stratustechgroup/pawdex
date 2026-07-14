@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/brand/icon";
 import { PawdexMark } from "@/components/brand/mark";
+import { PrefetchLink } from "@/components/pawdex/prefetch-link";
 import {
   HouseholdSwitcher,
   type SwitcherHousehold,
@@ -154,7 +155,7 @@ export function TopNav({
               ? pathname === "/" || pathname.startsWith("/pets")
               : pathname.startsWith(link.href);
           return (
-            <Link
+            <PrefetchLink
               key={link.href}
               href={link.href}
               style={{
@@ -170,7 +171,7 @@ export function TopNav({
               }}
             >
               {link.label}
-            </Link>
+            </PrefetchLink>
           );
         })}
       </nav>

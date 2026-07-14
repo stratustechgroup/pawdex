@@ -153,6 +153,10 @@ function PasswordForm({
         );
         return;
       }
+      // Warm the destination's RSC payload while the replace + refresh below
+      // resolve. Only worth doing here, post-auth: before sign-in the app routes
+      // bounce to /login, so there is nothing useful to prefetch earlier.
+      router.prefetch(redirectTo);
       router.replace(redirectTo);
       router.refresh();
     });
