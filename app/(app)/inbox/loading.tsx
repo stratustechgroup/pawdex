@@ -1,11 +1,11 @@
-import { SkelPage, SkelCard, Skel } from "../_skeleton";
+import { SkelPage, SkelCard, SkelSectionHead, Skel } from "../_skeleton";
 
-// Inbox skeleton: title plus a list of document rows.
+// Inbox skeleton: title + header action ("Set up auto-forwarding"), plus a list
+// of document rows.
 export default function InboxLoading() {
   return (
-    <SkelPage maxWidth={1000}>
-      <Skel w={160} h={26} r={8} />
-      <Skel w={280} h={14} r={6} style={{ marginTop: 10, marginBottom: 24 }} />
+    <SkelPage maxWidth={900}>
+      <SkelSectionHead titleW={100} subW={280} action style={{ marginBottom: 24 }} />
       <SkelCard style={{ padding: 8 }}>
         {Array.from({ length: 7 }).map((_, i) => (
           <div
