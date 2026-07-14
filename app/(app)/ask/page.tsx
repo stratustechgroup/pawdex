@@ -12,10 +12,21 @@ export default async function AskPage() {
   const session = await requireSession();
   const supabase = await createClient();
 
-  const { count: chunkCount } = await supabase
-    .from("extraction_chunks")
-    .select("id", { head: true, count: "exact" })
-    .eq("household_id", session.householdId);
+  const [{ count: chunkCount }, { count: committedCount }] = await Promise.all([
+    supabase
+      .from("extraction_chunks")
+      .select("id", { head: true, count: "exact" })
+      .eq("household_id", session.householdId),
+    supabase
+      .from("document_extractions")
+      .select("id", { head: true, count: "exact" })
+      .eq("household_id", session.householdId)
+      .eq("status", "committed"),
+  ]);
+
+  // Committed records with an empty index means indexing never ran (for
+  // example the embeddings key was unset at commit time), not "no records".
+  const indexingBehind = (chunkCount ?? 0) === 0 && (committedCount ?? 0) > 0;
 
   return (
     <div
@@ -32,7 +43,9 @@ export default async function AskPage() {
         title="Ask"
         sub={
           (chunkCount ?? 0) === 0
-            ? "Once you commit a document, its contents become searchable here. Until then, this page is quiet."
+            ? indexingBehind
+              ? "Your committed records haven't been indexed for Q&A yet."
+              : "Once you commit a document, its contents become searchable here. Until then, this page is quiet."
             : `Cite-grounded answers across your committed records. ${chunkCount} snippets indexed.`
         }
       />
@@ -57,10 +70,12 @@ export default async function AskPage() {
           <Icon name="sparkles" size={24} style={{ color: "var(--pw-text-subtle)" }} />
           <div>
             <div style={{ font: "500 14px var(--font-inter)", color: "var(--pw-text)" }}>
-              No records indexed yet
+              {indexingBehind ? "Indexing hasn't caught up with your records" : "No records indexed yet"}
             </div>
             <div style={{ marginTop: 6 }}>
-              Upload + commit a document, and Pawdex will index it for cited Q&amp;A.
+              {indexingBehind
+                ? `You have ${committedCount} committed ${committedCount === 1 ? "record" : "records"}, but none are indexed for Q&A yet. Re-committing a document rebuilds its index. If this persists, indexing may be disabled.`
+                : "Upload + commit a document, and Pawdex will index it for cited Q&A."}
             </div>
           </div>
         </div>

@@ -117,8 +117,17 @@ export default async function LoginPage({
             lineHeight: 1.55,
           }}
         >
-          By signing in, you agree to authorize Pawdex to send transactional emails on
-          your behalf only with your explicit per-feature consent.
+          By signing in, you confirm you are 18 or older and agree to Pawdex&rsquo;s{" "}
+          <a href="/terms" style={{ color: "var(--pw-accent)", textDecoration: "underline" }}>
+            Terms
+          </a>{" "}
+          and{" "}
+          <a href="/privacy" style={{ color: "var(--pw-accent)", textDecoration: "underline" }}>
+            Privacy Policy
+          </a>
+          , and authorize Pawdex to send transactional emails on your behalf only
+          with your explicit per-feature consent. Pawdex is offered in the United States
+          and is not directed to the EEA or UK.
         </p>
       </div>
     </main>
