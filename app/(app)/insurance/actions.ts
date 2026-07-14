@@ -103,6 +103,7 @@ export async function retryPolicyExtraction(formData: FormData): Promise<void> {
   const id = formData.get("policy_id");
   if (typeof id !== "string" || !id) throw new Error("policy_id required");
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't retry extraction.");
 
   const supabase = createServiceClient();
   const { data: policy } = await supabase

@@ -12,6 +12,7 @@ export async function markDoseGiven(formData: FormData): Promise<void> {
   if (!medicationId || !petId) throw new Error("medication_id + pet_id required");
 
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't record doses.");
   const supabase = createServiceClient();
 
   // Validate the medication belongs to this household + pet.
@@ -64,6 +65,7 @@ export async function undoDose(formData: FormData): Promise<void> {
     throw new Error("administration_id + pet_id required");
   }
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't undo doses.");
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("medication_administrations")

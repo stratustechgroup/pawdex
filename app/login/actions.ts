@@ -7,7 +7,14 @@ import { createClient } from "@/lib/supabase/server";
 
 const schema = z.object({
   email: z.string().email(),
-  redirectTo: z.string().startsWith("/"),
+  // Internal paths only. startsWith("/") alone admits "//evil.com" (and the
+  // "/\\" backslash variant), which resolves to an external origin downstream.
+  redirectTo: z
+    .string()
+    .startsWith("/")
+    .refine((v) => !v.startsWith("//") && !v.startsWith("/\\"), {
+      message: "redirectTo must be an internal path.",
+    }),
 });
 
 export async function sendMagicLink(

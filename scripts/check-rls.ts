@@ -74,6 +74,17 @@ const TABLES_TO_CHECK = [
   "research_consents",
   "dataset_releases",
   "dataset_release_items",
+  // Waitlist (0029) + profiles (0030)
+  "waitlist_signups",
+  "profiles",
+  // Billing (0031)
+  "billing_customers",
+  "subscriptions",
+  // Ingestion v2 (0032)
+  "invoice_items",
+  // Deletion + retention (0033)
+  "deletion_log",
+  "account_deletions",
 ];
 
 async function main() {

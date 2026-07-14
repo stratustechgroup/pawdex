@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireSession } from "@/lib/auth/household";
 import { recordAudit } from "@/lib/db/audit";
+import { sanitizeHttpUrl } from "@/lib/security/url";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { PharmacySource } from "@/lib/supabase/types";
 
@@ -23,7 +24,7 @@ export async function addPriceQuote(formData: FormData): Promise<void> {
   const sourceRaw = String(formData.get("source") ?? "");
   const packLabel = String(formData.get("pack_size_label") ?? "").trim() || null;
   const priceRaw = String(formData.get("price") ?? "");
-  const linkUrl = String(formData.get("link_url") ?? "").trim() || null;
+  const linkUrl = sanitizeHttpUrl(String(formData.get("link_url") ?? ""));
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
   if (!petId || !medicationId) throw new Error("pet_id + medication_id required");
@@ -37,6 +38,7 @@ export async function addPriceQuote(formData: FormData): Promise<void> {
   const priceCents = Math.round(priceNum * 100);
 
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't add price quotes.");
   const supabase = createServiceClient();
   const { data: med } = await supabase
     .from("medications")
@@ -95,6 +97,7 @@ export async function deletePriceQuote(formData: FormData): Promise<void> {
   const medicationId = String(formData.get("medication_id") ?? "");
   if (!id) throw new Error("quote_id required");
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't delete price quotes.");
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("medication_price_quotes")

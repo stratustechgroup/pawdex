@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { sendRecordsRequestForEvent } from "@/lib/outbound/records-request";
+import { secretsEqual } from "@/lib/security/compare";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
     );
   } else {
     const auth = request.headers.get("authorization") ?? "";
-    if (auth !== `Bearer ${secret}`) {
+    if (!secretsEqual(auth, `Bearer ${secret}`)) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
   }
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
   // household can't blow the function's wall time.
   const { data: due, error } = await supabase
     .from("pending_records_requests")
-    .select("id, household_id, medical_event_id, created_by")
+    .select("id, household_id, medical_event_id, created_by, households(deleted_at)")
     .eq("status", "scheduled")
     .lte("scheduled_for", today)
     .limit(MAX_PER_RUN);
@@ -60,7 +61,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const rows = due ?? [];
+  // Never send on behalf of a soft-deleted household: it is on its way to being
+  // purged, so cancel any queued outbound instead of mailing a vet clinic.
+  const rows = (due ?? []).filter((r) => {
+    const hh = (r as { households?: { deleted_at: string | null } | null }).households;
+    return !hh?.deleted_at;
+  });
   const summary = {
     triggered_at: new Date().toISOString(),
     scanned: rows.length,

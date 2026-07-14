@@ -29,6 +29,7 @@ export async function addLabValue(formData: FormData): Promise<void> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(collected)) throw new Error("Date required.");
 
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't add lab values.");
   const supabase = createServiceClient();
 
   const { data: pet } = await supabase
@@ -89,6 +90,7 @@ export async function deleteLabValue(formData: FormData): Promise<void> {
   const petId = String(formData.get("pet_id") ?? "");
   if (!id || !petId) throw new Error("lab_id + pet_id required");
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't delete lab values.");
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("lab_values")

@@ -34,7 +34,13 @@ export async function GET(request: NextRequest) {
   const code = url.searchParams.get("code");
   const tokenHash = url.searchParams.get("token_hash");
   const type = url.searchParams.get("type");
-  const next = url.searchParams.get("next") ?? "/";
+  // Only honor an internal path. Reject protocol-relative ("//evil.com", which
+  // NextResponse.redirect resolves to an external origin) and backslash tricks.
+  const nextRaw = url.searchParams.get("next") ?? "/";
+  const next =
+    nextRaw.startsWith("/") && !nextRaw.startsWith("//") && !nextRaw.startsWith("/\\")
+      ? nextRaw
+      : "/";
 
   const supabase = await createClient();
 

@@ -101,6 +101,9 @@ export async function startCheckout(input: {
 export async function openBillingPortal(): Promise<CheckoutResult> {
   const session = await requireSession();
 
+  if (session.role === "viewer") {
+    return { ok: false, error: "Only owners and members can manage billing." };
+  }
   if (!isBillingEnabled()) {
     return {
       ok: false,

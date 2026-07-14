@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/brand/icon";
 import { SectionHead } from "@/components/pawdex/chips";
 import { requireSession } from "@/lib/auth/household";
+import { sanitizeHttpUrl } from "@/lib/security/url";
 import { createClient } from "@/lib/supabase/server";
 import type { MedicationPriceQuote, PharmacySource } from "@/lib/supabase/types";
 
@@ -315,11 +316,11 @@ export default async function PricesPage({
                 >
                   {q.pack_size_label ? `${q.pack_size_label} · ` : ""}
                   Quoted {format(new Date(q.recorded_on), "MMM d, yyyy")}
-                  {q.link_url && (
+                  {sanitizeHttpUrl(q.link_url) && (
                     <>
                       {" · "}
                       <a
-                        href={q.link_url}
+                        href={sanitizeHttpUrl(q.link_url)!}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{

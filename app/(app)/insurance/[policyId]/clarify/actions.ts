@@ -37,6 +37,9 @@ export async function draftClarificationAction(
     return { status: "error", message: "Type a question for the insurer." };
 
   const session = await requireSession();
+  if (session.role === "viewer") {
+    return { status: "error", message: "Viewers can't draft insurer emails." };
+  }
   const supabase = createServiceClient();
   const { data: policy } = await supabase
     .from("insurance_policies")
@@ -103,6 +106,9 @@ export async function sendClarificationAction(
   }
 
   const session = await requireSession();
+  if (session.role === "viewer") {
+    return { status: "error", message: "Viewers can't send insurer emails." };
+  }
   const result = await sendInsurerClarification({
     householdId: session.householdId,
     userId: session.userId,

@@ -47,6 +47,7 @@ export async function switchHousehold(householdId: string): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(ACTIVE_HOUSEHOLD_COOKIE, householdId, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: ONE_YEAR_SECONDS,

@@ -45,6 +45,9 @@ export async function uploadPolicyDocumentAction(
 ): Promise<UploadPolicyState> {
   void initial;
   const session = await requireSession();
+  if (session.role === "viewer") {
+    return { status: "error", message: "Viewers can't upload policies." };
+  }
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { status: "error", message: "Pick a PDF or image first." };

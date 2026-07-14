@@ -30,6 +30,7 @@ export async function saveQolEntry(formData: FormData): Promise<void> {
   }
 
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't record quality-of-life entries.");
   const supabase = createServiceClient();
 
   // Validate pet belongs to household.
@@ -86,6 +87,7 @@ export async function deleteQolEntry(formData: FormData): Promise<void> {
   const petId = String(formData.get("pet_id") ?? "");
   if (!id || !petId) throw new Error("entry_id + pet_id required");
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't delete quality-of-life entries.");
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("qol_entries")

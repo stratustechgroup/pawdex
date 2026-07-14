@@ -43,6 +43,7 @@ export async function createClaim(formData: FormData): Promise<void> {
   if (!policyId) throw new Error("policy_id required");
 
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't create claims.");
   const supabase = createServiceClient();
 
   const { data: policy } = await supabase
@@ -121,6 +122,7 @@ export async function updateClaim(formData: FormData): Promise<void> {
   if (status) update.status = status;
 
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't update claims.");
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("claims")
@@ -147,6 +149,7 @@ export async function deleteClaim(formData: FormData): Promise<void> {
   const policyId = String(formData.get("policy_id") ?? "");
   if (!claimId || !policyId) throw new Error("claim_id + policy_id required");
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't delete claims.");
   const supabase = createServiceClient();
   const { error } = await supabase
     .from("claims")

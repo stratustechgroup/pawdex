@@ -18,6 +18,7 @@ export async function assignDocumentToPet(formData: FormData): Promise<void> {
   }
 
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't assign documents.");
   const supabase = createServiceClient();
 
   // Confirm both belong to this household before mutating.
@@ -31,6 +32,7 @@ export async function assignDocumentToPet(formData: FormData): Promise<void> {
       .from("pets")
       .select("id, household_id")
       .eq("id", petId)
+      .is("deleted_at", null)
       .maybeSingle(),
   ]);
 

@@ -30,6 +30,9 @@ export async function requestQuoteAction(
   }
 
   const session = await requireSession();
+  if (session.role === "viewer") {
+    return { status: "error", message: "Viewers can't request vet quotes." };
+  }
   const result = await requestVetQuote({
     householdId: session.householdId,
     userId: session.userId,

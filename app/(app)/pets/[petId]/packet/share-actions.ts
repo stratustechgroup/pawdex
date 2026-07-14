@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireSession } from "@/lib/auth/household";
 import { recordAudit } from "@/lib/db/audit";
+import { getPet } from "@/lib/db/pets";
 import {
   createShareLink,
   revokeShareLink,
@@ -45,6 +46,17 @@ export async function createBoardingShareLink(
   );
 
   const session = await requireSession();
+  if (session.role === "viewer") {
+    return { status: "error", message: "Viewers can't create share links." };
+  }
+
+  // Confirm the pet belongs to this household before minting a PUBLIC link —
+  // createShareLink trusts the pet_id, so an unscoped id would leak another
+  // household's pet (microchip included).
+  const pet = await getPet(session.householdId, petId);
+  if (!pet) {
+    return { status: "error", message: "Pet not found in this household." };
+  }
 
   try {
     const { link, rawToken } = await createShareLink({
@@ -95,6 +107,7 @@ export async function revokeBoardingShareLink(
   const petId = String(formData.get("pet_id") ?? "");
   if (!linkId || !petId) throw new Error("link_id + pet_id required");
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't revoke share links.");
   await revokeShareLink({
     householdId: session.householdId,
     linkId,

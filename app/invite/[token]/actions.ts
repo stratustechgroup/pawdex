@@ -92,6 +92,7 @@ export async function acceptInvitation(rawToken: string): Promise<AcceptResult> 
   const cookieStore = await cookies();
   cookieStore.set(ACTIVE_HOUSEHOLD_COOKIE, invitation.household_id, {
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: ONE_YEAR_SECONDS,

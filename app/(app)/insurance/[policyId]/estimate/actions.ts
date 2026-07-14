@@ -19,6 +19,7 @@ function asCents(raw: FormDataEntryValue | null): number | null {
 
 export async function createCostEstimate(formData: FormData): Promise<void> {
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't create estimates.");
   const policyId = formData.get("policy_id");
   if (typeof policyId !== "string" || !policyId) {
     throw new Error("policy_id required");
@@ -125,6 +126,7 @@ export async function deleteCostEstimate(formData: FormData): Promise<void> {
   const id = formData.get("estimate_id");
   if (typeof id !== "string" || !id) throw new Error("estimate_id required");
   const session = await requireSession();
+  if (session.role === "viewer") throw new Error("Viewers can't delete estimates.");
   const supabase = createServiceClient();
   const { data: row } = await supabase
     .from("cost_estimates")

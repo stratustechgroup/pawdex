@@ -40,6 +40,14 @@ export async function createDocument(
   }
 
   const session = await requireSession();
+  if (session.role === "viewer") {
+    return { ok: false, error: "Viewers can't upload documents." };
+  }
+  // Service-role storage ops below bypass storage RLS, so pin the path to the
+  // caller's household prefix ({household_id}/...) before we download/upload/remove.
+  if (!input.storage_path.startsWith(session.householdId + "/")) {
+    return { ok: false, error: "Invalid storage path." };
+  }
   const supabase = await createClient();
 
   // v6.1 — Server-side preprocessing pass. Three jobs: detect & convert HEIC
@@ -200,7 +208,22 @@ export async function createDocument(
 export async function reextractDocument(documentId: string): Promise<{
   ok: true;
 }> {
-  await requireSession();
+  const session = await requireSession();
+  if (session.role === "viewer") {
+    throw new Error("Viewers can't re-run extraction.");
+  }
+  // Scope the document to the caller's household before triggering a billable
+  // re-extraction — otherwise any household's documentId could be forced in.
+  const supabase = await createClient();
+  const { data: doc } = await supabase
+    .from("documents")
+    .select("id")
+    .eq("id", documentId)
+    .eq("household_id", session.householdId)
+    .maybeSingle();
+  if (!doc) {
+    throw new Error("Document not found in this household.");
+  }
   // Force tier 3 (Sonnet) for manual re-extract — user is explicitly asking
   // for the premium model.
   after(async () => {
@@ -229,6 +252,9 @@ export async function deleteDocumentAction(input: {
   redirectAfter: boolean;
 }): Promise<DeleteDocumentResult> {
   const session = await requireSession();
+  if (session.role === "viewer") {
+    return { ok: false, error: "Viewers can't delete documents." };
+  }
   const result = await deleteDocumentDb({
     householdId: session.householdId,
     actorId: session.userId,
