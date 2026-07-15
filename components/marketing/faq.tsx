@@ -1,7 +1,7 @@
 import { Icon } from "@/components/brand/icon";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
 
-const FAQS = [
+export const FAQS = [
   {
     q: "Is my data private?",
     a: "Yes, and structurally so. Your name, contact details and location are never shared with anyone; there is no toggle that changes that. Contributing de-identified medical records to veterinary research is a separate opt-in, off by default, revocable anytime, and it strips every direct identifier before anything leaves Pawdex.",

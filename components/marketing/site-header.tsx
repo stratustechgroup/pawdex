@@ -2,16 +2,18 @@ import Link from "next/link";
 
 import { Wordmark } from "@/components/brand/wordmark";
 import { Icon } from "@/components/brand/icon";
+import { ContactModalTrigger } from "@/components/marketing/contact-modal";
 
 // Anchors route home-first ("/#id") so they work from any marketing route, not
-// just the home page. Pricing is a real page. On the home page these still
-// resolve to same-page jumps.
+// just the home page. Pricing and About are real pages. On the home page the
+// anchors still resolve to same-page jumps.
 const LINKS = [
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#why-pawdex", label: "Why Pawdex" },
   { href: "/#breeders", label: "Breeders" },
   { href: "/pricing", label: "Pricing" },
   { href: "/#faq", label: "FAQ" },
+  { href: "/about", label: "About" },
 ];
 
 export function SiteHeader() {
@@ -31,6 +33,8 @@ export function SiteHeader() {
               {l.label}
             </Link>
           ))}
+          {/* Opens the shared contact modal; renders as a nav-link trigger. */}
+          <ContactModalTrigger label="Contact" />
         </nav>
         <div style={{ flex: 1 }} />
         <Link href="/#waitlist" className="mk-btn" style={{ height: 38, padding: "0 18px", fontSize: 13.5 }}>

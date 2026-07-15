@@ -6,6 +6,10 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
 import { PricingTiers } from "@/components/marketing/pricing-tiers";
 import { PricingFaq } from "@/components/marketing/pricing-faq";
+import {
+  JsonLd,
+  softwareApplicationSchema,
+} from "@/components/marketing/structured-data";
 
 const TITLE = "Pricing · Pawdex";
 const DESCRIPTION =
@@ -39,6 +43,7 @@ const TIER_DISCLOSURE =
 export default function PricingPage() {
   return (
     <div id="top">
+      <JsonLd data={softwareApplicationSchema()} />
       <a href="#pricing-tiers" className="mk-skip">
         Skip to plans
       </a>

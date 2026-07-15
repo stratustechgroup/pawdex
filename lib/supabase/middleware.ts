@@ -14,6 +14,8 @@ const PUBLIC_PATHS = [
   "/",
   "/home",
   "/pricing",
+  "/about",
+  "/contact",
   "/privacy",
   "/terms",
   "/accessibility",
@@ -30,8 +32,8 @@ function withSessionCookies(source: NextResponse, target: NextResponse) {
 
 // Supabase stores its session in cookies named `sb-<ref>-auth-token` (chunked
 // as `.0`, `.1` when large). If none of them are present the visitor cannot
-// have a session, so getUser() would return null after doing nothing useful —
-// match the `!user` outcome directly and skip building the client entirely.
+// have a session, so getUser() would return null after doing nothing useful.
+// Match the `!user` outcome directly and skip building the client entirely.
 function hasAuthCookie(request: NextRequest): boolean {
   return request.cookies.getAll().some((c) => c.name.startsWith("sb-"));
 }
@@ -106,7 +108,7 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Refresh session if expired — required for Server Components. Runs for every
+  // Refresh session if expired (required for Server Components). Runs for every
   // matched path, including the marketing rewrite below.
   const {
     data: { user },
@@ -120,7 +122,7 @@ export async function updateSession(request: NextRequest) {
     return withSessionCookies(response, NextResponse.rewrite(url));
   }
 
-  // Signed-in visitor never needs the marketing page — send them to the app.
+  // Signed-in visitor never needs the marketing page, so send them to the app.
   if (user && path === "/home") {
     const url = request.nextUrl.clone();
     url.pathname = "/";

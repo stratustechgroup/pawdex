@@ -13,8 +13,9 @@ const PRODUCT: FooterLink[] = [
 ];
 
 const COMPANY: FooterLink[] = [
+  { href: "/about", label: "About" },
   { href: "/accessibility", label: "Accessibility" },
-  { href: "mailto:support@pawdex.co", label: "Contact" },
+  { href: "/contact", label: "Contact" },
 ];
 
 const LEGAL: FooterLink[] = [

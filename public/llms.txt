@@ -1,0 +1,28 @@
+# Pawdex
+
+> Pawdex is a web app that turns any veterinary document into a structured, portable, searchable pet medical record.
+
+## What it does
+
+- AI document ingestion: reads vet PDFs, photos, and forwarded emails into a structured record, with a citation to the exact source page for every extracted fact and a human review step before anything is saved.
+- Expiration reminders: tracks vaccine and medication due dates and warns you before they lapse.
+- Insurance policy analysis: reviews a pet insurance policy for coverage, exclusions, and pre-existing conditions.
+- Multi-user households: one household holds any number of pets and people, with roles (full access or read-only).
+- AI Q&A: ask questions across your pet's records and get answers grounded in your own documents.
+- EU travel packets: assembles the vaccine and health-certificate records needed for pet travel.
+- Adoption and rehoming transfer: hand a pet's full history to a new family through a signup link.
+
+## Key pages
+
+- Home (https://www.pawdex.co/): what Pawdex is, how the document-to-record pipeline works, and the early-access waitlist.
+- About (https://www.pawdex.co/about): background on Pawdex and the problem it solves.
+- Pricing (https://www.pawdex.co/pricing): the plans and what each tier includes.
+- Contact (https://www.pawdex.co/contact): how to reach the Pawdex team for support and questions.
+
+## Facts
+
+- Available in the United States only.
+- Free during early access; no card required.
+- Your records are free to view and export forever, and are never held behind a paywall.
+- Pawdex organizes records. It is not veterinary advice and does not replace a veterinarian.
+- Privacy-first: personal information is never sold or shared. Contributing de-identified records to veterinary research is a separate opt-in, off by default.

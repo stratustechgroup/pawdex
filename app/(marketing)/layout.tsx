@@ -3,6 +3,11 @@ import { Fraunces } from "next/font/google";
 
 import "./marketing.css";
 import { MarketingThemeInit } from "@/components/marketing/theme-init";
+import {
+  JsonLd,
+  organizationSchema,
+  webSiteSchema,
+} from "@/components/marketing/structured-data";
 
 // Display face for the marketing surface only. The app itself stays on Inter;
 // Fraunces at high optical sizes gives the public page its editorial voice.
@@ -35,7 +40,7 @@ export const metadata: Metadata = {
 };
 
 // Public marketing shell. Deliberately free of the app's auth'd top nav and
-// session lookup — this route group renders for anonymous visitors.
+// session lookup. This route group renders for anonymous visitors.
 export default function MarketingLayout({
   children,
 }: {
@@ -44,6 +49,9 @@ export default function MarketingLayout({
   return (
     <>
       <MarketingThemeInit />
+      {/* Sitewide structured data: present on every marketing route. */}
+      <JsonLd data={organizationSchema()} />
+      <JsonLd data={webSiteSchema()} />
       <div className={`mk ${fraunces.variable}`}>{children}</div>
     </>
   );

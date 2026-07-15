@@ -5,8 +5,13 @@ import { FormatTicker } from "@/components/marketing/format-ticker";
 import { Lifecycle } from "@/components/marketing/lifecycle";
 import { Claims } from "@/components/marketing/claims";
 import { BreederStrip } from "@/components/marketing/breeder-strip";
-import { Faq } from "@/components/marketing/faq";
+import { Faq, FAQS } from "@/components/marketing/faq";
 import { SiteFooter } from "@/components/marketing/site-footer";
+import {
+  JsonLd,
+  softwareApplicationSchema,
+  faqPageSchema,
+} from "@/components/marketing/structured-data";
 
 // Quantified, honest, product-true. The Flighty lesson: concrete numbers
 // beat adjectives.
@@ -28,6 +33,8 @@ const STATS = [
 export default function MarketingHome() {
   return (
     <div id="top">
+      <JsonLd data={softwareApplicationSchema()} />
+      <JsonLd data={faqPageSchema(FAQS)} />
       <a href="#main" className="mk-skip">
         Skip to content
       </a>
