@@ -33,6 +33,9 @@ export default function robots(): MetadataRoute.Robots {
         "/invite/",
         "/transfer/",
         "/share/",
+        // Unlisted architecture walkthrough: reachable by direct link only,
+        // never indexed or crawled.
+        "/architecture",
       ],
     },
     sitemap: `${BASE}/sitemap.xml`,
