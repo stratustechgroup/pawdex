@@ -977,3 +977,79 @@
 :root[data-theme="dark"] #mk-tab-3:checked ~ .mk-tab-labels label[for="mk-tab-3"] {
   background: #2f6f4e;
 }
+
+/* ------------------------------------------------- mobile menu (header) */
+/*
+   Native <details> disclosure. Hidden at >=768px where .mk-nav takes over, so
+   the two never coexist. See components/marketing/site-header.tsx.
+*/
+.mk-mobile-menu {
+  position: relative;
+  margin-left: 10px;
+}
+@media (min-width: 768px) {
+  .mk-mobile-menu {
+    display: none;
+  }
+}
+.mk-mobile-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 44px: meets the touch-target minimum the rest of the audit is chasing. */
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  color: var(--pw-text);
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Safari renders a disclosure triangle on summary unless both are suppressed. */
+.mk-mobile-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+.mk-mobile-menu-trigger::marker {
+  content: "";
+}
+.mk-mobile-menu-trigger:focus-visible {
+  outline: 2px solid var(--mk-accent, currentColor);
+  outline-offset: 2px;
+}
+.mk-mobile-menu[open] .mk-mobile-menu-trigger {
+  background: var(--pw-surface-2, rgba(127, 127, 127, 0.12));
+}
+.mk-mobile-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 208px;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--pw-border-strong, rgba(127, 127, 127, 0.3));
+  background: var(--pw-surface, #fff);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+.mk-mobile-menu-link,
+.mk-mobile-menu-panel button {
+  display: flex;
+  align-items: center;
+  /* Full-width stacked rows, so 44px can't collide with a neighbour. */
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--pw-text);
+  font: 400 15px var(--font-inter);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.mk-mobile-menu-link:hover,
+.mk-mobile-menu-panel button:hover {
+  background: var(--pw-surface-2, rgba(127, 127, 127, 0.1));
+}

@@ -140,7 +140,10 @@ export default async function InsurancePage() {
           style={{
             display: "grid",
             gap: 16,
-            gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+            // min(360px, 100%) so the track collapses below its ideal width instead
+            // of forcing page scroll. At 360px — the modal phone width — the old
+            // 360px floor exceeded the ~312px interior and overflowed every card.
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(360px, 100%), 1fr))",
           }}
         >
           {policies.map((p) => (

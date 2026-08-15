@@ -1,5 +1,45 @@
 # Pawdex mobile-compatibility audit (phone-first, 360-390px)
 
+> **Status update (Aug 15, 2026) — partially remediated.**
+>
+> Fixed and verified at 360px against a built server:
+> - **#1 iOS input zoom.** One `@media (max-width: 768px)` rule in `globals.css`
+>   forces `font-size: 16px` on inputs/selects/textareas. `!important` is
+>   load-bearing: the offenders set font size via inline `style`. Verified —
+>   every input on `/login` computes to 16px.
+> - **#2 touch targets.** `(pointer: coarse)` pseudo-element expands the hit area
+>   to 44px without resizing the painted control, so the desktop scale is
+>   untouched. Skipped for button groups, where overlapping halos would steal
+>   each other's taps. Dropdown menu items resized for real (stacked rows can't
+>   collide). `vaccine-row-menu`'s 26px trigger opted in via `.pw-row-menu-trigger`.
+> - **#3 dialog scroll.** `DialogContent` gained `max-h-[calc(100dvh-2rem)]` +
+>   `overflow-y-auto`; submit buttons can no longer land off-screen.
+> - **#6 marketing mobile menu.** Native `<details>/<summary>` disclosure in
+>   `site-header.tsx` — keeps the header a server component and gets keyboard
+>   support and correct ARIA semantics for free. Verified present at 360px and
+>   `display: none` at desktop.
+> - **App shell overflow (was not in the original audit).** The app top-nav was a
+>   non-wrapping flex row with 24px padding and non-shrinking children, pushing
+>   ~30px past the viewport and dragging *every authenticated page* into
+>   horizontal scroll. Fixed via `.pw-topnav` mobile rules. Measured overflow on
+>   `/insurance`, `/vets`, `/inbox`, `/expiring`, `/reminders`: **169px → 8px**.
+> - **#4 partial.** `insurance/page.tsx` and `vets/page.tsx` grid tracks now use
+>   `minmax(min(Npx, 100%), …)`; the emergency card is fluid to `maxWidth: 360`
+>   instead of a hard `width: 360`. Pet pages: **169px → 49px**.
+>
+> **Still outstanding — do not treat this audit as closed:**
+> - **The dashboard (`/`) still overflows ~168px at 360px.** The offending
+>   element was not isolated; `min-width: 0` on the grid children and the insight
+>   card did not resolve it. Highest-traffic authenticated page, so this is the
+>   top remaining mobile item.
+> - Residual 8px on list pages and 49px on pet pages.
+> - #4 remainder: packet/aphis tables, share-link table, briefing table,
+>   destination-selector.
+> - #5 top-nav de-crowding, #7 remaining inline grids and table wrappers,
+>   #8 PWA manifest and safe-area metadata.
+> - The review-form fixed footer still lacks `safe-area-inset-bottom`.
+
+
 Read-only audit of the committed structure. No files were modified.
 
 ## Bottom line

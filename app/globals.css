@@ -570,6 +570,14 @@
   gap: 24px;
   grid-template-columns: 1fr;
 }
+/* Defensive: grid items default to min-width:auto and refuse to shrink below
+   their content's intrinsic width, which is the usual cause of nowrap+ellipsis
+   text never actually ellipsing. Correct hygiene for these columns, though it
+   did NOT resolve the dashboard's remaining ~168px overflow at 360px — that
+   offender is still unidentified. See docs/mobile-audit.md. */
+.dashboard-grid > * {
+  min-width: 0;
+}
 @media (min-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr 340px;
@@ -1103,5 +1111,115 @@ a.pw-timeline-row:hover {
   }
   .pw-tile-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Mobile: kill iOS Safari input zoom.
+
+   Safari zooms the whole page whenever a focused input's computed font-size is
+   under 16px, then leaves the viewport scaled. The shared ui/input + ui/textarea
+   primitives already handle this, but a dozen forms are built on local inline
+   style objects that hardcode 13-15px (login, onboarding, pet-form, insurance,
+   breed-combobox, reminders, account, household invite/new, breeding, vet edit,
+   command palette). Fixing them one at a time invites the next one to
+   reintroduce it.
+
+   One rule, phone widths only, so the desktop type scale is untouched. !important
+   is load-bearing here: the offenders set font/font-size via inline style
+   attributes, which otherwise win over any stylesheet selector.
+
+   Ranked #1 in docs/mobile-audit.md — highest-frequency defect in the app.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  select,
+  textarea,
+  .pw-palette-input {
+    font-size: 16px !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Mobile: raise touch targets to ~44px (docs/mobile-audit.md, ranked #2).
+
+   The shared button scale tops out at h-9 (36px) and icon buttons run
+   24-32px, with hand-rolled controls smaller still. Rather than resize every
+   button — which would reflow the desktop design too — this expands the
+   TAPPABLE area on touch devices while leaving the painted control exactly as
+   designed. The pseudo-element is a child of the button, so it participates in
+   the button's own hit testing.
+
+   Scoped to (pointer: coarse) so it never affects mouse users, and to phone
+   widths so tablet-with-trackpad layouts are untouched.
+
+   Deliberately NOT applied where controls sit shoulder to shoulder in a row
+   (button groups, segmented controls): overlapping 44px halos there would steal
+   each other's taps, which is worse than a small target. Those keep their real
+   size and are fixed by resizing instead.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) and (pointer: coarse) {
+  [data-slot="button"],
+  [data-slot="dropdown-menu-trigger"],
+  .pw-row-menu-trigger {
+    position: relative;
+  }
+  [data-slot="button"]:not([data-slot="button-group"] *)::after,
+  [data-slot="dropdown-menu-trigger"]::after,
+  .pw-row-menu-trigger::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+    /* Purely a hit area. Never paints, never affects layout. */
+    background: transparent;
+    pointer-events: auto;
+  }
+  /* Menu items are stacked vertically with full-width rows, so growing them
+     cannot collide with a neighbour horizontally. Safe to resize for real. */
+  [data-slot="dropdown-menu-item"] {
+    min-height: 44px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Mobile: stop the app top-nav overflowing the viewport.
+
+   The header is a single non-wrapping flex row with 24px side padding and a
+   16px gap. At 360px that leaves ~312px for the wordmark, household switcher,
+   search, theme toggle, notifications and avatar — and none of those children
+   could shrink, so the row pushed ~30px past the right edge and dragged the
+   whole page into horizontal scroll. Every authenticated page was affected,
+   which is why this reads as an app-shell bug rather than a per-page one
+   (docs/mobile-audit.md systemic #4).
+
+   Fix is layout-only: tighten the frame, and let the one genuinely elastic
+   child (the household switcher, which holds a long household name) absorb
+   the remaining pressure by shrinking and ellipsing.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .pw-topnav {
+    padding: 0 12px !important;
+    gap: 8px !important;
+  }
+  /* Flex children default to min-width:auto, which refuses to shrink below
+     content size — the actual mechanism of the overflow. */
+  .pw-topnav > * {
+    min-width: 0;
+  }
+  /* The switcher is the elastic one: its label is a user-supplied household
+     name of arbitrary length. Everything else is a fixed-size control. */
+  .pw-topnav [aria-haspopup="menu"] {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .pw-topnav [aria-haspopup="menu"] > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

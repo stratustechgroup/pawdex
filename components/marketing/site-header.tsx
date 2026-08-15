@@ -41,6 +41,31 @@ export function SiteHeader() {
           Get early access
           <Icon name="arrowRight" size={14} className="mk-btn-arrow" />
         </Link>
+
+        {/*
+          Mobile menu. Below 768px .mk-nav is display:none and only the CTA
+          survived, so Pricing, About and every section anchor were reachable
+          only via the footer — a navigation dead end on the first page a
+          prospect sees (docs/mobile-audit.md, ranked #6).
+
+          Built on <details>/<summary> rather than a client component: this
+          header is a server component, and the native disclosure gives
+          keyboard support, Escape-to-close and correct expanded/collapsed
+          semantics to assistive tech for free. No JS, no hydration.
+        */}
+        <details className="mk-mobile-menu">
+          <summary className="mk-mobile-menu-trigger" aria-label="Menu">
+            <Icon name="menu" size={18} />
+          </summary>
+          <nav className="mk-mobile-menu-panel" aria-label="Primary (mobile)">
+            {LINKS.map((l) => (
+              <Link key={l.href} href={l.href} className="mk-mobile-menu-link">
+                {l.label}
+              </Link>
+            ))}
+            <ContactModalTrigger label="Contact" />
+          </nav>
+        </details>
       </div>
     </header>
   );

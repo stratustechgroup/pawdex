@@ -73,7 +73,8 @@ export default async function VetsPage() {
           style={{
             display: "grid",
             gap: 14,
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+            // See insurance/page.tsx — same overflow, ~8px at 360px.
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(320px, 100%), 1fr))",
           }}
         >
           {clinics.map((c) => (

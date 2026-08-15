@@ -59,6 +59,9 @@ export function VaccineRowMenu({
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
+        // pw-row-menu-trigger opts this 26px control into the mobile 44px hit
+        // area in globals.css. The painted size stays as designed.
+        className="pw-row-menu-trigger"
         aria-label={`More actions for ${vaccineLabel}`}
         disabled={isPending}
         style={{

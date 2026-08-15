@@ -54,6 +54,10 @@ export function InsightCards({ insights }: { insights: Insight[] }) {
                 alignItems: "center",
                 gap: 5,
                 marginTop: 4,
+                // The citation child is nowrap + ellipsis, but a flex item
+                // defaults to min-width:auto, so without this the child's full
+                // intrinsic width wins and the ellipsis never engages.
+                minWidth: 0,
                 font: "400 11.5px var(--font-inter)",
                 color: "var(--pw-text-muted)",
               }}

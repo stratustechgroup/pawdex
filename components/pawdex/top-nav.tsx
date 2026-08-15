@@ -103,6 +103,11 @@ export function TopNav({
 
   return (
     <header
+      // pw-topnav: mobile rules in globals.css tighten padding/gap and let the
+      // household switcher shrink. Without them this row is a non-wrapping flex
+      // with 48px of padding and no shrinking children, so it overflowed the
+      // viewport on every authenticated page at 360px.
+      className="pw-topnav"
       style={{
         position: "relative",
         height: 56,

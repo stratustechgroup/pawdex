@@ -175,7 +175,10 @@ export default async function EmergencyCardPage({
           style={{
             display: "grid",
             gap: 24,
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 360px))",
+            // The 320px floor exceeds the ~264px interior of a pet subpage at 360px
+            // (the layout double-pads), so this forced page scroll on exactly the
+            // surface people pull up at a vet counter. min() lets it collapse.
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 360px))",
             justifyContent: "center",
           }}
         >
@@ -226,7 +229,10 @@ function CardFront({
     <article
       className="pw-id-card"
       style={{
-        width: 360,
+        // Was a hard width: 360. Fluid up to 360 so the card shrinks to the
+        // column instead of overflowing it; the ID-card proportions still hold.
+        width: "100%",
+        maxWidth: 360,
         minHeight: 220,
         padding: 16,
         borderRadius: 12,
@@ -394,7 +400,10 @@ function CardBack({
     <article
       className="pw-id-card"
       style={{
-        width: 360,
+        // Was a hard width: 360. Fluid up to 360 so the card shrinks to the
+        // column instead of overflowing it; the ID-card proportions still hold.
+        width: "100%",
+        maxWidth: 360,
         minHeight: 220,
         padding: 16,
         borderRadius: 12,
