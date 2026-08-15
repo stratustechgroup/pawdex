@@ -9,6 +9,7 @@ import {
   pimsPromptFragment,
 } from "@/lib/ai/pims-classifier";
 import { detectForm51, form51PromptFragment } from "@/lib/ai/form51-anchor";
+import { checkExtractionBudget } from "@/lib/ai/spend-guard";
 import type { Json } from "@/lib/supabase/types";
 
 /**
@@ -54,6 +55,19 @@ export async function processDocumentExtraction(opts: {
       documentId,
       err: docErr?.message,
     });
+    return;
+  }
+
+  // Abuse ceiling on AI spend. Checked before the status flip and before the
+  // file download, so a blocked request costs nothing: no attempt is burned, no
+  // bytes are moved, no model is called. See lib/ai/spend-guard.ts for why this
+  // exists separately from the (currently advisory) plan entitlement.
+  const budget = await checkExtractionBudget({ householdId: doc.household_id });
+  if (!budget.allowed) {
+    await markFailed(
+      documentId,
+      budget.message ?? "Document processing is temporarily unavailable.",
+    );
     return;
   }
 
