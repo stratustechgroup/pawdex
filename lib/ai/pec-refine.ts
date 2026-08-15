@@ -4,6 +4,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 
 import { getOpenRouter, MODEL_TIER2 } from "@/lib/ai/openrouter";
+import { recordAiUsage } from "@/lib/observability/ai-usage";
 import type { PolicyPECAnalysis } from "@/lib/db/pec-analysis";
 
 const SYSTEM_PROMPT = `You are reviewing a heuristic pre-existing-condition flagger's matches between a pet's medical events and an insurance policy's exclusion list. The heuristic over-flags because it matches on token overlap; your job is to filter false positives and rate each true match.
@@ -51,7 +52,8 @@ export async function refinePECAnalysis(
   }));
 
   const openrouter = getOpenRouter();
-  const { object } = await generateObject({
+  const startedAt = Date.now();
+  const { object, usage, providerMetadata } = await generateObject({
     model: openrouter(MODEL_TIER2),
     schema: refineResponseSchema,
     system: SYSTEM_PROMPT,
@@ -61,6 +63,20 @@ export async function refinePECAnalysis(
           `[${i + 1}] Event: "${p.title}"${p.diagnosis ? ` (diagnosis: ${p.diagnosis})` : ""} on ${p.occurred_on}\n    Exclusion: "${p.exclusion}"\n    event_id: ${p.event_id}`,
       )
       .join("\n\n")}\n\nReturn one verdict per row.`,
+  });
+
+  // Unattributed: refinePECAnalysis takes an analysis object, not a household,
+  // and threading ids through purely for telemetry would widen its signature
+  // for no product reason. Feature + model + cost is enough to see this in
+  // spend-by-feature; per-household attribution can be added if it ever
+  // becomes a material line item.
+  await recordAiUsage({
+    feature: "pec-refine",
+    model: MODEL_TIER2,
+    tier: 2,
+    usage,
+    providerMetadata,
+    latencyMs: Date.now() - startedAt,
   });
 
   return object.verdicts;

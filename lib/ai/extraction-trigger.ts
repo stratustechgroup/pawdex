@@ -199,6 +199,7 @@ export async function processDocumentExtraction(opts: {
       forceTier,
       maxTier,
       promptFragments,
+      attribution: { householdId: doc.household_id, documentId: documentId },
     });
 
     // Persist extraction row. The raw response sometimes carries headers /

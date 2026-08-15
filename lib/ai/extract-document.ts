@@ -10,6 +10,7 @@ import {
   type ExtractionResult,
 } from "./extraction-schema";
 import { buildExtractionSystemPrompt } from "./prompts/v1";
+import { recordAiUsage } from "@/lib/observability/ai-usage";
 
 type Tier = 1 | 2 | 3;
 
@@ -17,6 +18,12 @@ export interface ExtractDocumentOptions {
   fileBytes: Uint8Array;
   mimeType: string;
   filename: string;
+  /**
+   * Optional attribution for cost accounting. Every tier attempt writes an
+   * ai_usage row; these ids let spend be traced back to a household and
+   * document. Absent = the row is still written, just unattributed.
+   */
+  attribution?: { householdId?: string | null; documentId?: string | null };
   /** Skip the escalation ladder and run a specific tier directly (e.g. tier 3 for rabies certs). */
   forceTier?: Tier;
   /**
@@ -137,8 +144,27 @@ async function runTier(
     ? `Extract structured data from the attached veterinary document. Filename: ${opts.filename}\n\nIMPORTANT: A previous extraction attempt by a smaller model failed. The failure reason was:\n${priorFailureHint}\n\nPlease be especially careful about that issue. If a field is genuinely not in the document, leave it null rather than fabricating.`
     : `Extract structured data from the attached veterinary document. Filename: ${opts.filename}`;
 
+  // Every attempt is billed, including ones that get escalated past for low
+  // confidence and ones that throw after the model ran. So usage is recorded
+  // per attempt, not per successful extraction — otherwise the escalation
+  // ladder's real cost (tier 1 and 2 spent before tier 3 succeeds) stays
+  // invisible, and that ladder is exactly where the money goes.
+  const startedAt = Date.now();
+  const record = (usage: unknown, providerMetadata: unknown, ok: boolean) =>
+    recordAiUsage({
+      feature: "extract",
+      model: modelId,
+      tier,
+      usage: usage as never,
+      providerMetadata,
+      latencyMs: Date.now() - startedAt,
+      ok,
+      householdId: opts.attribution?.householdId ?? null,
+      documentId: opts.attribution?.documentId ?? null,
+    });
+
   try {
-    const { object, response } = await generateObject({
+    const { object, response, usage, providerMetadata } = await generateObject({
       model: openrouter(modelId),
       schema: extractionResultSchema,
       providerOptions: callBatchHint,
@@ -165,6 +191,8 @@ async function runTier(
       ],
     });
 
+    await record(usage, providerMetadata, true);
+
     if (object.confidence_overall < CONFIDENCE_FLOOR) {
       return {
         ok: true,
@@ -185,6 +213,10 @@ async function runTier(
       `[extract-document] Tier ${tier} (${modelId}) failed: ${msg}`,
       stack ? `\n${stack.split("\n").slice(0, 6).join("\n")}` : "",
     );
+    // A throw does not mean the call was free: a schema-validation failure
+    // happens after the model has already generated and billed. Record it as a
+    // failed attempt so escalation cost stays visible.
+    await record(undefined, undefined, false);
     return { ok: false, error: err };
   }
 }

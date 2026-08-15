@@ -4,6 +4,7 @@ import { generateText } from "ai";
 
 import { embedText } from "@/lib/ai/embeddings";
 import { getOpenRouter, MODEL_TIER3 } from "@/lib/ai/openrouter";
+import { recordAiUsage } from "@/lib/observability/ai-usage";
 import { createClient } from "@/lib/supabase/server";
 
 const TOP_K_DEFAULT = 8;
@@ -124,10 +125,23 @@ export async function answerHouseholdQuestion(input: {
     .join("\n\n");
 
   const openrouter = getOpenRouter();
-  const { text } = await generateText({
+  const startedAt = Date.now();
+  const { text, usage, providerMetadata } = await generateText({
     model: openrouter(MODEL_TIER3),
     system: SYSTEM_PROMPT,
     prompt: `Question: ${question}\n\nRecord snippets:\n${contextBlock}\n\nAnswer (cite using [#N] inline, then list Citations):`,
+  });
+
+  // Ask runs on tier 3 (Sonnet) and is user-initiated with no natural ceiling,
+  // so it is the feature most likely to surprise on cost. Recorded per call.
+  await recordAiUsage({
+    feature: "qa",
+    model: MODEL_TIER3,
+    tier: 3,
+    usage,
+    providerMetadata,
+    latencyMs: Date.now() - startedAt,
+    householdId: input.householdId,
   });
 
   return {

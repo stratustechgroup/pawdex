@@ -53,6 +53,85 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage: {
+        Row: {
+          cached_input_tokens: number | null
+          cost_microusd: number | null
+          created_at: string
+          document_id: string | null
+          extraction_id: string | null
+          feature: string
+          household_id: string | null
+          id: string
+          input_tokens: number | null
+          latency_ms: number | null
+          model: string
+          ok: boolean
+          output_tokens: number | null
+          reasoning_tokens: number | null
+          tier: number | null
+          total_tokens: number | null
+        }
+        Insert: {
+          cached_input_tokens?: number | null
+          cost_microusd?: number | null
+          created_at?: string
+          document_id?: string | null
+          extraction_id?: string | null
+          feature: string
+          household_id?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model: string
+          ok?: boolean
+          output_tokens?: number | null
+          reasoning_tokens?: number | null
+          tier?: number | null
+          total_tokens?: number | null
+        }
+        Update: {
+          cached_input_tokens?: number | null
+          cost_microusd?: number | null
+          created_at?: string
+          document_id?: string | null
+          extraction_id?: string | null
+          feature?: string
+          household_id?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model?: string
+          ok?: boolean
+          output_tokens?: number | null
+          reasoning_tokens?: number | null
+          tier?: number | null
+          total_tokens?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_extraction_id_fkey"
+            columns: ["extraction_id"]
+            isOneToOne: false
+            referencedRelation: "document_extractions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       animal_transfers: {
         Row: {
           accepted_at: string | null
@@ -469,6 +548,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      contact_messages: {
+        Row: {
+          created_at: string
+          email: string
+          handled_at: string | null
+          id: string
+          message: string
+          name: string | null
+          source: string | null
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          handled_at?: string | null
+          id?: string
+          message: string
+          name?: string | null
+          source?: string | null
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          handled_at?: string | null
+          id?: string
+          message?: string
+          name?: string | null
+          source?: string | null
+          subject?: string | null
+        }
+        Relationships: []
       }
       cost_estimates: {
         Row: {
@@ -2008,9 +2120,9 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_weight_kg?: number | null
+          date_of_birth?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
-          date_of_birth?: string | null
           dob_is_estimated?: boolean
           household_id: string
           id?: string

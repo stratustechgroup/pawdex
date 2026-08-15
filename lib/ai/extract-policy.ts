@@ -3,6 +3,7 @@ import "server-only";
 import { generateObject } from "ai";
 
 import { getOpenRouter, MODEL_TIER3 } from "@/lib/ai/openrouter";
+import { recordAiUsage } from "@/lib/observability/ai-usage";
 import {
   policyExtractionSchema,
   type PolicyExtractionResult,
@@ -22,6 +23,8 @@ export interface ExtractPolicyOptions {
    * documents and images, which have no text layer to pre-scan.
    */
   pecFragment?: string | null;
+  /** Optional attribution for cost accounting. See lib/observability/ai-usage.ts. */
+  attribution?: { householdId?: string | null; documentId?: string | null };
 }
 
 export interface ExtractPolicyResult {
@@ -47,9 +50,10 @@ export async function extractPolicy(
 ): Promise<ExtractPolicyResult> {
   const openrouter = getOpenRouter();
   const modelId = MODEL_TIER3;
+  const startedAt = Date.now();
 
   try {
-    const { object, response } = await generateObject({
+    const { object, response, usage, providerMetadata } = await generateObject({
       model: openrouter(modelId),
       schema: policyExtractionSchema,
       system: buildPolicySystemPrompt(opts.pecFragment),
@@ -70,6 +74,20 @@ export async function extractPolicy(
           ],
         },
       ],
+    });
+
+    // Policy extraction always runs on tier 3, so a single call is one of the
+    // more expensive things this product does. Recorded before any of the
+    // post-processing below, which can't fail the accounting.
+    await recordAiUsage({
+      feature: "policy",
+      model: modelId,
+      tier: 3,
+      usage,
+      providerMetadata,
+      latencyMs: Date.now() - startedAt,
+      householdId: opts.attribution?.householdId ?? null,
+      documentId: opts.attribution?.documentId ?? null,
     });
 
     // Bedrock's JSON schema validator doesn't accept `minimum`/`maximum` on

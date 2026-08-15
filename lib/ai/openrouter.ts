@@ -31,6 +31,13 @@ export function getOpenRouter(): OpenRouterProvider {
     apiKey,
     appName: process.env.OPENROUTER_APP_NAME,
     appUrl: process.env.OPENROUTER_REFERRER,
+    // Usage accounting, set once at the provider so every call reports it.
+    // OpenRouter then returns the EXACT charge for the call in
+    // providerMetadata.openrouter.usage.cost, which is what lib/observability
+    // /ai-usage.ts persists. Without this we'd be multiplying token counts by a
+    // hardcoded price table that goes stale the moment a model is repriced or
+    // the tier env vars point somewhere new.
+    extraBody: { usage: { include: true } },
   });
 
   return cached;

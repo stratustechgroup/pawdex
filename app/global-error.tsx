@@ -53,6 +53,15 @@ export default function GlobalError({
             An unexpected error stopped this page from loading. Your records are
             safe and nothing was changed. Reloading usually clears it.
           </p>
+          {/*
+            Deliberately a plain <a>, not next/link. This boundary fires when
+            the root layout or client render has already failed, so the router
+            and app shell are exactly what we cannot trust. A hard navigation
+            tears everything down and rebuilds it; a client-side transition
+            would try to reuse the broken tree. The lint rule guards against
+            accidental full page loads — this one is the point.
+          */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/"
             style={{

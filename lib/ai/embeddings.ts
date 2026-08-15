@@ -1,5 +1,7 @@
 import "server-only";
 
+import { recordAiUsage } from "@/lib/observability/ai-usage";
+
 // 1536-dim embeddings via text-embedding-3-small, routed through OpenRouter's
 // OpenAI-compatible embeddings endpoint so the whole AI path uses one vendor
 // and one key (the same OPENROUTER_API_KEY the extraction and Q&A calls use).
@@ -58,6 +60,7 @@ export async function embedTexts(inputs: string[]): Promise<number[][]> {
     headers["X-Title"] = process.env.OPENROUTER_APP_NAME;
   }
 
+  const startedAt = Date.now();
   const res = await fetch(EMBEDDING_API_URL, {
     method: "POST",
     headers,
@@ -76,6 +79,22 @@ export async function embedTexts(inputs: string[]): Promise<number[][]> {
   }
 
   const body = (await res.json()) as EmbeddingResponse;
+
+  // Embeddings are cheap per call but run on every commit and every Ask query,
+  // so volume is what matters here, not unit price. This path talks to the REST
+  // endpoint directly rather than through the AI SDK, so the token counts are
+  // mapped by hand from OpenAI-compatible field names. Awaited rather than
+  // floated: an unawaited promise may never settle in a serverless runtime.
+  await recordAiUsage({
+    feature: "embed",
+    model: EMBEDDING_MODEL,
+    usage: {
+      inputTokens: body.usage?.prompt_tokens,
+      totalTokens: body.usage?.total_tokens,
+    },
+    latencyMs: Date.now() - startedAt,
+  });
+
   // The API guarantees data sorted by `index`, but assert defensively.
   return body.data
     .slice()
