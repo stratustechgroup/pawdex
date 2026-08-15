@@ -46,11 +46,26 @@ reach first value without help.
 
 - Core record loop (ingest, extract, review, commit, view). **READY.** Verified
   working; the human-in-the-loop commit gate is sound.
-- Doc Q&A (Ask). **READY (pending deploy).** Embeddings now route through
-  OpenRouter (`openai/text-embedding-3-small` via the existing
-  `OPENROUTER_API_KEY`, already set in production), so no separate OpenAI key is
-  needed. Indexing turns on when this change deploys; committed documents then
-  need a one-time re-commit or backfill to build the index.
+- Doc Q&A (Ask). **READY.** Shipped and verified Aug 15. Embeddings route
+  through OpenRouter (`openai/text-embedding-3-small` via the existing
+  `OPENROUTER_API_KEY`), indexing runs on every commit, and the 23 previously
+  committed extractions were backfilled (359 chunks across 23 documents,
+  all 1536-dim).
+
+  Two defects had to be fixed to get here, both invisible until the feature was
+  actually exercised end to end:
+  1. Indexing had never run in production, because it required `OPENAI_API_KEY`
+     which was never set. Routing through OpenRouter fixed it.
+  2. Retrieval returned almost nothing even once chunks existed. The ivfflat
+     index from 0010 was built on an empty table, so its centroids were
+     meaningless and `probes = 1` searched one of 100 degenerate lists.
+     Measured 1-of-50 recall. Migration 0037 drops it in favour of an exact
+     scan within each household. Now 100% recall, verified by
+     `scripts/test-qa-index-e2e.ts`.
+
+  The lesson worth keeping: every earlier check confirmed the feature failed
+  *safely*, and none confirmed it *worked*. Negative-space testing hid two
+  separate defects behind a green board.
 - Email-forward ingestion. **GAP.** The inbound webhook refuses events in
   production without `RESEND_INBOUND_SECRET`. Upload still works; forwarding does
   not.

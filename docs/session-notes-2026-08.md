@@ -100,6 +100,35 @@ Sentry: confirmed not installed (no package, no `instrumentation.ts`, no capture
 calls). Setup is `npx @sentry/wizard@latest -i nextjs` plus a DSN in Vercel env;
 requires the user to create the account/project first.
 
+## Aug 15 — shipped, and what it cost to learn
+
+Pushed and deployed: OpenRouter embeddings + tooling, households test fix, docs,
+Next.js 16.2.6 -> 16.2.12, and migration 0037.
+
+**Push auto-deploys.** A Vercel Git integration exists on this project. An
+earlier note here said deploys were manual CLI only; that was wrong. The check
+that produced it (`vercel ls` immediately after a push) ran before Vercel had
+registered the build. The tell is the `pawdex-git-main-*` alias on the
+deployment. Consequence: the pre-push gate is the only gate, so lint and the
+e2e suites belong in CI, or work should go through a PR branch.
+
+**Ask needed two fixes, not one.** Deploying the embeddings change turned
+indexing on, but retrieval was still broken by the ivfflat index (see
+launch-readiness section 1). Found only by re-running the retrieval test after
+the backfill — the bug is invisible while the table is small, because the
+planner picks a seq scan and gets the right answer.
+
+**Applying a migration without dragging 0034 along:** `supabase db push` applies
+everything pending, and 0034 (purge cron) must stay unapplied until deletion is
+verified. Procedure used: move 0034 out of `supabase/migrations/`, run
+`supabase db push --dry-run` and confirm the list, push, move it back. Verified
+after: `supabase migration list` shows 0034 as the only unapplied one.
+
+**Verification limit worth stating:** retrieval was proven end to end against
+the production database using a throwaway ZZTEST household. The founder's real
+household was not queried, because that needs their session. The 359 real
+chunks were verified structurally (count, coverage, dimensions, no nulls).
+
 ## Launch gates
 
 **Gate A (free public launch):** email keys + domain auth; deploy embeddings and
