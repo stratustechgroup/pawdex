@@ -43,6 +43,9 @@ function isPublicPath(path: string): boolean {
   return (
     PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`)) ||
     path.startsWith("/api/webhooks/") ||
+    // Uptime probe. Unauthenticated on purpose (a monitor can't hold a secret)
+    // and deliberately reveals nothing beyond ok/degraded — see the route.
+    path === "/api/health" ||
     // Unauthenticated-by-design surfaces. Each handler does its own token auth
     // (Bearer CRON_SECRET, HMAC unsubscribe token, share token), so the session
     // gate here must let them through instead of bouncing them to /login.

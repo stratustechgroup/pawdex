@@ -31,6 +31,29 @@ Every required + optional env var Pawdex reads. Group by where the value lives.
 | `CRON_SECRET` | ✅ in prod | 32-byte hex string (`openssl rand -hex 32`). Same value must land in Supabase Vault — see below. |
 | `REMINDER_UNSUBSCRIBE_SECRET` | ✅ for reminders | 32-byte hex string for HMAC unsubscribe tokens. Must match the Edge Function's secret. |
 | `NEXT_PUBLIC_APP_URL` | ✅ for shared links | `http://localhost:3000` or your production URL — used in share-link URLs |
+| `SENTRY_DSN` | recommended in prod | sentry.io → Project → Settings → Client Keys. Server + edge error tracking. Absent = Sentry is a no-op, app behaves identically. |
+| `NEXT_PUBLIC_SENTRY_DSN` | recommended in prod | Same DSN value, exposed to the browser for client-side error capture. |
+
+### Error tracking (Sentry)
+
+Wired in `instrumentation.ts` (server + edge, including `onRequestError` so
+Server Action throws are captured), `instrumentation-client.ts` (browser), and
+`app/global-error.tsx` (render crashes). All of it is inert until a DSN is set,
+so the app ships and runs identically without an account.
+
+To enable: create a Sentry project (platform: Next.js), copy the DSN, and set
+both `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` in Vercel. No code change needed.
+
+Event scrubbing lives in `lib/observability/sentry-config.ts` and is enforced by
+`scripts/test-sentry-scrub.ts` in the normal test suite. Request bodies,
+cookies, headers, query strings, and the user object are stripped or redacted
+before an event leaves the process, and token-bearing paths
+(`/share/…`, `/transfer/…`, `/invite/…`, `/api/unsubscribe/…`) are truncated.
+Session Replay and tracing are deliberately off — replay would record pet
+medical records from the DOM.
+
+**Before enabling in production:** add Sentry to the subprocessor list in
+`docs/gdpr-posture.md` and to the privacy policy. It is not listed today.
 
 ### Supabase Vault (set once via SQL editor)
 
