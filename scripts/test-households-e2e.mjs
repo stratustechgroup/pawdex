@@ -231,6 +231,17 @@ async function main() {
     await sleep(settle);
     return true;
   }
+  // Click an element, retrying until findExpr matches something. Guards
+  // against post-action repaints (router.refresh) that land after a fixed
+  // settle would have elapsed — the kind flip-back was flaky without this.
+  async function clickElWhenReady(findExpr, settle = 900, timeoutMs = 8000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (await clickEl(findExpr, settle)) return true;
+      await sleep(300);
+    }
+    return false;
+  }
   async function typeText(str) {
     for (const ch of str) {
       await cdp.send("Input.dispatchKeyEvent", { type: "char", text: ch });
@@ -358,7 +369,7 @@ async function main() {
     // household; it is owner-gated, audited, and kind-only (never deletes data).
     console.log("== in-place household type flip ==");
     await goto("/settings/household", 1500);
-    await clickEl(
+    await clickElWhenReady(
       `[...document.querySelectorAll('button')].find(e => e.innerText.includes('Switch to Breeder'))`,
       2200,
     );
@@ -372,10 +383,11 @@ async function main() {
       .eq("entity_type", "household");
     assert("in-place flip wrote an audit_log entry", (flipAudit ?? 0) >= 1, `count=${flipAudit}`);
     await shot("04b-household-type-control");
-    await clickEl(
+    const flippedBack = await clickElWhenReady(
       `[...document.querySelectorAll('button')].find(e => e.innerText.includes('Switch to Personal'))`,
       2200,
     );
+    assert("Switch to Personal button appeared after refresh", flippedBack);
     haKind = (await sb.from("households").select("kind").eq("id", householdA).maybeSingle()).data?.kind;
     assert("in-place flip back to personal", haKind === "personal", `kind=${haKind}`);
     const { count: petStill } = await sb
