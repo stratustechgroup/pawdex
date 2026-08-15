@@ -1,202 +1,268 @@
-# Launch readiness
+# Pawdex Launch Readiness
 
-Owner: launch-readiness team (Task #17). Scope: legal, accessibility, performance,
-analytics, CI, waitlist rate limiting, SEO/sharing, domain strings, ops scripts.
+A go-to-market checklist for a modern consumer SaaS, with Pawdex assessed against
+each item. Written July 16, 2026. Verified against source and the live Vercel
+production environment, not from memory. Status meanings:
 
-All verification was done against a local production build (`pnpm build && pnpm start`
-on port 3500) pointed at the live Supabase project. No code was committed, no
-migrations pushed, nothing deployed. The lead owns commit and deploy.
+- **READY** — done, no action needed to launch.
+- **PARTIAL** — mostly there, a specific gap remains.
+- **GAP** — standard practice, not done, should be before launch.
+- **BLOCKER** — launch (of the relevant kind) should not happen without it.
 
-## Status by workstream
+There are two different "launches," and the bar is different for each:
 
-| # | Stream | Status | Evidence |
-|---|--------|--------|----------|
-| 1 | Legal (CCPA/CPRA) | Done | `/privacy`, `/terms`, `/accessibility` render 200 anonymously, prerendered static. Written honest to the product (see notes). |
-| 2 | Accessibility (WCAG 2.1 AA) | Done | axe-core: 0 serious / 0 critical on all audited pages, light and dark, anon and authed. Before/after below. |
-| 3 | Performance | Done | Middleware fast path for anonymous traffic; fonts and static prerender assessed. Numbers below. |
-| 4 | Analytics | Done | `@vercel/analytics` + `@vercel/speed-insights` mounted in `app/layout.tsx`. Founder must enable Web Analytics in Vercel. |
-| 5 | CI | Done | `.github/workflows/ci.yml`. Dry-run of tsc + test + build with dummy env and no `.env.local` all passed. |
-| 6 | Waitlist rate limiting | Done | No-migration global-window throttle in `lib/db/waitlist.ts`. Behavioral test passes, rows self-cleaned. |
-| 7 | SEO / sharing | Done | `metadataBase`, canonical, OG + Twitter tags, `opengraph-image` (renders, verified visually), `apple-icon`, `icon.svg`, `sitemap.xml`, `robots.txt` all render. |
-| 8 | Domain strings (pawdex.app to pawdex.co) | Done | Every code/test/doc occurrence migrated; zero residual `pawdex.app`. One pre-existing bug flagged (below). |
-| 9 | Ops scripts | Done | `scripts/backup-storage.ts` (25 objects / 21 MB downloaded, read-only) and `scripts/waitlist-export.ts` (clean CSV) both run against prod. |
+- **Gate A — open the free product to the public** (beyond the current waitlist).
+- **Gate B — charge money** (turn on paid plans).
 
-## 1. Legal
+## Top-line verdict
 
-Three server components in the marketing shell: `app/(marketing)/privacy/page.tsx`,
-`/terms/page.tsx`, `/accessibility/page.tsx`, sharing `components/marketing/legal-shell.tsx`
-and readable prose styles in `marketing.css`. Footer now links all three.
+The engineering and security posture is strong for a pre-launch product; the gaps
+are operational and commercial, not architectural.
 
-Claims were checked against what the code actually does before being written:
+**Gate A blockers (free public launch):**
+1. Outbound email is off in production (`RESEND_API_KEY` unset). Reminders, the
+   contact form notification, records requests, and insurer emails all silently
+   do nothing. Reminders are a core feature, so this is the headline blocker.
+2. No error monitoring or uptime alerting. You would not know the site was broken
+   until a user told you.
+3. Email-forward ingestion is refused in production (`RESEND_INBOUND_SECRET`
+   unset), an advertised capability that currently no-ops. (Doc Q&A indexing was
+   the other one; it is fixed by routing embeddings through OpenRouter and lights
+   up on the next deploy.)
+4. The deletion flows shipped but are runtime-unverified, and the OTP re-auth
+   depends on a Supabase email template that has not been confirmed enabled.
 
-- **De-identified research**: the product implements this (`research_consents` table,
-  migration 0027; opt-in in the transfer flow, off by default, revocable). The policy
-  describes it exactly that way, plus the public commitment never to re-identify
-  de-identified data (the CPRA condition for de-identified treatment).
-- **Global Privacy Control**: there is no GPC handling in code, and there does not
-  need to be, because Pawdex does not sell or share personal information. The policy
-  states this honestly: with nothing to sell or share, a GPC signal has nothing to
-  opt out of, and we honor it as a matter of course. This is truthful, not a claim of
-  a code path that does not exist.
-- **Service providers**: Vercel, Supabase, OpenRouter, Resend, matching the real stack.
+**Gate B blockers (charging money):** billing is dormant (no Stripe keys,
+enforcement hard-off), no legal entity is formed, and the Terms lack an
+arbitration/class-waiver clause. None of these should be crossed until resolved.
 
-## 2. Accessibility
+---
 
-Audited with axe-core (WCAG 2.0/2.1 A + AA rules) over CDP against the local prod
-build, in both light and dark themes, anonymous and authenticated (ZZTEST session via
-admin magic link). Runner: `scripts/launch-axe.mjs`.
+## 1. Product readiness
 
-Serious + critical counts, before and after:
+Standard practice: the core loop works end to end for a new user; advertised
+features actually function; empty and error states are handled; a new user can
+reach first value without help.
 
-| Page | Before (serious/critical) | After |
-|------|---------------------------|-------|
-| Marketing home (`/home`, dark) | 1 critical + 15 serious nodes | 0 / 0 |
-| Marketing home (`/home`, light) | 8 serious nodes | 0 / 0 |
-| Privacy / Terms / Accessibility | n/a (new) | 0 / 0 |
-| Login | 0 / 0 | 0 / 0 |
-| Dashboard (`/`, empty state, light + dark) | 1 serious node | 0 / 0 |
-| Dashboard (`/`, populated: pet card + reminders + policy, light + dark) | not separately audited before | 0 / 0 |
-| Account (`/settings/account`, light + dark) | up to 3 serious nodes | 0 / 0 |
+- Core record loop (ingest, extract, review, commit, view). **READY.** Verified
+  working; the human-in-the-loop commit gate is sound.
+- Doc Q&A (Ask). **READY (pending deploy).** Embeddings now route through
+  OpenRouter (`openai/text-embedding-3-small` via the existing
+  `OPENROUTER_API_KEY`, already set in production), so no separate OpenAI key is
+  needed. Indexing turns on when this change deploys; committed documents then
+  need a one-time re-commit or backfill to build the index.
+- Email-forward ingestion. **GAP.** The inbound webhook refuses events in
+  production without `RESEND_INBOUND_SECRET`. Upload still works; forwarding does
+  not.
+- Deletion / restore / CCPA hard-delete. **PARTIAL/BLOCKER for the feature.**
+  Shipped and schema applied, but never runtime-tested, and the account/household
+  OTP needs the Supabase Reauthentication email template enabled. Treat as beta
+  until `scripts/test-deletion-e2e.mjs` passes against a real DB.
+- Onboarding to first value. **VERIFY.** Confirm a brand-new user can add a pet
+  and commit a document without a dead end; the perceived-performance work
+  (skeletons, prefetch) helps here.
 
-What was fixed:
+## 2. Security
 
-- Skip-to-content link + `main` landmark on both shells (`.mk-skip`, `.pw-skip`).
-- `role="tablist"` removed from the lifecycle CSS-radio tabs (it required `role="tab"`
-  children it never had). Native radios carry the semantics.
-- Dark-theme accent buttons: the dark `--pw-accent` (#4A9472) is too light for white
-  text at small sizes (about 3.3 to 3.6:1). Added `.pw-accent-fill` (app) and dark-mode
-  `.mk-btn` / active-tab overrides (marketing) that pin the darker brand green. Token
-  values were not changed, only usage.
-- Marketing amber (`--mk-amber`) made theme-aware: darker on the cream surface (was
-  3.65 to 3.85:1 for eyebrows and claim indices), warmer on the dark surface.
-- FAQ numbers and tab indices moved from `--pw-text-subtle` to `--pw-text-muted` /
-  full opacity to clear AA on the dark surface.
-- Account page: support mailto underlined (link-in-text distinguishability), connected-
-  accounts subtext moved from muted to secondary (was 4.45:1 on surface-2).
+Standard practice: no critical/high vulns; auth enforced server-side; secrets not
+in the client; dependencies patched; abuse throttled.
 
-`app/(app)` edits were accessibility-only (attributes, class, single color token), no
-visual redesign.
+- Application security. **READY.** A multi-agent audit this session closed a
+  privileged-column write escalation (migration 0035), a systemic viewer-role
+  gap across 14 actions, a cross-household share-link IDOR, a stored XSS, and
+  added security headers (CSP report-only), rate limiting, constant-time secret
+  compares, and cookie flags.
+- Dependencies. **READY.** `pnpm audit` clean after pinning five transitive CVEs.
+- RLS / tenant isolation. **READY.** Fail-closed across all household tables;
+  service-role clients constructed only after signature/secret verification.
+- CSP. **PARTIAL.** Shipped as report-only. Flip to enforced after it soaks.
+- Rate limiting. **PARTIAL.** In-process sliding window; not distributed, resets
+  on cold start. Fine as defense-in-depth, thin against a coordinated flood.
+- Penetration test / third-party review. **GAP (optional pre-launch).** Not
+  required for a consumer beta; expected later for enterprise or research-data
+  buyers.
 
-## 3. Performance
+## 3. Legal & compliance
 
-Measured, not assumed. Local prod build, anonymous `/`:
+Standard practice: enforceable Terms with liability limits and dispute terms;
+privacy policy; correct licensing posture; entity formed.
 
-| | TTFB (warm) | Notes |
-|-|-------------|-------|
-| Live `https://www.pawdex.co/` before | ~150 to 220 ms warm, ~1.1 s cold | serverless invocation + network; cold start is the visible cost |
-| Local `/` before (anon) | ~4 to 6 ms | already fast |
-| Local `/` after (anon, fast path) | ~2.5 to 3.5 ms | rewrite preserved, gate preserved |
+- Terms assent. **READY.** Sign-in-wrap with Terms + Privacy links and an 18+
+  attestation (upgraded from browsewrap this session).
+- Arbitration + class-action waiver. **BLOCKER for Gate B, GAP for Gate A.**
+  Missing entirely; the single biggest litigation-cost exposure. Needs a lawyer.
+- Indemnification, venue specificity, DMCA designated agent. **GAP.** DMCA agent
+  is a ~$6 filing; the rest are lawyer text. DMCA and the physical-address
+  requirement are blocked on forming the entity.
+- Legal entity. **BLOCKER for Gate B.** No LLC formed yet; this gates the DMCA
+  agent, the required business address (also CAN-SPAM), and Stripe onboarding.
+- Compliance posture (CCPA, CAN-SPAM, COPPA, vet-practice boundaries). **READY.**
+  Documented in `docs/compliance-audit.md` (GREEN across the shipping surface;
+  the future insurance claim-filing feature is flagged for public-adjuster review
+  before it ships).
+- Accessibility statement honesty. **PARTIAL.** The statement claims axe runs; the
+  script exists but is not wired into CI. Run it before launch or wire it in.
 
-Honest finding that corrected the original hypothesis: `supabase.auth.getUser()` does
-**not** make a network round trip for an anonymous visitor, because with no `sb-*`
-auth cookie there is no token to validate and supabase-js returns null immediately.
-So the middleware was not making a per-request Supabase call for marketing traffic in
-the first place. The fast path (`lib/supabase/middleware.ts`) still helps: for any
-request with no auth cookie it reproduces the signed-out routing (rewrite `/` to
-`/home`, gate protected paths, pass through public ones) without constructing the
-Supabase client at all. The measurable win is small at the median and real at p99 and
-at scale (no client construction or cookie parsing on anon requests, and the anon path
-is provably independent of Supabase auth availability). The cookie-present path is
-unchanged; a logged-in session still refreshes and reaches the app (verified: the
-authenticated dashboard renders "Good afternoon, ..." with a live session).
+## 4. Privacy & data governance
 
-Other findings:
+Standard practice: honest privacy policy; data-subject rights; subprocessor
+agreements; a defined retention posture.
 
-- `/home` is already statically prerendered (`○` in the build). The middleware rewrite
-  serves that static page, so there was no per-request marketing render to fix.
-- Fraunces axes (opsz/SOFT/WONK): **kept.** The design actively uses SOFT (40/60/30)
-  and WONK (1) across every display heading (`marketing.css`), so dropping them is a
-  real visual change, not dead weight. The 118 KB variable woff2 is load-bearing.
-- The ~1.1 s cold start on the live site is the more visible "feels slow" signal. That
-  is infrastructure (keep-warm, function cold boot), not a code change for this pass.
-  Recommended as a founder/infra follow-up.
+- Privacy policy + US-only GDPR posture. **READY.** Documented in
+  `docs/gdpr-posture.md`; no third-party trackers, cookieless analytics, so no
+  cookie banner needed.
+- CCPA delete/export rights. **READY (mechanism), PARTIAL (verification).**
+  Self-serve deletion + 30-day retention + export-before-delete implemented; the
+  flows need the runtime test above.
+- Subprocessor DPAs (Vercel, Supabase, OpenRouter, OpenAI, Resend, Stripe).
+  **GAP/VERIFY.** Flagged in the compliance audit as unconfirmed. Confirm signed
+  DPAs are on file before handling real user data at scale.
+- Purge automation. **GAP.** The daily hard-purge cron (migration 0034) is
+  written but deliberately not applied. Arm it (with the vault secrets) once
+  deletion is verified, or soft-deleted data never actually purges.
 
-## 4. Analytics
+## 5. Billing & monetization
 
-`<Analytics />` and `<SpeedInsights />` mounted in `app/layout.tsx` via the v2 `/next`
-subpaths. If events 404 after deploy, the founder must flip on Web Analytics (and Speed
-Insights) in the Vercel dashboard for the project.
+Standard practice: payment provider live and tested; entitlements enforced;
+subscription lifecycle (upgrade, downgrade, cancel, refund, dunning) handled;
+auto-renew disclosures compliant.
 
-## 5. CI
+- Payments. **BLOCKER for Gate B.** Stripe is wired but dormant: no
+  `STRIPE_SECRET_KEY` in production, so `isBillingEnabled()` is false. You cannot
+  charge anyone today.
+- Entitlement enforcement. **BLOCKER for Gate B.** `canEnforce()` is hard-coded to
+  return false. Limits (free = 2 pets, 10 AI extractions/mo) are computed and
+  displayed but never block. Flip on with tests before charging.
+- Subscription-law compliance (CA ARL, card-network rules). **PARTIAL.** Terms and
+  checkout consent block are written and compliant per the audit; the refund
+  policy still needs founder sign-off.
+- Dunning / failed-payment handling. **GAP.** Verify the webhook path handles
+  payment failures and subscription state transitions before charging.
 
-`.github/workflows/ci.yml`: checkout, pnpm (via `packageManager` field added to
-`package.json`), Node 20 with pnpm cache, `install --frozen-lockfile`, `tsc --noEmit`,
-`pnpm test`, `pnpm build`. Triggers on push and PR to `main`. Dummy env vars are set at
-the job level so the build and tests run without any real secrets.
+## 6. Infrastructure & reliability
 
-Dry-run locally with `.env.local` hidden and only the dummy vars set: tsc PASS, test
-PASS (65 assertions, RESULT PASS), build exit 0. The unsubscribe-token test needs
-`REMINDER_UNSUBSCRIBE_SECRET`; it reads env first, so the CI dummy value satisfies it.
+Standard practice: known scaling model; database backups with a tested restore;
+a rollback path; secrets managed; region/latency understood.
 
-## 6. Waitlist rate limiting
+- Hosting & region. **READY.** Vercel functions pinned to `pdx1`, co-located with
+  Supabase `us-west-2`.
+- Database backups / PITR. **VERIFY.** Supabase provides managed backups; confirm
+  the plan's retention and, once, actually test a restore. Not documented today.
+- Rollback. **PARTIAL.** Vercel keeps prior deployments (instant rollback), but
+  deploys are run manually (`vercel --prod`) with no promote/preview gate.
+- Migrations discipline. **READY.** Additive, versioned, applied via CLI with a
+  dry-run; 0034 deliberately deferred.
+- Secrets management. **READY.** Env-based, service-role server-only, vault for
+  cron secrets. But see the missing-keys gaps in section 8.
 
-Chose the no-migration option. `lib/db/waitlist.ts` counts signups across the whole
-table in the last 10 minutes; at 30 or more it returns `rate_limited` and the action
-shows a polite "try again in a few minutes" message. Per-email dedup (unique index) and
-the form honeypot are unchanged. Fails open if the count query errors (the throttle is a
-backstop, not the gate).
+## 7. Observability & operations
 
-Behavioral test: `scripts/test-waitlist-ratelimit.ts` (wired into `pnpm test:live`).
-Seeds 30 ZZTEST rows, asserts the 31st is throttled, asserts signups resume after the
-window clears, and cleans up in a `finally`. Verified 0 `zztest-ratelimit` rows remain.
+Standard practice: error tracking, uptime monitoring, structured logging,
+alerting, a health check, and an incident process.
 
-## 7. SEO / sharing
+- Error tracking. **GAP (near-blocker for Gate A).** No Sentry or equivalent. You
+  currently have no way to know a server action is throwing for real users.
+- Uptime / synthetic monitoring. **GAP.** No external uptime check or alerting.
+- Health endpoint. **GAP.** None; add a lightweight `/api/health` for monitors.
+- Logging. **PARTIAL.** `console` logs land in Vercel logs; no structured logging
+  or log retention strategy.
+- Incident response. **GAP.** No runbook for "the site is down" or "a key
+  leaked," and no status page. `DEPLOY.md` is a good operational base to extend.
 
-- `metadataBase = https://www.pawdex.co` in the root layout; canonical + OG + Twitter
-  card in the marketing layout.
-- `app/(marketing)/opengraph-image.tsx`: 1200x630 PNG, brand shield-paw mark + wordmark
-  + tagline on the cream field with the green base bar. Rendered and inspected visually
-  (the paw mark is embedded as a data-URI image to avoid Satori's path-rendering limits).
-- `app/apple-icon.tsx` (180x180 PNG), `app/icon.svg` (PawdexMark).
-- `app/sitemap.ts` (marketing URLs only), `app/robots.ts` (allow marketing, disallow API
-  and every authed/token path, sitemap ref). Both render and were curl-verified.
+## 8. Email & communications
 
-## 8. Domain strings
+Standard practice: a verified sending domain with SPF/DKIM/DMARC; transactional
+email actually delivering; inbound handling; deliverability monitored.
 
-`pawdex.app` to `pawdex.co` across sender defaults (`records@`, `insurance@`,
-`vet-requests@`, `invites@`, `reminders@`), the inbound-domain default
-(`inbound.pawdex.app` to `inbound.pawdex.co`), the inbound webhook comment, DEPLOY.md,
-README.md, email-architecture.md, and the two test assertions coupled to the string
-(`test-insurance-live.ts`, `test-email-webhooks.ts`). Zero residual `pawdex.app` in application code, tests, and active docs. One comment in
-already-applied migration `0010_phase5_foundations.sql` still reads `pawdex.app`; left as
-historical (applied migrations are not edited here) and it has no runtime effect.
+- Outbound email. **BLOCKER for Gate A.** `RESEND_API_KEY` is not set in
+  production. Every send path (reminders, contact notification, records requests,
+  insurer clarifications) silently no-ops. This is the most surprising gap in the
+  audit given reminders are a headline feature.
+- Delivery + inbound webhook secrets. **GAP.** `RESEND_WEBHOOK_SECRET` and
+  `RESEND_INBOUND_SECRET` are unset in production, so delivery tracking and
+  email-forward ingestion are refused by the production fail-closed gates.
+- Sending-domain auth (SPF/DKIM/DMARC). **VERIFY.** `RESEND_FROM_EMAIL` is set;
+  confirm the domain is verified in Resend and DNS records are in place, or mail
+  lands in spam.
 
-## Flags for the lead
+## 9. Growth, SEO & analytics
 
-1. **Pre-existing bug, out of my a11y-only lane in `app/(app)`**: `app/(app)/pets/[petId]/upload/page.tsx`
-   builds the inbox address as `` inbox+${slug(householdName)}@pawdex.co `` using a
-   display-name slug and the bare domain. The correct address is
-   `inboxAddressFor(<household inbound slug>)` at `@inbound.pawdex.co`
-   (`lib/db/inbound-addresses.ts`). I migrated the domain string but did not rework the
-   address logic. This page likely shows the wrong forwarding address today. Recommend a
-   real fix that reuses the shared builder.
-2. **Edge function**: `supabase/functions/reminders-cron/index.ts` sender default changed
-   to `reminders@pawdex.co`. If you accept it, the edge function must be redeployed for
-   the change to take effect.
-3. **Systemic dark-mode primary-button contrast**: white text on `--pw-accent` in dark
-   mode is below AA at small sizes app-wide, not just the one CTA axe caught on the
-   audited page. I seeded a pet and re-audited the populated dashboard (pet card,
-   reminder rail, status pills, action buttons) in both themes: it came back 0/0, so the
-   pattern did not instantiate on the main authenticated screen. It could still appear on
-   pet-detail or other pages the task did not scope. `.pw-accent-fill` is a ready
-   primitive; consider applying it to other primary buttons (or revisiting the dark
-   accent) in a follow-up.
-4. **Onboarding agent's files** are also in the working tree (`app/auth/callback/route.ts`,
-   `app/onboarding/**`, `components/onboarding/**`). Not mine; noted only so the diff is
-   not a surprise.
+Standard practice: discoverable pages, structured data, a measurable activation
+funnel, and marketing content.
 
-## Founder-only remaining actions
+- SEO / AEO. **READY.** Sitemap, robots, per-page metadata, JSON-LD
+  (Organization, WebSite, SoftwareApplication, FAQPage), and `llms.txt` shipped.
+- Marketing site. **READY.** Home, pricing, about, contact live; positioning
+  informed by `docs/competitive-landscape.md`.
+- Product analytics. **GAP.** Only Vercel Web Analytics (page-level, cookieless).
+  No funnel/event analytics (PostHog/Amplitude), so activation and retention are
+  not measurable. Important the day you start acquiring users.
+- Conversion instrumentation (waitlist to active). **GAP.** Tie to the analytics
+  above.
 
-- Add `RESEND_API_KEY` (empty by design here) to enable outbound + inbound email.
-- Configure Google OAuth (Connected Accounts references it; provider must be enabled).
-- Vercel dashboard: enable Web Analytics and Speed Insights if events 404.
-- DNS: confirm `inbound.pawdex.co` MX/TXT and the Resend sending domain per DEPLOY.md.
-- Optional: address the live cold-start latency (keep-warm) if the site still feels slow.
+## 10. Support & customer success
 
-## Ops runbook
+Standard practice: a support channel, a help center, and defined response
+expectations.
 
-- **Storage backup**: `pnpm dlx tsx scripts/backup-storage.ts [outDir]`. Downloads the
-  whole `documents` bucket to `./backups/documents-<timestamp>/`, re-runnable, read-only.
-  Recommended schedule: nightly (launchd/cron or a scheduled GitHub Action with the
-  service-role key in secrets). Keep output off any public host: these are medical records.
-- **Waitlist export**: `pnpm dlx tsx scripts/waitlist-export.ts > waitlist.csv`.
+- Support channel. **READY.** Contact page + form (persists to `contact_messages`
+  and, once email is on, notifies support). A few in-app help pages exist.
+- Help center / docs. **PARTIAL.** Thin. Fine for a small beta; expand as volume
+  grows.
+- Response SLA. **VERIFY.** The contact page promises "a few business days";
+  make sure someone actually watches the inbox / table.
+
+## 11. Accessibility & mobile
+
+Standard practice: WCAG-reasonable, keyboard-navigable, mobile-usable, ideally
+installable.
+
+- Accessibility. **PARTIAL.** Decent posture on public pages (skip links,
+  landmarks, labeled inputs); the authenticated app forms were not deeply
+  audited, and axe is not in CI.
+- Mobile web. **PARTIAL.** Audited (`docs/mobile-audit.md`); fixes not yet
+  applied: sub-16px inputs cause iOS zoom, several touch targets under 44px,
+  dialogs lack scroll caps, one fixed-width surface overflows at 360px, and the
+  marketing header has no mobile hamburger.
+- PWA / installable. **GAP.** No `manifest.json`, so Android will not offer
+  Install. Relevant given the stated "web until a native app exists" plan.
+
+## 12. Launch mechanics
+
+Standard practice: CI gates on quality; a staging environment; a rollout plan; a
+comms plan.
+
+- CI. **PARTIAL.** `.github/workflows/ci.yml` runs typecheck, tests, and build on
+  push/PR to main with dummy secrets. It does not run lint, and there is no
+  deploy gate (deploys are manual). Add `eslint` to CI.
+- Staging environment. **GAP.** No separate staging/preview database; migrations
+  and the deletion e2e have nowhere safe to run before production.
+- Rollout plan. **VERIFY.** Decide batch sizes for opening the waitlist and a
+  kill-switch/feature-flag for anything risky (deletion, billing).
+
+---
+
+## The short list
+
+**Before Gate A (open the free product):**
+1. Set `RESEND_API_KEY` (+ `RESEND_WEBHOOK_SECRET`, `RESEND_INBOUND_SECRET`) in
+   production and confirm domain auth. Email is a core feature and is off.
+2. Deploy the embeddings-via-OpenRouter change so Ask indexing works, then
+   backfill the index for already-committed documents.
+3. Add error tracking (Sentry) and an uptime monitor with alerting.
+4. Verify the deletion flows end to end and enable the Supabase Reauthentication
+   template; arm the purge cron.
+5. Add product analytics so you can see whether launch is working.
+6. Apply the pending mobile fixes; wire axe into CI or soften the a11y statement.
+
+**Before Gate B (charge money):**
+1. Form the legal entity.
+2. Lawyer pass on Terms: arbitration + class-action waiver, indemnification,
+   refund policy sign-off; register a DMCA agent; add the business address.
+3. Turn on Stripe (keys) and flip entitlement enforcement (`canEnforce`) with
+   tests; verify dunning and subscription lifecycle.
+4. Confirm subprocessor DPAs are signed.
+
+**Strong today:** application security, tenant isolation, dependency hygiene,
+SEO/AEO, the marketing surface, the core record loop, and the compliance posture
+for the shipping feature set.
