@@ -21,8 +21,8 @@ Every required + optional env var Pawdex reads. Group by where the value lives.
 | `OPENROUTER_MODEL_TIER3` | optional | Default `anthropic/claude-sonnet-4.5` |
 | `OPENROUTER_APP_NAME` | optional | Sent as `X-Title` header on OpenRouter calls |
 | `OPENROUTER_REFERRER` | optional | Sent as `HTTP-Referer` header |
-| `OPENAI_API_KEY` | ✅ for doc Q&A | openai.com — used only for `text-embedding-3-small` |
-| `OPENAI_EMBEDDING_MODEL` | optional | Default `text-embedding-3-small` |
+| `OPENROUTER_EMBEDDING_MODEL` | optional | Default `openai/text-embedding-3-small`. Doc Q&A embeddings route through OpenRouter (same `OPENROUTER_API_KEY`), so no separate OpenAI key is needed. |
+| `OPENROUTER_EMBEDDING_URL` | optional | Default `https://openrouter.ai/api/v1/embeddings` |
 | `RESEND_API_KEY` | ✅ for any email | resend.com |
 | `RESEND_FROM_EMAIL` | ✅ for any email | A verified-domain sender; in dev `onboarding@resend.dev` is fine |
 | `RESEND_WEBHOOK_SECRET` | ✅ in prod | Resend delivery webhook signing secret (`whsec_…`) |

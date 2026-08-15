@@ -1,18 +1,24 @@
 import "server-only";
 
-// 1536-dim embeddings via OpenAI's text-embedding-3-small. We hit the OpenAI
-// REST endpoint directly to avoid pulling in another SDK. Cost is ~$0.02 per
-// million tokens — negligible relative to the LLM calls already on the path.
+// 1536-dim embeddings via text-embedding-3-small, routed through OpenRouter's
+// OpenAI-compatible embeddings endpoint so the whole AI path uses one vendor
+// and one key (the same OPENROUTER_API_KEY the extraction and Q&A calls use).
+// The model id is provider-prefixed for OpenRouter's catalog. Cost is ~$0.02
+// per million tokens, negligible next to the LLM calls already on the path.
 
 const EMBEDDING_MODEL =
-  process.env.OPENAI_EMBEDDING_MODEL ?? "text-embedding-3-small";
-const EMBEDDING_API_URL = "https://api.openai.com/v1/embeddings";
+  process.env.OPENROUTER_EMBEDDING_MODEL ??
+  process.env.OPENAI_EMBEDDING_MODEL ??
+  "openai/text-embedding-3-small";
+const EMBEDDING_API_URL =
+  process.env.OPENROUTER_EMBEDDING_URL ??
+  "https://openrouter.ai/api/v1/embeddings";
 const DEFAULT_DIMENSIONS = 1536;
 
-type OpenAIEmbeddingResponse = {
+type EmbeddingResponse = {
   data: { embedding: number[]; index: number }[];
   model: string;
-  usage: { prompt_tokens: number; total_tokens: number };
+  usage?: { prompt_tokens: number; total_tokens: number };
 };
 
 export class EmbeddingError extends Error {
@@ -27,10 +33,10 @@ export class EmbeddingError extends Error {
 export async function embedTexts(inputs: string[]): Promise<number[][]> {
   if (inputs.length === 0) return [];
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new EmbeddingError(
-      "OPENAI_API_KEY is not configured — set it in .env.local to enable doc Q&A indexing.",
+      "OPENROUTER_API_KEY is not configured — set it to enable doc Q&A indexing.",
     );
   }
 
@@ -40,12 +46,21 @@ export async function embedTexts(inputs: string[]): Promise<number[][]> {
     s.length > 24000 ? s.slice(0, 24000) : s,
   );
 
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    authorization: `Bearer ${apiKey}`,
+  };
+  // Mirror the attribution headers the chat client sends to OpenRouter.
+  if (process.env.OPENROUTER_REFERRER) {
+    headers["HTTP-Referer"] = process.env.OPENROUTER_REFERRER;
+  }
+  if (process.env.OPENROUTER_APP_NAME) {
+    headers["X-Title"] = process.env.OPENROUTER_APP_NAME;
+  }
+
   const res = await fetch(EMBEDDING_API_URL, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
+    headers,
     body: JSON.stringify({
       model: EMBEDDING_MODEL,
       input: cleaned,
@@ -56,11 +71,11 @@ export async function embedTexts(inputs: string[]): Promise<number[][]> {
   if (!res.ok) {
     const text = await res.text().catch(() => "(no body)");
     throw new EmbeddingError(
-      `OpenAI embedding API ${res.status}: ${text.slice(0, 400)}`,
+      `OpenRouter embedding API ${res.status}: ${text.slice(0, 400)}`,
     );
   }
 
-  const body = (await res.json()) as OpenAIEmbeddingResponse;
+  const body = (await res.json()) as EmbeddingResponse;
   // The API guarantees data sorted by `index`, but assert defensively.
   return body.data
     .slice()

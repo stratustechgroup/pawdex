@@ -12,7 +12,7 @@ type Chunk = {
 
 const MAX_CHUNK_CHARS = 1800;
 
-// Doc Q&A is an optional feature — without OPENAI_API_KEY the embedder
+// Doc Q&A is an optional feature — without OPENROUTER_API_KEY the embedder
 // (lib/ai/embeddings.ts) throws on every commit. We don't want a 5-line stack
 // trace logged for every extraction commit just because the key isn't set, so
 // flag the absence once and silently skip indexing thereafter. Wrapped in an
@@ -184,10 +184,10 @@ export async function indexExtractionForQa(args: {
 }): Promise<{ chunks_written: number }> {
   // Bail before doing any work when the embedding key isn't set — doc Q&A
   // is an optional feature, no need to noisily fail on every commit.
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     if (!warnState.missingKeyLogged) {
       console.info(
-        "[indexExtractionForQa] OPENAI_API_KEY not set — skipping doc Q&A indexing. Set it in .env.local to enable.",
+        "[indexExtractionForQa] OPENROUTER_API_KEY not set — skipping doc Q&A indexing.",
       );
       warnState.missingKeyLogged = true;
     }
