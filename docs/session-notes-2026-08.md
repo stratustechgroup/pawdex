@@ -129,6 +129,48 @@ the production database using a throwaway ZZTEST household. The founder's real
 household was not queried, because that needs their session. The 359 real
 chunks were verified structurally (count, coverage, dimensions, no nulls).
 
+## Aug 15 (later) — non-email go-live work
+
+Shipped: health endpoint, Sentry wiring, AI spend ceiling, token/cost accounting,
+mobile fixes, deletion verified, purge cron armed. All email work held per
+instruction.
+
+**Deletion is verified.** `scripts/test-deletion-e2e.mjs` 10/10 (soft delete +
+restore, sole-owned enumeration, purge cutoff, hard purge with a surviving
+deletion_log). The harness header claims it needs 0034; it does not — its schema
+guard only checks `pets.deleted_at` and `deletion_log`, both from 0033. The purge
+route was also exercised directly: 401 unauthenticated, 401 on a wrong secret,
+200 and a correct no-op with the right one, in prod as well as locally.
+
+**Purge cron armed (0034).** Applied last, after Sentry landed. Needed
+`--include-all` because 0035-0038 were applied ahead of it, so the CLI treats it
+as out-of-order; a dry run confirmed the flag applies only 0034. All migrations
+are now applied — the "hold 0034 back" procedure documented above no longer
+applies to future pushes.
+
+**Still unverified:** that the cron actually fires. That needs the SQL editor:
+```sql
+select jobname, schedule, active from cron.job where jobname like 'pawdex%';
+select name from vault.decrypted_secrets where name in ('pawdex_app_url','pawdex_cron_secret');
+```
+If the vault secrets are missing, the job POSTs to `https://example.invalid` and
+silently does nothing — the same failure mode the reminders cron has been in for
+eleven months. Worth checking before trusting retention.
+
+**Sentry ships inert.** No DSN configured, so `init` is a no-op; smoke-tested
+(pages 200, zero Sentry noise in the log). Add `SENTRY_DSN` +
+`NEXT_PUBLIC_SENTRY_DSN` in Vercel to enable, and add Sentry to the subprocessor
+list and privacy policy first — it is not listed today.
+
+**Spend ceiling is not the plan limit.** `canEnforce()` is still false; this is a
+separate abuse backstop (50/household/day, 500 global) that works with billing
+off and sits underneath whatever the product limit becomes. Fails open on a
+counting error, deliberately.
+
+**Cost data is exact, not estimated.** OpenRouter usage accounting is on at the
+provider (`extraBody`), verified against a live call returning `cost: 9e-7` USD.
+`pnpm ai:spend [days]` reports it.
+
 ## Launch gates
 
 **Gate A (free public launch):** email keys + domain auth; deploy embeddings and
