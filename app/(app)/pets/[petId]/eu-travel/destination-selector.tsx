@@ -36,7 +36,11 @@ export function DestinationSelector({
       style={{
         display: "grid",
         gap: 10,
-        gridTemplateColumns: "1fr 1fr auto",
+        // min(200px,100%) + auto-fit instead of a fixed "1fr 1fr auto": two
+        // date/select inputs refuse to shrink below ~150px each, so the fixed
+        // template forced +228px of page scroll at 360px. auto-fit wraps the
+        // controls into rows on phones and keeps them on one line on desktop.
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))",
         alignItems: "end",
         padding: 14,
         borderRadius: 10,

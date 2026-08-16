@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/brand/icon";
@@ -69,7 +69,6 @@ export default async function Aphis7001Page({
 
   const vaccines = (vaccRes.data ?? []) as VaccinationRow[];
   const rabies = vaccines.find((v) => v.is_rabies === true) ?? null;
-  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <>
@@ -154,7 +153,7 @@ export default async function Aphis7001Page({
         <FormSection label="Section I — Consignor / Origin">
           <Pair label="Owner / household" value={session.householdName} />
           <Pair label="Owner email" value={session.email ?? "—"} />
-          <Pair label="Date prepared" value={format(new Date(today), "MMM d, yyyy")} />
+          <Pair label="Date prepared" value={format(new Date(), "MMM d, yyyy")} />
         </FormSection>
 
         <FormSection label="Section II — Animal description">
@@ -169,7 +168,7 @@ export default async function Aphis7001Page({
             label="Date of birth"
             value={
               pet.date_of_birth
-                ? format(new Date(pet.date_of_birth), "MMM d, yyyy")
+                ? format(parseISO(pet.date_of_birth), "MMM d, yyyy")
                 : "—"
             }
           />
@@ -202,13 +201,13 @@ export default async function Aphis7001Page({
               <Pair label="Vaccine product" value={rabies.vaccine_type} />
               <Pair
                 label="Administered on"
-                value={format(new Date(rabies.administered_on), "MMM d, yyyy")}
+                value={format(parseISO(rabies.administered_on), "MMM d, yyyy")}
               />
               <Pair
                 label="Expiration"
                 value={
                   rabies.expires_on
-                    ? format(new Date(rabies.expires_on), "MMM d, yyyy")
+                    ? format(parseISO(rabies.expires_on), "MMM d, yyyy")
                     : "—"
                 }
               />
@@ -258,44 +257,46 @@ export default async function Aphis7001Page({
               None on file.
             </div>
           ) : (
-            <table
-              style={{
-                gridColumn: "1 / -1",
-                width: "100%",
-                borderCollapse: "collapse",
-                font: "400 12px var(--font-inter)",
-              }}
-            >
-              <thead>
-                <tr>
-                  <Th>Vaccine</Th>
-                  <Th>Administered</Th>
-                  <Th>Expires</Th>
-                  <Th>Lot</Th>
-                  <Th>Manufacturer</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {vaccines
-                  .filter((v) => !v.is_rabies)
-                  .map((v, i) => (
-                    <tr
-                      key={i}
-                      style={{ borderTop: "1px solid var(--pw-border)" }}
-                    >
-                      <Td>{v.vaccine_type}</Td>
-                      <Td className="tnum">
-                        {format(new Date(v.administered_on), "yyyy-MM-dd")}
-                      </Td>
-                      <Td className="tnum">
-                        {v.expires_on ? format(new Date(v.expires_on), "yyyy-MM-dd") : "—"}
-                      </Td>
-                      <Td className="mono">{v.lot_number ?? "—"}</Td>
-                      <Td>{v.manufacturer ?? "—"}</Td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+            <div style={{ overflowX: "auto" }}>{/* wide table scrolls in place, not the page */}
+              <table
+                style={{
+                  gridColumn: "1 / -1",
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  font: "400 12px var(--font-inter)",
+                }}
+              >
+                <thead>
+                  <tr>
+                    <Th>Vaccine</Th>
+                    <Th>Administered</Th>
+                    <Th>Expires</Th>
+                    <Th>Lot</Th>
+                    <Th>Manufacturer</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vaccines
+                    .filter((v) => !v.is_rabies)
+                    .map((v, i) => (
+                      <tr
+                        key={i}
+                        style={{ borderTop: "1px solid var(--pw-border)" }}
+                      >
+                        <Td>{v.vaccine_type}</Td>
+                        <Td className="tnum">
+                          {format(parseISO(v.administered_on), "yyyy-MM-dd")}
+                        </Td>
+                        <Td className="tnum">
+                          {v.expires_on ? format(parseISO(v.expires_on), "yyyy-MM-dd") : "—"}
+                        </Td>
+                        <Td className="mono">{v.lot_number ?? "—"}</Td>
+                        <Td>{v.manufacturer ?? "—"}</Td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </FormSection>
 
@@ -364,7 +365,11 @@ function FormSection({
         style={{
           display: "grid",
           gap: "6px 24px",
-          gridTemplateColumns: "repeat(2, 1fr)",
+          // minmax(min(240px,100%),1fr): each Pair is a 130px label + value on
+          // one line, so a fixed 2-col track needs ~320px per column and forced
+          // +184px of page scroll at 360px. auto-fit stacks the pairs on
+          // phones; desktop and print still get two columns.
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(240px, 100%), 1fr))",
           font: "400 12px var(--font-inter)",
         }}
       >

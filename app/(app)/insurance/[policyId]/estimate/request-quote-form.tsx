@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import { Icon } from "@/components/brand/icon";
 
@@ -26,6 +27,15 @@ export function RequestQuoteForm({
     requestQuoteAction,
     initial,
   );
+  const router = useRouter();
+
+  // Refresh once the action succeeds — replaces the revalidatePath the server
+  // action can't safely call (it wedges pending forever inside a
+  // useActionState transition; see share-actions.ts + vercel/next.js#82289).
+  useEffect(() => {
+    if (state.status === "sent") router.refresh();
+  }, [state, router]);
+
 
   const clinicsWithEmail = clinics.filter((c) => c.hasEmail);
   const noClinicsAvailable = clinicsWithEmail.length === 0;

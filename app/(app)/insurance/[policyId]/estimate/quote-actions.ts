@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 
 import { requireSession } from "@/lib/auth/household";
 import { requestVetQuote } from "@/lib/outbound/vet-quote-request";
@@ -20,7 +19,12 @@ export async function requestQuoteAction(
   const procedure = String(formData.get("procedure") ?? "").trim();
 
   if (!policyId || !petId || !clinicId) {
-    return { status: "error", message: "Pick a pet + clinic." };
+    // No revalidatePath in this action on purpose: called from a useActionState
+  // transition it wedges the client's pending state forever (reproduced and
+  // bisected in share-actions.ts; vercel/next.js#82289). The client calls
+  // router.refresh() when the success state lands; other affected routes are
+  // force-dynamic and refetch on navigation.
+  return { status: "error", message: "Pick a pet + clinic." };
   }
   if (!procedure) {
     return {
@@ -46,6 +50,5 @@ export async function requestQuoteAction(
     return { status: "error", message: result.error, code: result.code };
   }
 
-  revalidatePath(`/insurance/${policyId}/estimate`);
   return { status: "sent", outboundEmailId: result.outbound_email_id };
 }

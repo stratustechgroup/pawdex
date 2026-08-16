@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import { Icon } from "@/components/brand/icon";
 
@@ -98,6 +99,15 @@ function SendForm({
     sendClarificationAction,
     initial,
   );
+  const router = useRouter();
+
+  // Refresh once the action succeeds — replaces the revalidatePath the server
+  // action can't safely call (it wedges pending forever inside a
+  // useActionState transition; see share-actions.ts + vercel/next.js#82289).
+  useEffect(() => {
+    if (sendState.status === "sent") router.refresh();
+  }, [sendState, router]);
+
   const [subject, setSubject] = useState(initialSubject);
   const [body, setBody] = useState(initialBody);
   const [recipient, setRecipient] = useState("");

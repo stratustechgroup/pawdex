@@ -84,8 +84,16 @@ export async function createBoardingShareLink(
       },
     });
 
-    revalidatePath(`/pets/${petId}/packet`);
-
+    // Deliberately NO revalidatePath here. Calling it inside an action invoked
+    // through useActionState leaves the client's pending state stuck forever —
+    // a known React 19 / Next.js race (vercel/next.js#82289, #58772): the
+    // action completes server-side but the transition never resolves, so the
+    // button reads "Creating…" indefinitely while retries silently mint more
+    // live tokens. Reproduced and bisected against this exact form on
+    // 16.2.12. The client calls router.refresh() after the state lands
+    // (share-panel.tsx), which refreshes the links list without the hang.
+    // Plain <form action> flows are unaffected; revoke below keeps its
+    // revalidatePath on purpose.
     return {
       status: "created",
       url: `${appUrl()}/share/${rawToken}`,

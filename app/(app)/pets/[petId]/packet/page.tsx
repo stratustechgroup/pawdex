@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 import { Icon } from "@/components/brand/icon";
 import { requireSession } from "@/lib/auth/household";
 import { createClient } from "@/lib/supabase/server";
 
+import { effectiveWeightKg } from "@/lib/db/weights";
 import { listShareLinksForPet } from "@/lib/db/share-links";
 
 import { PrintButton } from "./print-button";
@@ -65,7 +66,7 @@ export default async function CompliancePacketPage({
   const { petId } = await params;
   const session = await requireSession();
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = format(new Date(), "yyyy-MM-dd"); // local calendar date, not UTC
 
   const [petRes, vaccRes, householdRes] = await Promise.all([
     supabase
@@ -100,6 +101,12 @@ export default async function CompliancePacketPage({
     );
   }
   const shareLinks = await listShareLinksForPet(session.householdId, petId);
+  const weightKg = await effectiveWeightKg(
+    supabase,
+    session.householdId,
+    petId,
+    pet.current_weight_kg,
+  );
   const allVaccines = (vaccRes.data ?? []) as VaccinationRow[];
 
   // Latest per family.
@@ -230,7 +237,7 @@ export default async function CompliancePacketPage({
             >
               {pet.breed ?? pet.species}
               {pet.date_of_birth &&
-                ` · DOB ${format(new Date(pet.date_of_birth), "MMM d, yyyy")}${pet.dob_is_estimated ? " (estimated)" : ""}`}
+                ` · DOB ${format(parseISO(pet.date_of_birth), "MMM d, yyyy")}${pet.dob_is_estimated ? " (estimated)" : ""}`}
             </div>
           </div>
           <div
@@ -265,8 +272,8 @@ export default async function CompliancePacketPage({
             <Pair
               label="Weight"
               value={
-                pet.current_weight_kg
-                  ? `${pet.current_weight_kg} kg (${(pet.current_weight_kg * 2.20462).toFixed(1)} lb)`
+                weightKg
+                  ? `${weightKg} kg (${(weightKg * 2.20462).toFixed(1)} lb)`
                   : "—"
               }
             />
@@ -292,83 +299,85 @@ export default async function CompliancePacketPage({
               accepting your pet.
             </p>
           ) : (
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                font: "400 12px var(--font-inter)",
-              }}
-            >
-              <thead>
-                <tr>
-                  <Th>Vaccine</Th>
-                  <Th>Administered</Th>
-                  <Th>Expires</Th>
-                  <Th>Lot</Th>
-                  <Th>Manufacturer</Th>
-                  <Th>Clinic</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentVaccines.map((v) => {
-                  const expired = v.expires_on ? v.expires_on < today : false;
-                  const clinic = v.vet_clinic_id
-                    ? clinicById.get(v.vet_clinic_id)
-                    : null;
-                  return (
-                    <tr
-                      key={v.id}
-                      style={{
-                        borderTop: "1px solid var(--pw-border)",
-                      }}
-                    >
-                      <Td
+            <div style={{ overflowX: "auto" }}>{/* wide table scrolls in place, not the page */}
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  font: "400 12px var(--font-inter)",
+                }}
+              >
+                <thead>
+                  <tr>
+                    <Th>Vaccine</Th>
+                    <Th>Administered</Th>
+                    <Th>Expires</Th>
+                    <Th>Lot</Th>
+                    <Th>Manufacturer</Th>
+                    <Th>Clinic</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentVaccines.map((v) => {
+                    const expired = v.expires_on ? v.expires_on < today : false;
+                    const clinic = v.vet_clinic_id
+                      ? clinicById.get(v.vet_clinic_id)
+                      : null;
+                    return (
+                      <tr
+                        key={v.id}
                         style={{
-                          fontWeight: v.is_rabies ? 600 : 400,
-                          color: v.is_rabies
-                            ? "var(--pw-text)"
-                            : "var(--pw-text)",
+                          borderTop: "1px solid var(--pw-border)",
                         }}
                       >
-                        {v.vaccine_type}
-                        {v.is_rabies && (
-                          <span
-                            style={{
-                              marginLeft: 6,
-                              padding: "1px 6px",
-                              borderRadius: 4,
-                              background: "var(--pw-accent-soft)",
-                              color: "var(--pw-accent-fg-on-soft)",
-                              font: "500 9px var(--font-jetbrains-mono)",
-                              letterSpacing: "0.06em",
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            Legal
-                          </span>
-                        )}
-                      </Td>
-                      <Td className="tnum">
-                        {format(new Date(v.administered_on), "yyyy-MM-dd")}
-                      </Td>
-                      <Td
-                        className="tnum"
-                        style={{
-                          color: expired ? "#b54a4a" : "var(--pw-text)",
-                          fontWeight: expired ? 600 : 400,
-                        }}
-                      >
-                        {v.expires_on ? format(new Date(v.expires_on), "yyyy-MM-dd") : "—"}
-                        {expired && " (expired)"}
-                      </Td>
-                      <Td className="mono">{v.lot_number ?? "—"}</Td>
-                      <Td>{v.manufacturer ?? "—"}</Td>
-                      <Td>{clinic?.name ?? v.administering_vet ?? "—"}</Td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        <Td
+                          style={{
+                            fontWeight: v.is_rabies ? 600 : 400,
+                            color: v.is_rabies
+                              ? "var(--pw-text)"
+                              : "var(--pw-text)",
+                          }}
+                        >
+                          {v.vaccine_type}
+                          {v.is_rabies && (
+                            <span
+                              style={{
+                                marginLeft: 6,
+                                padding: "1px 6px",
+                                borderRadius: 4,
+                                background: "var(--pw-accent-soft)",
+                                color: "var(--pw-accent-fg-on-soft)",
+                                font: "500 9px var(--font-jetbrains-mono)",
+                                letterSpacing: "0.06em",
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              Legal
+                            </span>
+                          )}
+                        </Td>
+                        <Td className="tnum">
+                          {format(parseISO(v.administered_on), "yyyy-MM-dd")}
+                        </Td>
+                        <Td
+                          className="tnum"
+                          style={{
+                            color: expired ? "#b54a4a" : "var(--pw-text)",
+                            fontWeight: expired ? 600 : 400,
+                          }}
+                        >
+                          {v.expires_on ? format(parseISO(v.expires_on), "yyyy-MM-dd") : "—"}
+                          {expired && " (expired)"}
+                        </Td>
+                        <Td className="mono">{v.lot_number ?? "—"}</Td>
+                        <Td>{v.manufacturer ?? "—"}</Td>
+                        <Td>{clinic?.name ?? v.administering_vet ?? "—"}</Td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
 

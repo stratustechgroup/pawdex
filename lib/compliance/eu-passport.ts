@@ -317,11 +317,15 @@ export function computeEuComplianceReport(
     const expired =
       rabies.expires_on && parseISO(rabies.expires_on) < (travelDate ?? today);
     if (expired) {
+      // Tense follows reality: with no travel date the comparison is against
+      // today, so the vaccine is already expired, not "will be" anything.
+      const alreadyExpired =
+        rabies.expires_on && parseISO(rabies.expires_on) < today;
       requirements.push({
         id: "rabies",
         label: "Current rabies vaccination",
         status: "blocker",
-        detail: `Last rabies (${rabies.vaccine_type}) administered ${rabies.administered_on}, expires ${rabies.expires_on}. Will be expired at travel.`,
+        detail: `Last rabies (${rabies.vaccine_type}) administered ${rabies.administered_on}, expires ${rabies.expires_on}. ${alreadyExpired ? "Already expired." : "Will be expired by the travel date."}`,
         action_required:
           "Re-vaccinate before travel. The 21-day post-vaccine wait period applies — plan accordingly.",
       });

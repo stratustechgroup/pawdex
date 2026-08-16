@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 
 import { requireSession } from "@/lib/auth/household";
 import { sendRecordsRequestForEvent } from "@/lib/outbound/records-request";
@@ -17,7 +16,12 @@ export async function requestRecordsAction(
   const medicalEventId = formData.get("medical_event_id");
   const petId = formData.get("pet_id");
   if (typeof medicalEventId !== "string" || !medicalEventId) {
-    return {
+    // No revalidatePath in this action on purpose: called from a useActionState
+  // transition it wedges the client's pending state forever (reproduced and
+  // bisected in share-actions.ts; vercel/next.js#82289). The client calls
+  // router.refresh() when the success state lands; other affected routes are
+  // force-dynamic and refetch on navigation.
+  return {
       status: "error",
       message: "Missing medical event id.",
       code: "validation",
@@ -36,9 +40,7 @@ export async function requestRecordsAction(
   }
 
   if (typeof petId === "string" && petId) {
-    revalidatePath(`/pets/${petId}/medical`);
   }
-  revalidatePath("/settings/activity");
 
   return { status: "sent", outboundEmailId: result.outbound_email_id };
 }

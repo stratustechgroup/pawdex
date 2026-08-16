@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 
 import { Icon } from "@/components/brand/icon";
@@ -35,6 +36,16 @@ export function SharePanel({
     initial,
   );
   const [copied, setCopied] = useState(false);
+  const router = useRouter();
+
+  // Refresh the active-links list once creation succeeds. This replaces the
+  // revalidatePath the server action can't safely call (see share-actions.ts:
+  // inside a useActionState transition it wedges pending forever). Running
+  // refresh from an effect keeps it outside the action's transition, which is
+  // the documented workaround.
+  useEffect(() => {
+    if (state.status === "created") router.refresh();
+  }, [state, router]);
 
   async function copy(url: string) {
     try {

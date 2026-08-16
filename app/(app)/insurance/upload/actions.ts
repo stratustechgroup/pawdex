@@ -2,7 +2,6 @@
 
 import { randomUUID } from "node:crypto";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 
@@ -177,6 +176,10 @@ export async function uploadPolicyDocumentAction(
     }
   });
 
-  revalidatePath("/insurance");
+  // No revalidatePath in this action on purpose: called from a useActionState
+  // transition it wedges the client's pending state forever (reproduced and
+  // bisected in share-actions.ts; vercel/next.js#82289). The client calls
+  // router.refresh() when the success state lands; other affected routes are
+  // force-dynamic and refetch on navigation.
   redirect("/insurance");
 }

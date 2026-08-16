@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 
 import { requireSession } from "@/lib/auth/household";
 import { getEffectiveAuthorization } from "@/lib/auth/authorizations";
@@ -34,7 +33,12 @@ export async function draftClarificationAction(
   const policyContext = String(formData.get("policy_context") ?? "").trim();
   if (!policyId) return { status: "error", message: "Missing policy id." };
   if (!question)
-    return { status: "error", message: "Type a question for the insurer." };
+    // No revalidatePath in this action on purpose: called from a useActionState
+  // transition it wedges the client's pending state forever (reproduced and
+  // bisected in share-actions.ts; vercel/next.js#82289). The client calls
+  // router.refresh() when the success state lands; other affected routes are
+  // force-dynamic and refetch on navigation.
+  return { status: "error", message: "Type a question for the insurer." };
 
   const session = await requireSession();
   if (session.role === "viewer") {
@@ -122,7 +126,5 @@ export async function sendClarificationAction(
     return { status: "error", message: result.error, code: result.code };
   }
 
-  revalidatePath("/settings/activity");
-  revalidatePath(`/insurance/${policyId}/clarify`);
   return { status: "sent", outboundEmailId: result.outbound_email_id };
 }
