@@ -8,6 +8,7 @@ import { TravelStrip } from "@/components/marketing/travel-strip";
 import { BreederStrip } from "@/components/marketing/breeder-strip";
 import { Faq, FAQS } from "@/components/marketing/faq";
 import { SiteFooter } from "@/components/marketing/site-footer";
+import { ScrollRail } from "@/components/marketing/scroll-rail";
 import {
   JsonLd,
   softwareApplicationSchema,
@@ -42,6 +43,12 @@ export default function MarketingHome() {
       <SiteHeader />
 
       <main id="main">
+      <ScrollRail
+        chapters={[
+          { id: "top", label: "Top" },
+          { id: "waitlist", label: "Early access" },
+        ]}
+      />
       {/* ------------------------------------------------------------- Hero */}
       <section className="mk-hero">
         <div className="mk-container mk-hero-grid">

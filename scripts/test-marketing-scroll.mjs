@@ -153,6 +153,23 @@ const BEAT_PROBE = `(() => {
   return JSON.stringify(out);
 })()`;
 
+/* The rail is navigation as well as decoration, so it has to be correct in
+   both motion states: filling with progress when motion is allowed, and shown
+   as a static position marker (not an empty track) when it is not. */
+const RAIL_PROBE = `(() => {
+  const rail = document.querySelector('.mk-rail');
+  if (!rail) return JSON.stringify(null);
+  const fill = rail.querySelector('.mk-rail-fill');
+  const anims = fill ? fill.getAnimations() : [];
+  return JSON.stringify({
+    display: getComputedStyle(rail).display,
+    links: rail.querySelectorAll('.mk-rail-link').length,
+    fillAnims: anims.length,
+    fillHasTimeline: !!(anims[0] && anims[0].timeline),
+    fillTransform: fill ? getComputedStyle(fill).transform : null,
+  });
+})()`;
+
 async function evalJson(cdp, expr) {
   const r = await cdp.send("Runtime.evaluate", {
     expression: expr,
@@ -181,6 +198,7 @@ async function loadAndProbe(cdp, url) {
   return {
     scenes: await evalJson(cdp, SCENE_PROBE),
     beats: await evalJson(cdp, BEAT_PROBE),
+    rail: await evalJson(cdp, RAIL_PROBE),
   };
 }
 
@@ -204,8 +222,21 @@ async function main() {
 
   let total = 0;
   for (const path of PAGES) {
-    const { scenes, beats } = await loadAndProbe(cdp, ORIGIN + path);
+    const { scenes, beats, rail } = await loadAndProbe(cdp, ORIGIN + path);
     total += scenes.length;
+
+    if (rail) {
+      check(
+        rail.display === "grid",
+        `${path}: rail must be visible at 1440px, display is "${rail.display}"`,
+      );
+      check(rail.links > 0, `${path}: rail rendered with no chapter links`);
+      check(
+        rail.fillAnims > 0 && rail.fillHasTimeline,
+        `${path}: rail fill is not attached to a scroll timeline, progress will never move`,
+      );
+    }
+
     console.log(
       `motion    ${path}: ${scenes.length} scene(s), ${beats.length} beat(s)`,
     );
@@ -255,10 +286,23 @@ async function main() {
   });
 
   for (const path of PAGES) {
-    const { scenes, beats } = await loadAndProbe(cdp, ORIGIN + path);
+    const { scenes, beats, rail } = await loadAndProbe(cdp, ORIGIN + path);
     console.log(
       `reduced   ${path}: ${scenes.length} scene(s), ${beats.length} beat(s)`,
     );
+    if (rail) {
+      check(
+        rail.fillAnims === 0,
+        `${path}: under reduced motion the rail fill must not animate, found ${rail.fillAnims}`,
+      );
+      // scaleY(1) serialises as matrix(1, 0, 0, 1, 0, 0). An empty track
+      // (scaleY(0)) would serialise with a 0 in the fourth slot.
+      check(
+        rail.fillTransform === "matrix(1, 0, 0, 1, 0, 0)" ||
+          rail.fillTransform === "none",
+        `${path}: under reduced motion the rail must show as filled, transform is "${rail.fillTransform}"`,
+      );
+    }
     for (const b of beats) {
       check(
         b.count === 0,
