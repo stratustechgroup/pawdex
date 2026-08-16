@@ -81,7 +81,9 @@ export function EveryVisitVignette() {
           <span style={{ font: "550 13px var(--mk-body)", color: "var(--pw-text)" }}>
             Fwd: Baxter visit summary
           </span>
-          <span className="mk-mono-tag" style={{ marginLeft: "auto", color: "var(--pw-text-subtle)" }}>
+          {/* muted, not subtle: --pw-text-subtle lands at 2.8:1 on the dark
+              surface, which fails AA for 11.5px body text. */}
+          <span className="mk-mono-tag" style={{ marginLeft: "auto", color: "var(--pw-text-muted)" }}>
             2 min ago
           </span>
         </div>

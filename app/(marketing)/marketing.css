@@ -1091,6 +1091,30 @@
   background: var(--pw-surface-2, rgba(127, 127, 127, 0.1));
 }
 
+/* Header CTA: full wording on desktop, short wording where the menu button
+   needs the room. */
+.mk-header-cta {
+  height: 38px;
+  padding: 0 18px;
+  font-size: 13.5px;
+  flex-shrink: 0;
+}
+.mk-cta-short {
+  display: none;
+}
+@media (max-width: 768px) {
+  .mk-header-cta {
+    padding: 0 14px;
+    font-size: 13px;
+  }
+  .mk-cta-full {
+    display: none;
+  }
+  .mk-cta-short {
+    display: inline;
+  }
+}
+
 /* ─── Paper field ─────────────────────────────────────────────────────────
    The scattered documents behind the hero and inside Scene A. Absolutely
    positioned, decorative, and hidden entirely below 920px: a rotated
@@ -2117,204 +2141,214 @@
     }
 
     /* ---- Pinned scenes -------------------------------------------------- */
-    .mk-scene {
-      --mk-beats: 3;
-      min-height: calc((var(--mk-beats) + 1) * 100svh);
-      /* view-timeline, NOT scroll-timeline. .mk-scene has no scrollbar of its
-         own; what we track is its journey through the viewport. A named
-         scroll-timeline here would attach to nothing and never advance. */
-      view-timeline: --scene block;
-      content-visibility: auto;
-      contain-intrinsic-size: auto 100svh;
-    }
-    /* Beats occupy the same grid cell so they overlay instead of stacking.
-       Without this the stage lays them out in a column and a four-beat scene is
-       four screens of content crammed into one viewport. In the static baseline
-       the stage is not a grid at all, so children flow normally, which is
-       exactly what the no-motion fallback wants. */
-    .mk-scene-stage > * {
-      grid-area: 1 / 1;
-    }
-    .mk-scene-stage {
-      position: sticky;
-      top: 0;
-      /* svh, not vh. On iOS Safari vh is the URL-bar-collapsed height, so a
-         vh-tall sticky stage is a few pixels too tall while the bar is showing
-         and the whole scene jitters as you scroll. */
-      height: 100svh;
-      display: grid;
-      place-items: center;
-      overflow: visible;
-    }
+    /* Pinned scenes are a desktop affordance, deliberately.
+       On a phone a four-beat scene is four screens of scroll you cannot skim,
+       the stage is where iOS Safari's URL-bar collapse causes the worst
+       jitter, and the paper field has to be hidden anyway because the pile is
+       wider than the viewport. Below 921px every scene renders in the static
+       form that the no-support and reduced-motion paths already use: complete,
+       ordered, readable, and much shorter. */
+    @media (min-width: 921px) {
+      .mk-scene {
+        --mk-beats: 3;
+        min-height: calc((var(--mk-beats) + 1) * 100svh);
+        /* view-timeline, NOT scroll-timeline. .mk-scene has no scrollbar of
+           its own; what we track is its journey through the viewport. A named
+           scroll-timeline here would attach to nothing and never advance. */
+        view-timeline: --scene block;
+        content-visibility: auto;
+        contain-intrinsic-size: auto 100svh;
+      }
 
-    /* A beat owns one slice of its scene's progress.
+      /* Beats occupy the same grid cell so they overlay instead of stacking.
+         Without this the stage lays them out in a column and a four-beat scene is
+         four screens of content crammed into one viewport. In the static baseline
+         the stage is not a grid at all, so children flow normally, which is
+         exactly what the no-motion fallback wants. */
+      .mk-scene-stage > * {
+        grid-area: 1 / 1;
+      }
+      .mk-scene-stage {
+        position: sticky;
+        top: 0;
+        /* svh, not vh. On iOS Safari vh is the URL-bar-collapsed height, so a
+           vh-tall sticky stage is a few pixels too tall while the bar is showing
+           and the whole scene jitters as you scroll. */
+        height: 100svh;
+        display: grid;
+        place-items: center;
+        overflow: visible;
+      }
 
-       The range is `contain`: the span during which the scene fully covers the
-       viewport, which is exactly the span during which the stage is pinned.
-       `entry` would run every beat out during the first viewport of scroll and
-       then leave the stage frozen for the rest of the scene. */
-    .mk-beat {
-      --mk-beat-index: 0;
-      animation: mk-beat-inout linear both;
-      animation-timeline: --scene;
-      animation-range: contain
-          calc(var(--mk-beat-index) / var(--mk-beats) * 100%) contain
-          calc((var(--mk-beat-index) + 1) / var(--mk-beats) * 100%);
-    }
-    @keyframes mk-beat-inout {
-      0% {
-        opacity: 0;
-        transform: translate3d(0, 3svh, 0) scale(0.98);
-      }
-      18% {
-        opacity: 1;
-        transform: none;
-      }
-      82% {
-        opacity: 1;
-        transform: none;
-      }
-      100% {
-        opacity: 0;
-        transform: translate3d(0, -3svh, 0) scale(1.02);
-      }
-    }
+      /* A beat owns one slice of its scene's progress.
 
-    /* ---- Scene A behaviour ---------------------------------------------- */
-    .mk-shoebox-fx {
-      display: block;
-    }
-    .mk-shoebox-papers {
-      position: absolute;
-      inset: 0;
-    }
-    /* Stretch across the cell so the scan line and the chips have the full
-       stage to position against. */
-    .mk-shoebox-read {
-      place-self: stretch;
-    }
-    /* Inside the scene the sheets stop drifting and start converging. Two
-       animations on one element, each on its own slice of the scene: one owns
-       transform and rotate, the other owns opacity. They never touch the same
-       property, so they compose instead of fighting. */
-    .mk-shoebox .mk-paper {
-      animation:
-        mk-shoebox-converge linear both,
-        mk-shoebox-recede linear both;
-      animation-timeline: --scene, --scene;
-      animation-range:
-        contain 2% contain 42%,
-        contain 60% contain 76%;
-    }
-    @keyframes mk-shoebox-converge {
-      from {
-        transform: translate3d(0, 0, 0);
-        rotate: var(--mk-rot);
+         The range is `contain`: the span during which the scene fully covers the
+         viewport, which is exactly the span during which the stage is pinned.
+         `entry` would run every beat out during the first viewport of scroll and
+         then leave the stage frozen for the rest of the scene. */
+      .mk-beat {
+        --mk-beat-index: 0;
+        animation: mk-beat-inout linear both;
+        animation-timeline: --scene;
+        animation-range: contain
+            calc(var(--mk-beat-index) / var(--mk-beats) * 100%) contain
+            calc((var(--mk-beat-index) + 1) / var(--mk-beats) * 100%);
       }
-      to {
-        /* The field spans the stage, so viewport units stand in for "percent
-           of the field". The trailing -50% is what actually centres the sheet:
-           percentages inside a translate resolve against the element's own box,
-           so it pulls each sheet back by half its own width and height. Without
-           it you centre the top-left corner and the pile sits low and right.
+      @keyframes mk-beat-inout {
+        0% {
+          opacity: 0;
+          transform: translate3d(0, 3svh, 0) scale(0.98);
+        }
+        18% {
+          opacity: 1;
+          transform: none;
+        }
+        82% {
+          opacity: 1;
+          transform: none;
+        }
+        100% {
+          opacity: 0;
+          transform: translate3d(0, -3svh, 0) scale(1.02);
+        }
+      }
 
-           The scale is not decoration. In the hero these sheets are texture; in
-           this scene they are the subject, and a subject has to be big enough
-           to look at. */
-        /* The depth-derived offset is what stops the pile turning to mush.
-           Converge every sheet on the exact same point and fourteen sets of
-           ruled lines overlap into noise; nudging each one a few pixels by its
-           own depth gives the stack visible edges, like paper actually behaves.
-           Depths run 0.8 to 3.2, so this lands in roughly -8px to +8px. */
-        transform: translate3d(
-            calc(
-              (var(--mk-pile-x) - var(--mk-x-n)) * 1vw - 50% +
-                (var(--mk-depth) - 2) * 7px
-            ),
-            calc(
-              (50 - var(--mk-y-n)) * 1svh - 50% + (var(--mk-depth) - 2) * 5px
-            ),
-            0
-          )
-          scale(1.35);
-        rotate: calc((var(--mk-depth) - 2) * 0.9deg);
+      /* ---- Scene A behaviour ---------------------------------------------- */
+      .mk-shoebox-fx {
+        display: block;
       }
-    }
-    @keyframes mk-shoebox-recede {
-      from {
-        opacity: 0.92;
+      .mk-shoebox-papers {
+        position: absolute;
+        inset: 0;
       }
-      to {
-        opacity: 0;
+      /* Stretch across the cell so the scan line and the chips have the full
+         stage to position against. */
+      .mk-shoebox-read {
+        place-self: stretch;
       }
-    }
+      /* Inside the scene the sheets stop drifting and start converging. Two
+         animations on one element, each on its own slice of the scene: one owns
+         transform and rotate, the other owns opacity. They never touch the same
+         property, so they compose instead of fighting. */
+      .mk-shoebox .mk-paper {
+        animation:
+          mk-shoebox-converge linear both,
+          mk-shoebox-recede linear both;
+        animation-timeline: --scene, --scene;
+        animation-range:
+          contain 2% contain 42%,
+          contain 60% contain 76%;
+      }
+      @keyframes mk-shoebox-converge {
+        from {
+          transform: translate3d(0, 0, 0);
+          rotate: var(--mk-rot);
+        }
+        to {
+          /* The field spans the stage, so viewport units stand in for "percent
+             of the field". The trailing -50% is what actually centres the sheet:
+             percentages inside a translate resolve against the element's own box,
+             so it pulls each sheet back by half its own width and height. Without
+             it you centre the top-left corner and the pile sits low and right.
 
-    .mk-shoebox-chip {
-      /* Chips detach in sequence rather than all at once, so the eye reads it
-         as extraction rather than a reveal. */
-      animation: mk-shoebox-chip-out linear both;
-      animation-timeline: --scene;
-      animation-range: contain calc(52% + var(--mk-chip-i) * 2%) contain
-        calc(62% + var(--mk-chip-i) * 2%);
-    }
-    @keyframes mk-shoebox-chip-out {
-      from {
-        opacity: 0;
-        transform: translate3d(-40px, 0, 0) scale(0.94);
+             The scale is not decoration. In the hero these sheets are texture; in
+             this scene they are the subject, and a subject has to be big enough
+             to look at. */
+          /* The depth-derived offset is what stops the pile turning to mush.
+             Converge every sheet on the exact same point and fourteen sets of
+             ruled lines overlap into noise; nudging each one a few pixels by its
+             own depth gives the stack visible edges, like paper actually behaves.
+             Depths run 0.8 to 3.2, so this lands in roughly -8px to +8px. */
+          transform: translate3d(
+              calc(
+                (var(--mk-pile-x) - var(--mk-x-n)) * 1vw - 50% +
+                  (var(--mk-depth) - 2) * 7px
+              ),
+              calc(
+                (50 - var(--mk-y-n)) * 1svh - 50% + (var(--mk-depth) - 2) * 5px
+              ),
+              0
+            )
+            scale(1.35);
+          rotate: calc((var(--mk-depth) - 2) * 0.9deg);
+        }
       }
-      to {
-        opacity: 1;
-        transform: none;
+      @keyframes mk-shoebox-recede {
+        from {
+          opacity: 0.92;
+        }
+        to {
+          opacity: 0;
+        }
       }
-    }
 
-    .mk-shoebox-scan {
-      animation: mk-shoebox-scan linear both;
-      animation-timeline: --scene;
-      animation-range: contain 46% contain 64%;
-    }
-    @keyframes mk-shoebox-scan {
-      from {
-        transform: translate(-50%, -220%);
-        opacity: 0;
+      .mk-shoebox-chip {
+        /* Chips detach in sequence rather than all at once, so the eye reads it
+           as extraction rather than a reveal. */
+        animation: mk-shoebox-chip-out linear both;
+        animation-timeline: --scene;
+        animation-range: contain calc(52% + var(--mk-chip-i) * 2%) contain
+          calc(62% + var(--mk-chip-i) * 2%);
       }
-      20% {
-        opacity: 1;
+      @keyframes mk-shoebox-chip-out {
+        from {
+          opacity: 0;
+          transform: translate3d(-40px, 0, 0) scale(0.94);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
       }
-      80% {
-        opacity: 1;
-      }
-      to {
-        transform: translate(-50%, 220%);
-        opacity: 0;
-      }
-    }
 
-    /* ---- Scene C behaviour ---------------------------------------------- */
-    /* The source arrives second, and the connector draws itself as it lands.
-       stroke-dashoffset is a paint-only property, which normally would not earn
-       a place in this system, but the path is 120px long and there is exactly
-       one of them on the page. */
-    .mk-cit-link-path {
-      stroke-dashoffset: 300;
-      animation: mk-cit-draw linear both;
-      animation-timeline: --scene;
-      animation-range: contain 42% contain 72%;
-    }
-    @keyframes mk-cit-draw {
-      to {
-        stroke-dashoffset: 0;
+      .mk-shoebox-scan {
+        animation: mk-shoebox-scan linear both;
+        animation-timeline: --scene;
+        animation-range: contain 46% contain 64%;
       }
-    }
+      @keyframes mk-shoebox-scan {
+        from {
+          transform: translate(-50%, -220%);
+          opacity: 0;
+        }
+        20% {
+          opacity: 1;
+        }
+        80% {
+          opacity: 1;
+        }
+        to {
+          transform: translate(-50%, 220%);
+          opacity: 0;
+        }
+      }
 
-    /* ---- Progress rail fill --------------------------------------------- */
-    .mk-rail-fill {
-      animation: mk-rail-fill linear both;
-      animation-timeline: scroll(root block);
-    }
-    @keyframes mk-rail-fill {
-      to {
-        transform: scaleY(1);
+      /* ---- Scene C behaviour ---------------------------------------------- */
+      /* The source arrives second, and the connector draws itself as it lands.
+         stroke-dashoffset is a paint-only property, which normally would not earn
+         a place in this system, but the path is 120px long and there is exactly
+         one of them on the page. */
+      .mk-cit-link-path {
+        stroke-dashoffset: 300;
+        animation: mk-cit-draw linear both;
+        animation-timeline: --scene;
+        animation-range: contain 42% contain 72%;
+      }
+      @keyframes mk-cit-draw {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      /* ---- Progress rail fill --------------------------------------------- */
+      .mk-rail-fill {
+        animation: mk-rail-fill linear both;
+        animation-timeline: scroll(root block);
+      }
+      @keyframes mk-rail-fill {
+        to {
+          transform: scaleY(1);
+        }
       }
     }
 

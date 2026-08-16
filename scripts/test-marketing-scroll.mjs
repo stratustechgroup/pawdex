@@ -458,6 +458,41 @@ async function main() {
       o.sw <= o.cw + 1,
       `${path}: page scrolls horizontally at 390px (scrollWidth ${o.sw} > clientWidth ${o.cw})`,
     );
+
+    // Pinned scenes are desktop-only by design. If a stage is still sticky at
+    // 390px, a phone visitor is about to get several screens of scroll they
+    // cannot skim, in the one place iOS Safari jitters worst.
+    const mobileScenes = await evalJson(cdp, SCENE_PROBE);
+    for (const sc of mobileScenes) {
+      if (sc.error) continue;
+      check(
+        sc.position !== "sticky",
+        `${path} ${sc.id}: scene is still pinned at 390px; pinned scenes are desktop-only`,
+      );
+    }
+
+    // The header controls have to be reachable, not merely present. A CTA that
+    // grows by a few pixels can push the menu trigger past the right edge where
+    // it is invisible and untappable, and nothing else on the page changes.
+    const hdr = await evalJson(
+      cdp,
+      `JSON.stringify((() => {
+        const box = (sel) => {
+          const el = document.querySelector(sel);
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return { x: Math.round(r.x), right: Math.round(r.right), w: Math.round(r.width) };
+        };
+        return { menu: box('.mk-mobile-menu'), cta: box('.mk-header .mk-btn'), vw: window.innerWidth };
+      })())`,
+    );
+    for (const [name, b] of Object.entries(hdr)) {
+      if (name === "vw" || !b) continue;
+      check(
+        b.x >= 0 && b.right <= hdr.vw + 1,
+        `${path}: header ${name} is outside the 390px viewport (x ${b.x}, right ${b.right})`,
+      );
+    }
   }
 
   ws.close();

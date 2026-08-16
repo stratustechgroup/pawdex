@@ -43,8 +43,14 @@ export function SiteHeader() {
           <ContactModalTrigger label="Contact" />
         </nav>
         <div style={{ flex: 1 }} />
-        <Link href="/#waitlist" className="mk-btn" style={{ height: 38, padding: "0 18px", fontSize: 13.5 }}>
-          Get early access
+        {/* Two labels, one link. Below 768px the full wording plus the menu
+            button does not fit in 390px: making the button nowrap pushed the
+            menu trigger clean off the screen, and letting it wrap put three
+            lines of text inside a 38px pill. A shorter label at small widths is
+            the only version where both controls fit and neither is mangled. */}
+        <Link href="/#waitlist" className="mk-btn mk-header-cta">
+          <span className="mk-cta-full">Get early access</span>
+          <span className="mk-cta-short">Early access</span>
           <Icon name="arrowRight" size={14} className="mk-btn-arrow" />
         </Link>
 
