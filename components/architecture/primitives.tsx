@@ -61,7 +61,15 @@ export function DiagramFrame({
 }) {
   return (
     <>
-      <div className="arch-frame">
+      {/* The frame scrolls horizontally on narrow viewports, so it needs to be
+          reachable and scrollable from the keyboard. A scrollable region with
+          no tab stop is content a keyboard user simply cannot get to. */}
+      <div
+        className="arch-frame"
+        tabIndex={0}
+        role="group"
+        aria-label={caption ? `Diagram: ${caption}` : "Diagram"}
+      >
         <div className="arch-frame-pad">{children}</div>
       </div>
       {caption ? <p className="arch-caption">{caption}</p> : null}

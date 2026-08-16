@@ -9,9 +9,28 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
 };
 
+// Section list for the in-page table of contents. Kept beside the content
+// it describes so the two cannot drift apart unnoticed.
+const SECTIONS = [
+  { id: "notice-at-collection", label: "Notice at collection" },
+  { id: "how-we-use-your-information", label: "How we use your information" },
+  { id: "we-do-not-sell-or-share-your-personal-information", label: "We do not sell or share your personal information" },
+  { id: "analytics-and-why-there-is-no-cookie-banner", label: "Analytics, and why there is no cookie banner" },
+  { id: "de-identified-research-separate-opt-in-off-by-default", label: "De-identified research (separate opt-in, off by default)" },
+  { id: "service-providers", label: "Service providers" },
+  { id: "data-retention", label: "Data retention" },
+  { id: "your-california-privacy-rights", label: "Your California privacy rights" },
+  { id: "children", label: "Children" },
+  { id: "where-pawdex-is-offered", label: "Where Pawdex is offered" },
+  { id: "changes-to-this-policy", label: "Changes to this policy" },
+  { id: "contact", label: "Contact" },
+  { id: "change-log", label: "Change log" },
+];
+
 export default function PrivacyPage() {
   return (
     <LegalShell
+      sections={SECTIONS}
       eyebrow="Legal"
       title="Privacy Policy"
       updated="Effective July 10, 2026"
@@ -24,7 +43,7 @@ export default function PrivacyPage() {
         wrote it to be read, not to be survived.
       </p>
 
-      <h2>Notice at collection</h2>
+      <h2 id="notice-at-collection">Notice at collection</h2>
       <p>
         When you use Pawdex we collect the following categories of personal
         information, for the purposes described:
@@ -57,7 +76,7 @@ export default function PrivacyPage() {
         product. We do not buy personal information about you from data brokers.
       </p>
 
-      <h2>How we use your information</h2>
+      <h2 id="how-we-use-your-information">How we use your information</h2>
       <p>
         We use your information to provide Pawdex: to store and organize your
         records, extract and cite the facts inside them, send reminders and
@@ -68,7 +87,7 @@ export default function PrivacyPage() {
         any time.
       </p>
 
-      <h2>We do not sell or share your personal information</h2>
+      <h2 id="we-do-not-sell-or-share-your-personal-information">We do not sell or share your personal information</h2>
       <p>
         We do not sell your personal information, and we do not share it for
         cross-context behavioral advertising, as those terms are defined under
@@ -83,7 +102,7 @@ export default function PrivacyPage() {
         works.
       </p>
 
-      <h2>Analytics, and why there is no cookie banner</h2>
+      <h2 id="analytics-and-why-there-is-no-cookie-banner">Analytics, and why there is no cookie banner</h2>
       <p>
         We use Vercel Web Analytics and Vercel Speed Insights to understand which
         pages are used and how fast they load. Both are privacy-first and
@@ -102,7 +121,7 @@ export default function PrivacyPage() {
         that would change this, we will update this policy and ask first.
       </p>
 
-      <h2>De-identified research (separate opt-in, off by default)</h2>
+      <h2 id="de-identified-research-separate-opt-in-off-by-default">De-identified research (separate opt-in, off by default)</h2>
       <p>
         Pawdex is building an optional program to contribute de-identified,
         aggregate records to veterinary and animal-health research. This is
@@ -133,7 +152,7 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
-      <h2>Service providers</h2>
+      <h2 id="service-providers">Service providers</h2>
       <p>
         We rely on a small set of infrastructure providers to run Pawdex. They
         process personal information only to provide services to us, under
@@ -158,7 +177,7 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
-      <h2>Data retention</h2>
+      <h2 id="data-retention">Data retention</h2>
       <p>
         We keep your account information and records for as long as your account
         is active, so your pet&apos;s history stays intact and available to you.
@@ -170,7 +189,7 @@ export default function PrivacyPage() {
         no longer identifies you.
       </p>
 
-      <h2>Your California privacy rights</h2>
+      <h2 id="your-california-privacy-rights">Your California privacy rights</h2>
       <p>
         If you are a California resident, the CCPA/CPRA gives you the right to:
       </p>
@@ -206,7 +225,7 @@ export default function PrivacyPage() {
         any of these rights.
       </p>
 
-      <h2>Children</h2>
+      <h2 id="children">Children</h2>
       <p>
         Pawdex is a product for pet owners and is not directed to children under
         13. We do not knowingly collect personal information from children under
@@ -215,7 +234,7 @@ export default function PrivacyPage() {
         delete it.
       </p>
 
-      <h2>Where Pawdex is offered</h2>
+      <h2 id="where-pawdex-is-offered">Where Pawdex is offered</h2>
       <p>
         Pawdex is offered in the United States and is not directed to, or
         marketed in, the European Economic Area, the United Kingdom, or other
@@ -227,7 +246,7 @@ export default function PrivacyPage() {
         rights and disclosures those laws require.
       </p>
 
-      <h2>Changes to this policy</h2>
+      <h2 id="changes-to-this-policy">Changes to this policy</h2>
       <p>
         If we make a material change to this policy, we will update the effective
         date above and, where appropriate, notify you in the product or by
@@ -235,14 +254,14 @@ export default function PrivacyPage() {
         updated policy.
       </p>
 
-      <h2>Contact</h2>
+      <h2 id="contact">Contact</h2>
       <p>
         Questions, requests, or concerns about privacy go to{" "}
         <a href="mailto:privacy@pawdex.co">privacy@pawdex.co</a>. We read every
         one.
       </p>
 
-      <h2>Change log</h2>
+      <h2 id="change-log">Change log</h2>
       <p>
         July 10, 2026: Added an Analytics section documenting our cookieless
         analytics and why no cookie-consent banner is needed, and a note that

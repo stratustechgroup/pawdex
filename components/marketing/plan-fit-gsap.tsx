@@ -57,7 +57,9 @@ export default function PlanFitGsap() {
             ease: "power3.out",
             y: fits ? -8 : 0,
             scale: fits ? 1.02 : 0.985,
-            opacity: fits ? 1 : 0.62,
+            // Never opacity. Fading the unrecommended cards drops their text
+            // below the contrast floor; scale carries the de-emphasis instead.
+            opacity: 1,
           });
         }
       };

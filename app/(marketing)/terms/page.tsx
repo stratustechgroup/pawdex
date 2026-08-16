@@ -9,9 +9,29 @@ export const metadata: Metadata = {
   alternates: { canonical: "/terms" },
 };
 
+// Section list for the in-page table of contents. Kept beside the content
+// it describes so the two cannot drift apart unnoticed.
+const SECTIONS = [
+  { id: "early-access", label: "Early access" },
+  { id: "pawdex-is-not-veterinary-or-medical-advice", label: "Pawdex is not veterinary or medical advice" },
+  { id: "your-account", label: "Your account" },
+  { id: "subscriptions-billing-and-cancellation", label: "Subscriptions, billing, and cancellation" },
+  { id: "acceptable-use", label: "Acceptable use" },
+  { id: "your-content-and-your-data", label: "Your content and your data" },
+  { id: "outbound-actions-on-your-behalf", label: "Outbound actions on your behalf" },
+  { id: "termination", label: "Termination" },
+  { id: "warranty-disclaimer", label: "Warranty disclaimer" },
+  { id: "limitation-of-liability", label: "Limitation of liability" },
+  { id: "governing-law", label: "Governing law" },
+  { id: "changes-to-these-terms", label: "Changes to these terms" },
+  { id: "contact", label: "Contact" },
+  { id: "change-log", label: "Change log" },
+];
+
 export default function TermsPage() {
   return (
     <LegalShell
+      sections={SECTIONS}
       eyebrow="Legal"
       title="Terms of Service"
       updated="Effective July 10, 2026"
@@ -22,7 +42,7 @@ export default function TermsPage() {
         them.
       </p>
 
-      <h2>Early access</h2>
+      <h2 id="early-access">Early access</h2>
       <p>
         Pawdex is in early access. That means the product is still evolving:
         features may change, break, or be added, and we may adjust how the
@@ -31,7 +51,7 @@ export default function TermsPage() {
         an early-access product as your only copy of anything irreplaceable.
       </p>
 
-      <h2>Pawdex is not veterinary or medical advice</h2>
+      <h2 id="pawdex-is-not-veterinary-or-medical-advice">Pawdex is not veterinary or medical advice</h2>
       <p>
         Pawdex organizes and structures the veterinary records you give it. It
         is a records-organization tool, not a veterinary provider, and it does
@@ -44,7 +64,7 @@ export default function TermsPage() {
         In an emergency, contact a veterinarian, not the app.
       </p>
 
-      <h2>Your account</h2>
+      <h2 id="your-account">Your account</h2>
       <p>
         You are responsible for keeping your account credentials secure and for
         activity that happens under your account. Tell us promptly at{" "}
@@ -53,7 +73,7 @@ export default function TermsPage() {
         use Pawdex, and the service is not directed to children under 13.
       </p>
 
-      <h2>Subscriptions, billing, and cancellation</h2>
+      <h2 id="subscriptions-billing-and-cancellation">Subscriptions, billing, and cancellation</h2>
       <p>
         Pawdex has a free tier that stays free. The core of the product, keeping
         your pets&apos; records organized, searchable, and exportable, does not
@@ -103,7 +123,7 @@ export default function TermsPage() {
         pricing applies.
       </p>
 
-      <h2>Acceptable use</h2>
+      <h2 id="acceptable-use">Acceptable use</h2>
       <p>You agree not to:</p>
       <ul>
         <li>
@@ -124,7 +144,7 @@ export default function TermsPage() {
         </li>
       </ul>
 
-      <h2>Your content and your data</h2>
+      <h2 id="your-content-and-your-data">Your content and your data</h2>
       <p>
         Your records are yours. You keep all rights to the documents and
         information you put into Pawdex. You grant us the limited permission we
@@ -134,7 +154,7 @@ export default function TermsPage() {
         are never locked in.
       </p>
 
-      <h2>Outbound actions on your behalf</h2>
+      <h2 id="outbound-actions-on-your-behalf">Outbound actions on your behalf</h2>
       <p>
         Some features let Pawdex act for you, such as emailing a clinic to
         request records. These run only with your explicit, per-feature consent,
@@ -142,7 +162,7 @@ export default function TermsPage() {
         the accuracy of the information you ask us to send.
       </p>
 
-      <h2>Termination</h2>
+      <h2 id="termination">Termination</h2>
       <p>
         You can stop using Pawdex and delete your account at any time. We may
         suspend or terminate an account that violates these terms or that we
@@ -152,7 +172,7 @@ export default function TermsPage() {
         <a href="/privacy">Privacy Policy</a>.
       </p>
 
-      <h2>Warranty disclaimer</h2>
+      <h2 id="warranty-disclaimer">Warranty disclaimer</h2>
       <p>
         Pawdex is provided &quot;as is&quot; and &quot;as available,&quot;
         without warranties of any kind, whether express or implied, including
@@ -162,7 +182,7 @@ export default function TermsPage() {
         complete or accurate.
       </p>
 
-      <h2>Limitation of liability</h2>
+      <h2 id="limitation-of-liability">Limitation of liability</h2>
       <p>
         To the fullest extent permitted by law, Pawdex and its team will not be
         liable for indirect, incidental, special, consequential, or punitive
@@ -173,7 +193,7 @@ export default function TermsPage() {
         allow certain limitations, so parts of this may not apply to you.
       </p>
 
-      <h2>Governing law</h2>
+      <h2 id="governing-law">Governing law</h2>
       <p>
         These terms are governed by the laws of the State of California, without
         regard to its conflict-of-laws rules. The state and federal courts
@@ -181,7 +201,7 @@ export default function TermsPage() {
         otherwise resolved.
       </p>
 
-      <h2>Changes to these terms</h2>
+      <h2 id="changes-to-these-terms">Changes to these terms</h2>
       <p>
         We may update these terms as the product grows. If a change is material,
         we will update the effective date and, where appropriate, notify you.
@@ -189,13 +209,13 @@ export default function TermsPage() {
         terms.
       </p>
 
-      <h2>Contact</h2>
+      <h2 id="contact">Contact</h2>
       <p>
         Questions about these terms go to{" "}
         <a href="mailto:support@pawdex.co">support@pawdex.co</a>.
       </p>
 
-      <h2>Change log</h2>
+      <h2 id="change-log">Change log</h2>
       <p>
         July 10, 2026: Added the Subscriptions, billing, and cancellation
         section covering auto-renewal, online cancellation, the permanent free

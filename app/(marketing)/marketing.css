@@ -139,6 +139,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  /* Buttons never wrap. At 390px the header CTA was breaking "Get early
+     access" across three lines inside a 38px-tall pill. */
+  white-space: nowrap;
   height: 46px;
   padding: 0 22px;
   border-radius: 999px;
@@ -1134,7 +1137,7 @@
 .mk-paper-head {
   font: 600 7.5px/1 var(--mk-mono);
   letter-spacing: 0.1em;
-  color: var(--pw-text-subtle);
+  color: var(--pw-text-muted);
   padding-bottom: 8px;
   border-bottom: 1px solid var(--pw-border);
   white-space: nowrap;
@@ -1254,7 +1257,7 @@
   white-space: nowrap;
   font: 500 12px var(--mk-mono);
   letter-spacing: 0.06em;
-  color: var(--pw-text-subtle);
+  color: var(--pw-text-muted);
 }
 
 /* The pile lands left of centre so the facts have somewhere to land. A fact
@@ -1358,7 +1361,7 @@
 }
 .mk-life-card-meta {
   margin-left: auto;
-  color: var(--pw-text-subtle);
+  color: var(--pw-text-muted);
 }
 .mk-life-row {
   display: flex;
@@ -1408,6 +1411,57 @@
    available if the rail is ever removed. */
 .mk-life-spine {
   display: none;
+}
+
+/* ─── Legal contents ──────────────────────────────────────────────────────
+   No motion on these pages at all. Just a way in. */
+.mk-legal-toc {
+  margin: 32px 0 40px;
+  padding: 18px 20px;
+  background: var(--pw-surface-2);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-r-lg);
+}
+.mk-legal-toc-head {
+  margin: 0 0 12px;
+  font: 600 10.5px/1 var(--mk-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pw-text-subtle);
+}
+.mk-legal-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  counter-reset: toc;
+}
+.mk-legal-toc li {
+  counter-increment: toc;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.mk-legal-toc li::before {
+  content: counter(toc, decimal-leading-zero);
+  font: 500 10.5px var(--mk-mono);
+  color: var(--pw-text-subtle);
+  flex-shrink: 0;
+}
+.mk-legal-toc a {
+  font: 400 14px/1.5 var(--mk-body);
+  color: var(--pw-text-secondary);
+  text-decoration: none;
+}
+.mk-legal-toc a:hover,
+.mk-legal-toc a:focus-visible {
+  color: var(--pw-text);
+  text-decoration: underline;
+}
+/* Jumping to a heading must not tuck it under the sticky header. */
+.mk-legal h2[id] {
+  scroll-margin-top: 84px;
 }
 
 /* ─── Plan fit finder ─────────────────────────────────────────────────────
@@ -1564,7 +1618,12 @@
   transform: translateY(-8px) scale(1.02);
 }
 .pf-card[data-fit="false"] {
-  opacity: 0.62;
+  /* De-emphasis by scale and border only, never opacity. Fading a card to 62%
+     drags its body text below the 4.5:1 contrast floor, and on a pricing page
+     the two cards you did NOT recommend are exactly the ones a visitor wants
+     to read in order to disagree with you. */
+  transform: scale(0.985);
+  border-color: var(--pw-border);
 }
 
 .pf-card-name {
@@ -1605,7 +1664,7 @@
 .pf-price-note {
   margin-top: 4px;
   font: 400 12px var(--mk-body);
-  color: var(--pw-text-subtle);
+  color: var(--pw-text-muted);
 }
 
 .pf-meter {
@@ -1676,17 +1735,17 @@
   color: var(--pw-accent);
 }
 .pf-feature--off {
-  color: var(--pw-text-subtle);
+  color: var(--pw-text-muted);
 }
 .pf-feature--off .pf-check {
-  color: var(--pw-text-subtle);
+  color: var(--pw-text-muted);
 }
 
 .pf-softcap,
 .pf-disclosure {
   margin: 0;
   font: 400 11.5px/1.5 var(--mk-body);
-  color: var(--pw-text-subtle);
+  color: var(--pw-text-muted);
 }
 .pf-waitlist {
   display: flex;
@@ -1840,7 +1899,7 @@
   font: 600 8.5px/1 var(--mk-mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--pw-text-subtle);
+  color: var(--pw-text-muted);
   padding-bottom: 10px;
   border-bottom: 1px solid var(--pw-border);
 }

@@ -72,12 +72,27 @@ const ws = await connect(await getPageTarget());
 const cdp = new CDP(ws);
 await cdp.send("Page.enable");
 await cdp.send("Runtime.enable");
+const W = Number(process.env.SHOT_WIDTH ?? 1440);
+const H = Number(process.env.SHOT_HEIGHT ?? 900);
 await cdp.send("Emulation.setDeviceMetricsOverride", {
-  width: 1440,
-  height: 900,
+  width: W,
+  height: H,
   deviceScaleFactor: 1,
-  mobile: false,
+  mobile: W < 600,
 });
+if (process.env.SHOT_SCHEME) {
+  await cdp.send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-color-scheme", value: process.env.SHOT_SCHEME }],
+  });
+}
+if (process.env.SHOT_MOTION) {
+  await cdp.send("Emulation.setEmulatedMedia", {
+    features: [
+      { name: "prefers-color-scheme", value: process.env.SHOT_SCHEME || "dark" },
+      { name: "prefers-reduced-motion", value: process.env.SHOT_MOTION },
+    ],
+  });
+}
 await cdp.send("Page.navigate", { url: ORIGIN + PATHNAME });
 await sleep(2500);
 

@@ -127,7 +127,7 @@ export default function AboutPage() {
         </section>
 
         {/* ------------------------------------------------------ The problem */}
-        <section className="mk-section" style={{ background: "var(--pw-surface)" }}>
+        <section className="mk-section mk-crossfade" style={{ background: "var(--pw-surface)" }}>
           <div className="mk-container mk-band-grid">
             <div>
               <span className="mk-eyebrow">The problem</span>
@@ -193,7 +193,7 @@ export default function AboutPage() {
         </section>
 
         {/* ----------------------------------------------------- What we built */}
-        <section className="mk-section">
+        <section className="mk-section mk-crossfade">
           <div className="mk-container">
             <span className="mk-eyebrow">What we built</span>
             <h2 className="mk-h2" style={{ margin: "18px 0 0", maxWidth: "20ch" }}>
@@ -304,7 +304,7 @@ export default function AboutPage() {
         </section>
 
         {/* ---------------------------------------------------- What we believe */}
-        <section className="mk-section" style={{ background: "var(--pw-surface)" }}>
+        <section className="mk-section mk-crossfade" style={{ background: "var(--pw-surface)" }}>
           <div className="mk-container">
             <span className="mk-eyebrow">What we believe</span>
             <h2 className="mk-h2" style={{ margin: "18px 0 0", maxWidth: "20ch" }}>
@@ -328,7 +328,7 @@ export default function AboutPage() {
         </section>
 
         {/* -------------------------------------------------------- Where we are */}
-        <section className="mk-section">
+        <section className="mk-section mk-crossfade">
           <div className="mk-container mk-band-grid">
             <div>
               <span className="mk-eyebrow">Where we are</span>

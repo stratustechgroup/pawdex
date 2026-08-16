@@ -432,6 +432,34 @@ async function main() {
     }
   }
 
+  // ── pass 3: mobile, no horizontal overflow ────────────────────────
+  // A rotated, absolutely positioned paper field and three off-screen pricing
+  // cards are exactly the ingredients that push a page sideways on a phone.
+  // This repo has had to fix that class of bug before; it gets an assertion.
+  await cdp.send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+  });
+  await cdp.send("Emulation.setDeviceMetricsOverride", {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 2,
+    mobile: true,
+  });
+
+  for (const path of PAGES) {
+    await cdp.send("Page.navigate", { url: ORIGIN + path });
+    await sleep(1200);
+    const o = await evalJson(
+      cdp,
+      `JSON.stringify({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth })`,
+    );
+    console.log(`mobile    ${path}: scrollWidth ${o.sw} vs client ${o.cw}`);
+    check(
+      o.sw <= o.cw + 1,
+      `${path}: page scrolls horizontally at 390px (scrollWidth ${o.sw} > clientWidth ${o.cw})`,
+    );
+  }
+
   ws.close();
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed) {
