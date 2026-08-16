@@ -1053,3 +1053,126 @@
 .mk-mobile-menu-panel button:hover {
   background: var(--pw-surface-2, rgba(127, 127, 127, 0.1));
 }
+
+/* ─── Scroll system ───────────────────────────────────────────────────────
+   Four primitives, used by every marketing page. No page invents its own
+   scroll behaviour.
+
+   Everything motion-related lives inside a double gate:
+     @supports (animation-timeline: view())  +  prefers-reduced-motion: no-preference
+   That is deliberately opt-in rather than opt-out. The plain rules below the
+   gate ARE the fallback, so a browser without scroll-driven animation and a
+   visitor with reduced motion both get the same complete static page, and
+   there is nothing to unwind. No JS polyfill, ever.
+
+   Author API:
+     .mk-parallax   reads --mk-depth   (1 = slowest / furthest back)
+     .mk-scene      reads --mk-beats   (one viewport of scroll per beat)
+     .mk-beat       reads --mk-beat-index (0-based)
+     .mk-crossfade  no properties, animates its direct children on entry  */
+
+/* Static baseline. This is what unsupported browsers and reduced-motion
+   visitors see: a plain document, everything visible, nothing pinned. */
+.mk-scene {
+  position: relative;
+}
+.mk-scene-stage {
+  position: relative;
+}
+.mk-beat {
+  position: relative;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* ---- Ambient depth ------------------------------------------------- */
+    .mk-parallax {
+      --mk-depth: 1;
+      will-change: transform;
+      animation: mk-drift linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+    @keyframes mk-drift {
+      from {
+        transform: translate3d(0, calc(var(--mk-depth) * 6vh), 0);
+      }
+      to {
+        transform: translate3d(0, calc(var(--mk-depth) * -6vh), 0);
+      }
+    }
+
+    /* ---- Pinned scenes -------------------------------------------------- */
+    .mk-scene {
+      --mk-beats: 3;
+      min-height: calc((var(--mk-beats) + 1) * 100svh);
+      /* view-timeline, NOT scroll-timeline. .mk-scene has no scrollbar of its
+         own; what we track is its journey through the viewport. A named
+         scroll-timeline here would attach to nothing and never advance. */
+      view-timeline: --scene block;
+      content-visibility: auto;
+      contain-intrinsic-size: auto 100svh;
+    }
+    .mk-scene-stage {
+      position: sticky;
+      top: 0;
+      /* svh, not vh. On iOS Safari vh is the URL-bar-collapsed height, so a
+         vh-tall sticky stage is a few pixels too tall while the bar is showing
+         and the whole scene jitters as you scroll. */
+      height: 100svh;
+      display: grid;
+      place-items: center;
+      overflow: visible;
+    }
+
+    /* A beat owns one slice of its scene's progress.
+
+       The range is `contain`: the span during which the scene fully covers the
+       viewport, which is exactly the span during which the stage is pinned.
+       `entry` would run every beat out during the first viewport of scroll and
+       then leave the stage frozen for the rest of the scene. */
+    .mk-beat {
+      --mk-beat-index: 0;
+      animation: mk-beat-inout linear both;
+      animation-timeline: --scene;
+      animation-range: contain
+          calc(var(--mk-beat-index) / var(--mk-beats) * 100%) contain
+          calc((var(--mk-beat-index) + 1) / var(--mk-beats) * 100%);
+    }
+    @keyframes mk-beat-inout {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 3svh, 0) scale(0.98);
+      }
+      18% {
+        opacity: 1;
+        transform: none;
+      }
+      82% {
+        opacity: 1;
+        transform: none;
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(0, -3svh, 0) scale(1.02);
+      }
+    }
+
+    /* ---- Entry crossfade, the cheap version ----------------------------- */
+    .mk-crossfade > * {
+      animation: mk-crossfade linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 40%;
+    }
+    @keyframes mk-crossfade {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 24px, 0);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
+}

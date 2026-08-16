@@ -1,0 +1,292 @@
+/**
+ * Scroll-system verification for the marketing surface.
+ *
+ * The failure mode this exists for is not a build error. It is a pinned scene
+ * that never releases, trapping the visitor mid-page with no way out but the
+ * back button. That does not show up in tsc, in a lint, or in a screenshot. It
+ * shows up in production, to a real person, once.
+ *
+ * So this asserts the three structural invariants that make a sticky scene
+ * releasable, on every marketing page, in both motion states:
+ *
+ *   1. the scene is meaningfully taller than its sticky stage
+ *   2. no ancestor of the stage clips overflow (the single most common cause of
+ *      "position: sticky silently does nothing")
+ *   3. the stage actually computes to position: sticky when motion is allowed,
+ *      and does NOT when the visitor has asked for reduced motion
+ *
+ * Connects to an already-running headless Chrome. Use scripts/run-marketing-scroll.sh,
+ * which boots the server and the browser for you.
+ *
+ * Env:
+ *   SCROLL_ORIGIN     origin to test against (default http://localhost:3210)
+ *   CDP_PORT          Chrome remote debugging port (default 9445)
+ *   EXPECTED_SCENES   minimum total .mk-scene count across all pages (default 0)
+ */
+
+const PORT = Number(process.env.CDP_PORT ?? 9445);
+const ORIGIN = process.env.SCROLL_ORIGIN ?? "http://localhost:3210";
+const EXPECTED_SCENES = Number(process.env.EXPECTED_SCENES ?? 0);
+const PAGES = ["/", "/architecture", "/about", "/pricing"];
+
+// ── harness ──────────────────────────────────────────────────────────
+let passed = 0;
+let failed = 0;
+const failures = [];
+function check(cond, msg) {
+  if (cond) {
+    passed++;
+  } else {
+    failed++;
+    failures.push(msg);
+    console.error("FAIL: " + msg);
+  }
+}
+
+// ── CDP plumbing (same shape as scripts/test-cockpit-cdp.mjs) ────────
+async function getPageTarget() {
+  const res = await fetch(`http://localhost:${PORT}/json`);
+  const targets = await res.json();
+  let page = targets.find((t) => t.type === "page");
+  if (!page) {
+    const nt = await fetch(`http://localhost:${PORT}/json/new`);
+    page = await nt.json();
+  }
+  return page.webSocketDebuggerUrl;
+}
+
+class CDP {
+  constructor(ws) {
+    this.ws = ws;
+    this.id = 0;
+    this.pending = new Map();
+    ws.addEventListener("message", (ev) => {
+      const msg = JSON.parse(ev.data);
+      if (msg.id && this.pending.has(msg.id)) {
+        const { resolve, reject } = this.pending.get(msg.id);
+        this.pending.delete(msg.id);
+        if (msg.error) reject(new Error(JSON.stringify(msg.error)));
+        else resolve(msg.result);
+      }
+    });
+  }
+  send(method, params = {}) {
+    const id = ++this.id;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      this.ws.send(JSON.stringify({ id, method, params }));
+      setTimeout(() => {
+        if (this.pending.has(id)) {
+          this.pending.delete(id);
+          reject(new Error(`timeout ${method}`));
+        }
+      }, 30000);
+    });
+  }
+}
+
+function connect(url) {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(url);
+    ws.addEventListener("open", () => resolve(ws));
+    ws.addEventListener("error", (e) =>
+      reject(new Error("ws error " + (e.message ?? ""))),
+    );
+  });
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// ── the probe, evaluated in the page ─────────────────────────────────
+const SCENE_PROBE = `(() => {
+  const out = [];
+  for (const scene of document.querySelectorAll('.mk-scene')) {
+    const stage = scene.querySelector('.mk-scene-stage');
+    if (!stage) {
+      out.push({ id: scene.id || '(unnamed)', error: 'no .mk-scene-stage child' });
+      continue;
+    }
+    // Walk up from the stage looking for a clipping ancestor. overflow hidden
+    // or clip anywhere above a sticky element silently disables the stickiness.
+    let bad = null;
+    let n = stage.parentElement;
+    while (n && n !== document.documentElement) {
+      const ov = getComputedStyle(n);
+      if (['hidden', 'clip'].includes(ov.overflowY) || ['hidden', 'clip'].includes(ov.overflow)) {
+        bad = (n.className && String(n.className).slice(0, 60)) || n.tagName;
+        break;
+      }
+      n = n.parentElement;
+    }
+    out.push({
+      id: scene.id || '(unnamed)',
+      beats: getComputedStyle(scene).getPropertyValue('--mk-beats').trim() || null,
+      sceneH: Math.round(scene.getBoundingClientRect().height),
+      stageH: Math.round(stage.getBoundingClientRect().height),
+      badAncestor: bad,
+      position: getComputedStyle(stage).position,
+    });
+  }
+  return JSON.stringify(out);
+})()`;
+
+/* A beat that renders but never animates is the quiet failure: the scene pins,
+   the visitor scrolls, and nothing happens. getAnimations() is the only honest
+   way to know the timeline actually attached and the calc()-derived range
+   resolved to a real, non-empty slice. */
+const BEAT_PROBE = `(() => {
+  const out = [];
+  for (const beat of document.querySelectorAll('.mk-beat')) {
+    const anims = beat.getAnimations();
+    const a = anims[0];
+    out.push({
+      scene: beat.closest('.mk-scene')?.id || '(none)',
+      index: getComputedStyle(beat).getPropertyValue('--mk-beat-index').trim(),
+      count: anims.length,
+      hasTimeline: !!(a && a.timeline),
+      rangeStart: a && a.rangeStart ? String(a.rangeStart.rangeName ?? '') + ' ' +
+        (a.rangeStart.offset ? a.rangeStart.offset.toString() : '') : null,
+      rangeEnd: a && a.rangeEnd ? String(a.rangeEnd.rangeName ?? '') + ' ' +
+        (a.rangeEnd.offset ? a.rangeEnd.offset.toString() : '') : null,
+    });
+  }
+  return JSON.stringify(out);
+})()`;
+
+async function evalJson(cdp, expr) {
+  const r = await cdp.send("Runtime.evaluate", {
+    expression: expr,
+    returnByValue: true,
+  });
+  if (r.exceptionDetails) {
+    throw new Error("page eval threw: " + JSON.stringify(r.exceptionDetails));
+  }
+  return JSON.parse(r.result.value);
+}
+
+async function loadAndProbe(cdp, url) {
+  await cdp.send("Page.navigate", { url });
+  // Page.loadEventFired is not exposed through this minimal client, so poll
+  // readyState instead. Cheap and deterministic.
+  for (let i = 0; i < 60; i++) {
+    const r = await cdp.send("Runtime.evaluate", {
+      expression: "document.readyState",
+      returnByValue: true,
+    });
+    if (r.result.value === "complete") break;
+    await sleep(250);
+  }
+  // Give scroll-driven animation attachment a frame or two to settle.
+  await sleep(400);
+  return {
+    scenes: await evalJson(cdp, SCENE_PROBE),
+    beats: await evalJson(cdp, BEAT_PROBE),
+  };
+}
+
+async function main() {
+  const wsUrl = await getPageTarget();
+  const ws = await connect(wsUrl);
+  const cdp = new CDP(ws);
+  await cdp.send("Page.enable");
+  await cdp.send("Runtime.enable");
+  await cdp.send("Emulation.setDeviceMetricsOverride", {
+    width: 1440,
+    height: 900,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+
+  // ── pass 1: motion allowed ────────────────────────────────────────
+  await cdp.send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+  });
+
+  let total = 0;
+  for (const path of PAGES) {
+    const { scenes, beats } = await loadAndProbe(cdp, ORIGIN + path);
+    total += scenes.length;
+    console.log(
+      `motion    ${path}: ${scenes.length} scene(s), ${beats.length} beat(s)`,
+    );
+
+    for (const b of beats) {
+      check(
+        b.count > 0,
+        `${path} ${b.scene} beat ${b.index}: no animation attached, the beat will never play`,
+      );
+      check(
+        b.hasTimeline,
+        `${path} ${b.scene} beat ${b.index}: animation has no timeline, the named view-timeline did not resolve`,
+      );
+      check(
+        b.rangeStart !== b.rangeEnd,
+        `${path} ${b.scene} beat ${b.index}: range start and end are identical (${b.rangeStart}), the calc() slice collapsed to zero width`,
+      );
+    }
+
+    for (const s of scenes) {
+      check(!s.error, `${path} ${s.id}: ${s.error ?? ""}`);
+      if (s.error) continue;
+      check(
+        s.sceneH > s.stageH * 1.5,
+        `${path} ${s.id}: scene (${s.sceneH}px) must be meaningfully taller than its stage (${s.stageH}px), or it never releases`,
+      );
+      check(
+        s.badAncestor === null,
+        `${path} ${s.id}: clipping ancestor "${s.badAncestor}" above the sticky stage disables stickiness`,
+      );
+      check(
+        s.position === "sticky",
+        `${path} ${s.id}: stage computed position is "${s.position}", expected sticky`,
+      );
+    }
+  }
+
+  check(
+    total >= EXPECTED_SCENES,
+    `expected at least ${EXPECTED_SCENES} scene(s) across all pages, found ${total}`,
+  );
+
+  // ── pass 2: reduced motion ────────────────────────────────────────
+  // Everything must collapse. Not slower, not shorter. Gone.
+  await cdp.send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+  });
+
+  for (const path of PAGES) {
+    const { scenes, beats } = await loadAndProbe(cdp, ORIGIN + path);
+    console.log(
+      `reduced   ${path}: ${scenes.length} scene(s), ${beats.length} beat(s)`,
+    );
+    for (const b of beats) {
+      check(
+        b.count === 0,
+        `${path} ${b.scene} beat ${b.index}: under reduced motion a beat must have no animation at all, found ${b.count}`,
+      );
+    }
+    for (const s of scenes) {
+      if (s.error) continue;
+      check(
+        s.position !== "sticky",
+        `${path} ${s.id}: under reduced motion the stage must not be sticky, got "${s.position}"`,
+      );
+      check(
+        s.sceneH < s.stageH * 1.5,
+        `${path} ${s.id}: under reduced motion the scene must collapse to its content height (scene ${s.sceneH}px vs stage ${s.stageH}px)`,
+      );
+    }
+  }
+
+  ws.close();
+  console.log(`\n${passed} passed, ${failed} failed`);
+  if (failed) {
+    console.error("\nfailures:\n" + failures.map((f) => "  - " + f).join("\n"));
+  }
+  process.exit(failed ? 1 : 0);
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
