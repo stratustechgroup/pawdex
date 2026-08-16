@@ -170,6 +170,15 @@ const RAIL_PROBE = `(() => {
   });
 })()`;
 
+/* A tall, narrow H1 means the copy column got crushed by a layout mistake.
+   That is invisible to tsc, invisible to a build, and obvious to a visitor. */
+const HEADLINE_PROBE = `(() => {
+  const h1 = document.querySelector('h1');
+  if (!h1) return JSON.stringify(null);
+  const r = h1.getBoundingClientRect();
+  return JSON.stringify({ w: Math.round(r.width), h: Math.round(r.height) });
+})()`;
+
 /* Diagram groups start at opacity 0 and are raised by a view() animation. If
    that animation ever fails to attach, the diagrams are simply invisible and
    nothing else on the page would tell you. Under reduced motion the base
@@ -184,10 +193,34 @@ const DIAGRAM_PROBE = `(() => {
   });
 })()`;
 
+/* A fourteen-sheet decorative field behind the headline is exactly the kind of
+   thing that quietly steals the largest paint. The fix (content-visibility,
+   fewer sheets) is only obvious if something tells you it happened. */
+const LCP_PROBE = `new Promise((resolve) => {
+  // LCP is not exposed through getEntriesByType; a buffered PerformanceObserver
+  // is the only way to read it back after the fact.
+  let last = null;
+  try {
+    new PerformanceObserver((list) => {
+      const e = list.getEntries();
+      if (e.length) last = e[e.length - 1];
+    }).observe({ type: 'largest-contentful-paint', buffered: true });
+  } catch (err) {
+    resolve(JSON.stringify(null));
+    return;
+  }
+  setTimeout(() => resolve(JSON.stringify(last ? {
+    startTime: Math.round(last.startTime),
+    tag: last.element ? last.element.tagName : null,
+    cls: last.element ? String(last.element.className || '').slice(0, 40) : null,
+  } : null)), 1500);
+})`;
+
 async function evalJson(cdp, expr) {
   const r = await cdp.send("Runtime.evaluate", {
     expression: expr,
     returnByValue: true,
+    awaitPromise: true,
   });
   if (r.exceptionDetails) {
     throw new Error("page eval threw: " + JSON.stringify(r.exceptionDetails));
@@ -214,6 +247,8 @@ async function loadAndProbe(cdp, url) {
     beats: await evalJson(cdp, BEAT_PROBE),
     rail: await evalJson(cdp, RAIL_PROBE),
     diagrams: await evalJson(cdp, DIAGRAM_PROBE),
+    lcp: await evalJson(cdp, LCP_PROBE),
+    headline: await evalJson(cdp, HEADLINE_PROBE),
   };
 }
 
@@ -237,8 +272,30 @@ async function main() {
 
   let total = 0;
   for (const path of PAGES) {
-    const { scenes, beats, rail } = await loadAndProbe(cdp, ORIGIN + path);
+    const { scenes, beats, rail, lcp, headline } = await loadAndProbe(
+      cdp,
+      ORIGIN + path,
+    );
     total += scenes.length;
+
+    if (headline) {
+      check(
+        headline.w >= 400 && headline.w > headline.h,
+        `${path}: headline is ${headline.w}x${headline.h}px, which means the copy column was crushed`,
+      );
+    }
+
+    if (path === "/" && lcp) {
+      console.log(`          LCP ${lcp.startTime}ms on <${lcp.tag}> ${lcp.cls}`);
+      // The bar is not "the H1 must win": a ticker or a card can legitimately
+      // be the largest paint. The bar is that DECORATION must never win, and
+      // that the headline must not have been crushed into a narrow ribbon by a
+      // layout mistake, which is what a tall, narrow H1 means.
+      check(
+        !String(lcp.cls).includes("mk-paper"),
+        `home LCP element is a decorative paper sheet (${lcp.cls}); the paper field has stolen the largest paint`,
+      );
+    }
 
     if (rail) {
       check(

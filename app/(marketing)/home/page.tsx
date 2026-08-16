@@ -1,5 +1,4 @@
 import { SiteHeader } from "@/components/marketing/site-header";
-import { HeroVisual } from "@/components/marketing/hero-visual";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
 import { FormatTicker } from "@/components/marketing/format-ticker";
 import { Lifecycle } from "@/components/marketing/lifecycle";
@@ -9,28 +8,12 @@ import { BreederStrip } from "@/components/marketing/breeder-strip";
 import { Faq, FAQS } from "@/components/marketing/faq";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { ScrollRail } from "@/components/marketing/scroll-rail";
+import { Hero } from "@/components/marketing/hero";
 import {
   JsonLd,
   softwareApplicationSchema,
   faqPageSchema,
 } from "@/components/marketing/structured-data";
-
-// Quantified, honest, product-true. The Flighty lesson: concrete numbers
-// beat adjectives.
-const STATS = [
-  {
-    stat: "~1 min",
-    label: "to read a 40-page vet chart, cover to cover",
-  },
-  {
-    stat: "100%",
-    label: "of extracted facts link back to the exact page of the original document",
-  },
-  {
-    stat: "0",
-    label: "records saved without your explicit approval",
-  },
-];
 
 export default function MarketingHome() {
   return (
@@ -49,63 +32,7 @@ export default function MarketingHome() {
           { id: "waitlist", label: "Early access" },
         ]}
       />
-      {/* ------------------------------------------------------------- Hero */}
-      <section className="mk-hero">
-        <div className="mk-container mk-hero-grid">
-          <div>
-            <span className="mk-eyebrow mk-reveal">The permanent record for pets</span>
-            <h1 className="mk-display mk-reveal" style={{ margin: "24px 0 0", color: "var(--pw-text)" }}>
-              They can&apos;t tell you their history. <em>Pawdex can.</em>
-            </h1>
-            <p className="mk-lead mk-reveal" style={{ margin: "24px 0 0", maxWidth: "46ch" }}>
-              Your pet&apos;s medical story is scattered across clinics, inboxes
-              and a shoebox of paper. Forward any vet document to Pawdex and it
-              becomes one clean, source-cited timeline that stays current for
-              life, and follows them wherever life goes.
-            </p>
-            <div className="mk-reveal" style={{ marginTop: 32 }}>
-              <WaitlistForm source="hero" />
-            </div>
-          </div>
-          <HeroVisual />
-        </div>
-
-        {/* Quantified claims strip */}
-        <div className="mk-container" style={{ marginTop: "clamp(40px, 6vw, 72px)" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 0,
-              borderTop: "1px solid var(--pw-border)",
-            }}
-          >
-            {STATS.map((s, i) => (
-              <div
-                key={s.stat}
-                style={{
-                  padding: "22px 24px 4px",
-                  borderLeft: i === 0 ? "none" : "1px solid var(--pw-border)",
-                }}
-                className="max-sm:!border-l-0"
-              >
-                <div
-                  style={{
-                    font: "600 clamp(22px, 2.6vw, 30px) var(--mk-mono)",
-                    letterSpacing: "-0.02em",
-                    color: "var(--pw-accent)",
-                  }}
-                >
-                  {s.stat}
-                </div>
-                <div className="mk-small" style={{ marginTop: 6, maxWidth: "30ch" }}>
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Hero />
 
       {/* Reads-everything ticker */}
       <FormatTicker />

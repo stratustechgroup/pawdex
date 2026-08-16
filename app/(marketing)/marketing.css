@@ -267,6 +267,40 @@
   }
 }
 
+/* ---------------------------------------------- hero over the paper field */
+
+/* Taller than the old hero, because the field needs room to read as scattered
+   rather than cropped. min-height, not height, so long copy still fits. */
+.mk-hero--field {
+  min-height: min(88svh, 780px);
+  display: grid;
+  align-items: center;
+  overflow: hidden;
+}
+.mk-hero-copy {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+@media (min-width: 921px) {
+  .mk-hero-copy {
+    /* Left-aligned inside the centred container, not centred itself: the field
+       lives on the right, and centred type over a right-weighted image reads as
+       an accident. Constrain the column with max-width alone. Adding padding on
+       top of a max-width box subtracts from the text, which crushes the
+       headline into a narrow ribbon. */
+    max-width: 640px;
+    margin-inline: 0;
+  }
+}
+.mk-hero-sentinel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+}
+
 /* --------------------------------------------------- hero live simulation */
 
 .mk-sim {
@@ -1052,6 +1086,78 @@
 .mk-mobile-menu-link:hover,
 .mk-mobile-menu-panel button:hover {
   background: var(--pw-surface-2, rgba(127, 127, 127, 0.1));
+}
+
+/* ─── Paper field ─────────────────────────────────────────────────────────
+   The scattered documents behind the hero and inside Scene A. Absolutely
+   positioned, decorative, and hidden entirely below 920px: a rotated
+   fourteen-element field on a phone is noise, and dropping it is the cheapest
+   available performance win on the device class that needs it most. */
+.mk-paper-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  /* Off-screen sheets cost nothing until they approach. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100svh;
+}
+@media (max-width: 920px) {
+  .mk-paper-field--hero {
+    display: none;
+  }
+}
+
+.mk-paper {
+  position: absolute;
+  left: var(--mk-x);
+  top: var(--mk-y);
+  width: var(--mk-w);
+  rotate: var(--mk-rot);
+  padding: 11px 13px 13px;
+  background: var(--pw-surface);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-r-sm);
+  box-shadow: var(--pw-shadow-md);
+  opacity: 0.92;
+}
+/* Depth read as contrast as well as motion: the furthest sheets sit back into
+   the page instead of competing with the headline. */
+.mk-paper--fax {
+  opacity: 0.78;
+}
+.mk-paper--handwritten {
+  background: var(--pw-surface-2);
+}
+
+.mk-paper-head {
+  font: 600 7.5px/1 var(--mk-mono);
+  letter-spacing: 0.1em;
+  color: var(--pw-text-subtle);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--pw-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mk-paper-lines {
+  display: grid;
+  gap: 6px;
+  padding-top: 9px;
+}
+.mk-paper-lines span {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--pw-surface-3);
+}
+.mk-paper-stamp {
+  margin-top: 9px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--mk-amber) 55%, transparent);
 }
 
 /* ─── Progress rail ───────────────────────────────────────────────────────
