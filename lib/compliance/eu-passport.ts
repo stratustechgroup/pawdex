@@ -58,69 +58,75 @@ export type CountryCode =
   | "NO"
   | "GB";
 
+export type Regime = "eu" | "gb";
+
 export type Destination = {
   code: CountryCode;
   name: string;
+  /** Which rule set applies. GB left the EU regime; more regimes to come. */
+  regime: Regime;
   requires_tapeworm: boolean;
   notes?: string;
 };
 
 export const EU_DESTINATIONS: Destination[] = [
-  { code: "AT", name: "Austria", requires_tapeworm: false },
-  { code: "BE", name: "Belgium", requires_tapeworm: false },
-  { code: "BG", name: "Bulgaria", requires_tapeworm: false },
-  { code: "HR", name: "Croatia", requires_tapeworm: false },
-  { code: "CY", name: "Cyprus", requires_tapeworm: false },
-  { code: "CZ", name: "Czechia", requires_tapeworm: false },
-  { code: "DK", name: "Denmark", requires_tapeworm: false },
-  { code: "EE", name: "Estonia", requires_tapeworm: false },
+  { code: "AT", name: "Austria", regime: "eu", requires_tapeworm: false },
+  { code: "BE", name: "Belgium", regime: "eu", requires_tapeworm: false },
+  { code: "BG", name: "Bulgaria", regime: "eu", requires_tapeworm: false },
+  { code: "HR", name: "Croatia", regime: "eu", requires_tapeworm: false },
+  { code: "CY", name: "Cyprus", regime: "eu", requires_tapeworm: false },
+  { code: "CZ", name: "Czechia", regime: "eu", requires_tapeworm: false },
+  { code: "DK", name: "Denmark", regime: "eu", requires_tapeworm: false },
+  { code: "EE", name: "Estonia", regime: "eu", requires_tapeworm: false },
   {
     code: "FI",
     name: "Finland",
+    regime: "eu",
     requires_tapeworm: true,
     notes: "Echinococcus treatment 24–120h before arrival.",
   },
-  { code: "FR", name: "France", requires_tapeworm: false },
-  { code: "DE", name: "Germany", requires_tapeworm: false },
-  { code: "GR", name: "Greece", requires_tapeworm: false },
-  { code: "HU", name: "Hungary", requires_tapeworm: false },
+  { code: "FR", name: "France", regime: "eu", requires_tapeworm: false },
+  { code: "DE", name: "Germany", regime: "eu", requires_tapeworm: false },
+  { code: "GR", name: "Greece", regime: "eu", requires_tapeworm: false },
+  { code: "HU", name: "Hungary", regime: "eu", requires_tapeworm: false },
   {
     code: "IE",
     name: "Ireland",
+    regime: "eu",
     requires_tapeworm: true,
     notes: "Echinococcus treatment 24–120h before arrival.",
   },
-  { code: "IT", name: "Italy", requires_tapeworm: false },
-  { code: "LV", name: "Latvia", requires_tapeworm: false },
-  { code: "LT", name: "Lithuania", requires_tapeworm: false },
-  { code: "LU", name: "Luxembourg", requires_tapeworm: false },
+  { code: "IT", name: "Italy", regime: "eu", requires_tapeworm: false },
+  { code: "LV", name: "Latvia", regime: "eu", requires_tapeworm: false },
+  { code: "LT", name: "Lithuania", regime: "eu", requires_tapeworm: false },
+  { code: "LU", name: "Luxembourg", regime: "eu", requires_tapeworm: false },
   {
     code: "MT",
     name: "Malta",
+    regime: "eu",
     requires_tapeworm: true,
     notes: "Echinococcus treatment 24–120h before arrival.",
   },
-  { code: "NL", name: "Netherlands", requires_tapeworm: false },
+  { code: "NL", name: "Netherlands", regime: "eu", requires_tapeworm: false },
   {
     code: "NO",
     name: "Norway",
+    regime: "eu",
     requires_tapeworm: true,
     notes: "Echinococcus treatment 24–120h before arrival.",
   },
-  { code: "PL", name: "Poland", requires_tapeworm: false },
-  { code: "PT", name: "Portugal", requires_tapeworm: false },
-  { code: "RO", name: "Romania", requires_tapeworm: false },
-  { code: "SK", name: "Slovakia", requires_tapeworm: false },
-  { code: "SI", name: "Slovenia", requires_tapeworm: false },
-  { code: "ES", name: "Spain", requires_tapeworm: false },
-  { code: "SE", name: "Sweden", requires_tapeworm: false },
-  {
-    code: "GB",
-    name: "United Kingdom",
-    requires_tapeworm: true,
-    notes: "Echinococcus treatment 24–120h before arrival.",
-  },
+  { code: "PL", name: "Poland", regime: "eu", requires_tapeworm: false },
+  { code: "PT", name: "Portugal", regime: "eu", requires_tapeworm: false },
+  { code: "RO", name: "Romania", regime: "eu", requires_tapeworm: false },
+  { code: "SK", name: "Slovakia", regime: "eu", requires_tapeworm: false },
+  { code: "SI", name: "Slovenia", regime: "eu", requires_tapeworm: false },
+  { code: "ES", name: "Spain", regime: "eu", requires_tapeworm: false },
+  { code: "SE", name: "Sweden", regime: "eu", requires_tapeworm: false },
 ];
+// GB is deliberately NOT in this list any more: Great Britain left the EU pet
+// scheme and runs its own regime (GB pet health certificate, its own tapeworm
+// rule, approved routes). It lives in lib/compliance/destinations.ts with
+// regime "gb". Processing GB under EU logic was audit finding §4.
 
 export type RequirementStatus = "ok" | "warning" | "blocker" | "todo" | "na";
 
@@ -130,6 +136,14 @@ export type Requirement = {
   status: RequirementStatus;
   detail: string;
   action_required: string | null;
+  /**
+   * Whether this row participates in the overall readiness computation.
+   * Defaults to true. False marks calendar actions and logistics notes — the
+   * health certificate that can only exist in the last 10 days, route
+   * constraints, the US re-entry form — which inform the owner without making
+   * "ready" unreachable (the pre-Phase-1 bug).
+   */
+  gates_readiness?: boolean;
 };
 
 export type ComplianceReport = {
@@ -191,7 +205,7 @@ const TAPEWORM_WINDOW_HOURS_MAX = 120;
 const TAPEWORM_KEYWORDS = ["praziquantel", "droncit", "echinococcus", "drontal"];
 const TITER_KEYWORDS = ["favn", "rabies titer", "rabies antibody", "raffit"];
 
-function latestRabies(
+export function latestRabies(
   vaccs: ComplianceInputs["vaccinations"],
 ): ComplianceInputs["vaccinations"][number] | null {
   const rabies = vaccs.filter(
@@ -222,7 +236,7 @@ function hasTiterOnFile(events: ComplianceInputs["events"]): {
     : { found: false, occurred_on: null, title: null };
 }
 
-function hasTapewormTreatment(
+export function hasTapewormTreatment(
   meds: ComplianceInputs["medications"],
   events: ComplianceInputs["events"],
   asOf: Date | null,
@@ -250,8 +264,8 @@ export function isValidIsoChip(value: string | null): boolean {
   return /^\d{15}$/.test(trimmed);
 }
 
-/** The EU non-commercial pet regime covers exactly dogs, cats and ferrets. */
-function coveredSpecies(species: string): "dog" | "cat" | "ferret" | null {
+/** The EU (and GB) pet schemes cover exactly dogs, cats and ferrets. */
+export function coveredSpecies(species: string): "dog" | "cat" | "ferret" | null {
   const s = species.trim().toLowerCase();
   if (s.startsWith("dog") || s === "canine") return "dog";
   if (s.startsWith("cat") || s === "feline") return "cat";
@@ -648,6 +662,7 @@ export function computeEuComplianceReport(
     id: "ehc",
     label: "EU animal health certificate (via VEHCS)",
     status: "todo",
+    gates_readiness: false,
     detail:
       "Issued by a USDA-accredited vet through VEHCS and endorsed (ink-signed) by USDA APHIS, within 10 days of EU entry. This is the EU's own certificate — not APHIS Form 7001. Once checked at entry it covers onward EU movement for 6 months.",
     action_required:
@@ -657,7 +672,7 @@ export function computeEuComplianceReport(
   // Readiness reflects the RECORDS. The certificate is inherently a
   // last-10-days errand, so it never blocks "ready" — the page copy presents
   // ready as "records ready, certificate appointment remains".
-  const gating = requirements.filter((r) => r.id !== "ehc");
+  const gating = requirements.filter((r) => r.gates_readiness !== false);
   const blockers = gating.filter((r) => r.status === "blocker").length;
   const ok = requirements.filter((r) => r.status === "ok").length;
   const overall: ComplianceReport["overall_status"] =

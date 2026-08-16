@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Session worktrees are full checkouts of this repo; linting them
+    // double-counts every finding against whichever branch they hold.
+    ".claude/**",
   ]),
 ]);
 

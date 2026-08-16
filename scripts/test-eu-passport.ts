@@ -15,6 +15,11 @@ import {
   EU_DESTINATIONS,
   type ComplianceInputs,
 } from "../lib/compliance/eu-passport";
+import {
+  ALL_DESTINATIONS,
+  computeComplianceReport,
+  GB_DESTINATION,
+} from "../lib/compliance/destinations";
 
 let pass = 0;
 let fail = 0;
@@ -220,6 +225,72 @@ console.log("\n(11) tapeworm window math for dogs");
     }),
   );
   assert("treatment 30 days before travel → outside window", row(stale, "tapeworm")!.status === "warning", row(stale, "tapeworm")!.status);
+}
+
+
+console.log("\n(12) GB regime — its own rules, not the EU's");
+{
+  const GB = GB_DESTINATION;
+  const dispatch = computeComplianceReport;
+
+  const r = dispatch(base({ destination: GB }));
+  assert("GB report computed via dispatcher", r.destination.code === "GB");
+  const titer = row(r, "titer")!;
+  assert("GB: no titer from the US", titer.status === "na", titer.status);
+  const phc = row(r, "gb-phc")!;
+  assert("GB document is the GB pet health certificate", /Great Britain pet health certificate/.test(phc.label));
+  assert("GB PHC does not gate readiness", phc.gates_readiness === false);
+  assert("GB names neither EU cert nor bare 7001 as the pathway", !/EU animal health certificate/i.test(phc.label));
+  const route = row(r, "gb-route")!;
+  assert("approved-route logistics row present, non-gating", route.gates_readiness === false);
+  assert("GB dog gets tapeworm requirement unconditionally", !!row(r, "tapeworm") && row(r, "tapeworm")!.status !== "na");
+
+  const cat = dispatch(base({ destination: GB, pet: { species: "cat" } as never }));
+  assert("GB cat: tapeworm na (dogs only)", row(cat, "tapeworm")!.status === "na");
+
+  const vaccinatedTooYoung = dispatch(
+    base({
+      destination: GB,
+      pet: { date_of_birth: iso(-100) } as never,
+      vaccinations: [{ vaccine_type: "Rabies 1yr", vaccine_family: "rabies", administered_on: iso(-50), expires_on: iso(310), is_rabies: true }],
+    }),
+  );
+  assert(
+    "GB: vaccinated at ~7 weeks → blocker (12-week minimum)",
+    row(vaccinatedTooYoung, "rabies-age")?.status === "blocker",
+    String(row(vaccinatedTooYoung, "rabies-age")?.status),
+  );
+}
+
+console.log("\n(13) US re-entry rows on every outbound report");
+{
+  const r = computeComplianceReport(base());
+  const form = row(r, "us-reentry-form")!;
+  assert("dog gets the CDC Dog Import Form row", !!form);
+  assert("form row is non-gating", form.gates_readiness === false);
+  assert("mentions the Ceuta/Melilla trap", /Ceuta/.test(form.detail));
+  assert("overall readiness unaffected by re-entry rows", r.overall_status === "ready", r.overall_status);
+
+  const puppy = computeComplianceReport(
+    base({
+      pet: { date_of_birth: iso(-80) } as never,
+      vaccinations: [{ vaccine_type: "Rabies 1yr", vaccine_family: "rabies", administered_on: iso(-2), expires_on: iso(360), is_rabies: true }],
+      travel_date: iso(30),
+    }),
+  );
+  const age = row(puppy, "us-reentry-age")!;
+  assert("puppy under 6 months → re-entry age warning", age?.status === "warning");
+  assert("warning says no waiver exists", /no waiver/i.test(age?.action_required ?? ""));
+
+  const cat = computeComplianceReport(base({ pet: { species: "cat" } as never }));
+  assert("cat: re-entry row is 'na' (no CDC rabies requirement)", row(cat, "us-reentry")!.status === "na");
+}
+
+console.log("\n(14) EU list no longer contains GB");
+{
+  assert("GB absent from EU_DESTINATIONS", !EU_DESTINATIONS.some((d) => d.code === "GB"));
+  assert("GB present in ALL_DESTINATIONS with gb regime", ALL_DESTINATIONS.some((d) => d.code === "GB" && d.regime === "gb"));
+  assert("EU destinations all carry eu regime", EU_DESTINATIONS.every((d) => d.regime === "eu"));
 }
 
 console.log(`\neu passport engine: ${pass} passed, ${fail} failed`);
