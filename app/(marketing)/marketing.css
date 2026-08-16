@@ -1410,6 +1410,184 @@
   display: none;
 }
 
+/* ─── Claim rows ──────────────────────────────────────────────────────────
+   Asymmetric on purpose. The old three-up grid gave every claim the same
+   weight and the same shape, which is precisely what made the page read as
+   interchangeable blocks. Alternating rows force the eye to move and give each
+   claim its own moment. */
+.mk-claim-row {
+  width: min(1140px, calc(100% - 48px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 76px);
+  align-items: center;
+  padding-block: clamp(40px, 6vw, 76px);
+}
+.mk-claim-row--flip .mk-claim-row-copy {
+  order: 2;
+}
+.mk-claim-row--flip .mk-claim-row-proof {
+  order: 1;
+}
+/* A row with no proof column (claim 02, whose proof is the scene below it)
+   keeps the copy in one column rather than stretching it across the full
+   width, so the measure stays readable. */
+.mk-claim-row:not(:has(.mk-claim-row-proof)) .mk-claim-row-copy {
+  grid-column: 1 / -1;
+  max-width: 62ch;
+  margin-inline: auto;
+  text-align: center;
+}
+@media (max-width: 880px) {
+  .mk-claim-row {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .mk-claim-row--flip .mk-claim-row-copy,
+  .mk-claim-row--flip .mk-claim-row-proof {
+    order: initial;
+  }
+}
+
+.mk-claim-row-title {
+  margin: 14px 0 0;
+  color: var(--pw-text);
+  text-wrap: balance;
+}
+.mk-claim-row-body {
+  margin: 16px 0 0;
+  max-width: 52ch;
+}
+.mk-claim-row:not(:has(.mk-claim-row-proof)) .mk-claim-row-body {
+  margin-inline: auto;
+}
+
+/* ─── Stats ───────────────────────────────────────────────────────────────
+   Relocated out of the hero. Same numbers, same words. */
+.mk-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  border-top: 1px solid var(--pw-border);
+  margin-top: clamp(32px, 5vw, 64px);
+}
+.mk-stat {
+  padding: 22px 24px 4px;
+  border-left: 1px solid var(--pw-border);
+}
+.mk-stat:first-child {
+  border-left: 0;
+}
+@media (max-width: 640px) {
+  .mk-stat {
+    border-left: 0;
+  }
+}
+.mk-stat-value {
+  font: 600 clamp(22px, 2.6vw, 30px) var(--mk-mono);
+  letter-spacing: -0.02em;
+  color: var(--pw-accent);
+}
+.mk-stat-label {
+  margin-top: 6px;
+  max-width: 30ch;
+}
+
+/* ─── Scene C: the citation ───────────────────────────────────────────────
+   Static baseline: source page and fact side by side, both fully visible, with
+   the connector drawn. A visitor with no motion sees the finished proof, which
+   is the entire point of the scene anyway. */
+.mk-cit-grid {
+  width: min(1140px, calc(100% - 48px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 0;
+}
+@media (max-width: 880px) {
+  .mk-cit-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .mk-cit-link {
+    display: none;
+  }
+}
+
+.mk-cit-source {
+  margin: 0;
+  justify-self: end;
+  width: min(300px, 100%);
+}
+.mk-cit-page {
+  padding: 16px 16px 18px;
+}
+.mk-cit-page-head {
+  font: 600 8.5px/1 var(--mk-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pw-text-subtle);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-cit-page-lines {
+  display: grid;
+  gap: 9px;
+  padding-top: 12px;
+}
+.mk-cit-line {
+  display: block;
+  height: 5px;
+  border-radius: 2px;
+  background: var(--pw-surface-3);
+}
+.mk-cit-line--hl {
+  background: color-mix(in srgb, var(--mk-amber) 42%, var(--pw-surface-3));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mk-amber) 16%, transparent);
+}
+.mk-cit-page-label {
+  margin: 10px 0 0;
+  text-align: center;
+  font: 500 10.5px/1 var(--mk-mono);
+  letter-spacing: 0.08em;
+  color: var(--pw-text-muted);
+}
+
+.mk-cit-link {
+  width: 120px;
+  height: 40px;
+}
+.mk-cit-link-path {
+  stroke: var(--pw-border-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 0;
+}
+
+.mk-cit-fact-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  width: min(360px, 100%);
+}
+.mk-cit-fact-label {
+  flex: 1;
+  min-width: 0;
+  font: 600 14px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-cit-fact-date {
+  font: 500 11.5px var(--mk-mono);
+  color: var(--pw-text-muted);
+  white-space: nowrap;
+}
+.mk-cit-fact-note {
+  margin: 14px 0 0;
+  max-width: 34ch;
+}
+
 /* ─── Progress rail ───────────────────────────────────────────────────────
    A 2px track in the left gutter with one tick per chapter. The chapter name is
    a tooltip, not a permanent label, so the rail occupies a fixed 12px of width
@@ -1737,6 +1915,23 @@
       to {
         transform: translate(-50%, 220%);
         opacity: 0;
+      }
+    }
+
+    /* ---- Scene C behaviour ---------------------------------------------- */
+    /* The source arrives second, and the connector draws itself as it lands.
+       stroke-dashoffset is a paint-only property, which normally would not earn
+       a place in this system, but the path is 120px long and there is exactly
+       one of them on the page. */
+    .mk-cit-link-path {
+      stroke-dashoffset: 300;
+      animation: mk-cit-draw linear both;
+      animation-timeline: --scene;
+      animation-range: contain 42% contain 72%;
+    }
+    @keyframes mk-cit-draw {
+      to {
+        stroke-dashoffset: 0;
       }
     }
 
