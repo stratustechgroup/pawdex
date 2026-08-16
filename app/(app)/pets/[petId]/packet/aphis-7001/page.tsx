@@ -143,10 +143,13 @@ export default async function Aphis7001Page({
             }}
           >
             Bring this worksheet to your USDA-accredited vet at the certificate
-            appointment. The vet completes the actual APHIS 7001 form via
-            USDA APHIS Veterinary Services; this prefilled summary speeds the
-            visit. Issued certificate is valid for the destination&apos;s
-            entry window from issue date (typically 10 days).
+            appointment — it prefills the details every destination&apos;s
+            certificate asks for and speeds the visit. Your vet issues the
+            destination&apos;s own certificate through VEHCS (the EU, for
+            example, has its own — APHIS Form 7001 is only a fallback for
+            countries with no specific form). The issued certificate is valid
+            for the destination&apos;s entry window from issue date (typically
+            10 days).
           </p>
         </header>
 
@@ -238,9 +241,10 @@ export default async function Aphis7001Page({
                 font: "500 12px var(--font-inter)",
               }}
             >
-              No rabies vaccine on file. APHIS 7001 cannot be issued without a
-              current rabies vaccination administered at least 30 days before
-              travel (most destinations).
+              No rabies vaccine on file. A health certificate cannot be issued
+              without a current rabies vaccination — and for most destinations
+              (including the EU) entry is allowed no earlier than 21 days after
+              a primary rabies vaccination. Exact timing is destination-specific.
             </div>
           )}
         </FormSection>
@@ -318,9 +322,12 @@ export default async function Aphis7001Page({
           }}
         >
           This worksheet summarizes Pawdex records to speed the certificate
-          appointment. It is NOT a legal substitute for the issued APHIS 7001
-          form. The vet must complete and the USDA APHIS office must endorse
-          the official form within 10 days of travel (some destinations vary).
+          appointment. It is NOT a certificate. The destination determines the
+          official form — the EU has its own animal health certificate, and
+          APHIS Form 7001 applies only where no destination-specific form
+          exists. Your vet issues the official document via VEHCS and USDA
+          APHIS endorses it, typically within 10 days of travel (destination
+          windows vary).
         </footer>
       </div>
     </>

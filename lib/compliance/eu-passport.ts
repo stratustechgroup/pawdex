@@ -1,24 +1,31 @@
 /**
- * Pure compliance computation for EU pet travel post-2026-04-22.
+ * Pure compliance computation for EU pet travel under the post-2026-04-22
+ * regime (Delegated Reg (EU) 2026/131 + Implementing Reg (EU) 2026/636).
+ * Verified against primary sources 2026-08-15/16 — see
+ * docs/pet-passport-deep-dive.md §3 for per-rule citations.
  *
- * Rule sources (current as of plan revision):
- * - Rabies vaccination must be current and administered AFTER microchip
- *   implantation. Booster cadence per product label.
- * - For animals originating in non-listed third countries (incl. USA), a
- *   rabies titer test (FAVN, ≥ 0.5 IU/ml) from an EU-approved lab must be
- *   drawn ≥ 30 days post-vaccination and ≥ 3 months before travel.
- * - Pet must be ≥ 15 weeks old at the time of travel.
- * - Microchip must be ISO 11784/11785 compliant (15 digits, numeric).
- * - For travel to UK/IE/FI/MT/NO: tapeworm treatment (Echinococcus
- *   multilocularis, praziquantel-based) administered 24–120 hours before
- *   arrival, recorded by the issuing vet.
+ * Rules encoded (dogs, cats, ferrets):
+ * - ISO 11784/11785 microchip, implanted on or before the date of the rabies
+ *   vaccination — a vaccine given before the chip does not count.
+ * - Current rabies vaccination, valid through the travel day, administered at
+ *   12+ weeks of age; entry no earlier than 21 days after a PRIMARY
+ *   vaccination (an unbroken booster chain does not restart the wait).
+ * - Rabies titer (FAVN ≥ 0.5 IU/ml): NOT required from listed countries. The
+ *   US is listed in Annex II of Reg (EU) 2026/636, so the default US origin is
+ *   exempt; the requirement applies only to unlisted-origin pets.
+ * - ~15-week effective age minimum (12-week vaccine minimum + 21-day wait).
+ * - Echinococcus (praziquantel) treatment 24–120h before arrival, DOGS ONLY,
+ *   for the destinations flagged below (FI/IE/MT/NO — GB has its own regime).
+ * - EU animal health certificate: issued by a USDA-accredited vet via VEHCS,
+ *   endorsed (ink-signed) by USDA APHIS, within 10 days of entry. This is an
+ *   EU-specific certificate — it is NOT APHIS Form 7001.
  *
  * Pawdex does not verify against the issuing veterinarian and never makes
  * the final compliance call — this view is a checklist for the owner and a
- * handoff for a USDA-accredited / EU-recognized vet.
+ * handoff for a USDA-accredited vet.
  */
 
-import { differenceInDays, formatISO, parseISO, subMonths } from "date-fns";
+import { differenceInDays, formatISO, parseISO } from "date-fns";
 
 export type CountryCode =
   | "AT"
@@ -141,6 +148,9 @@ export type ComplianceInputs = {
     date_of_birth: string | null;
     microchip_number: string | null;
     microchip_registry: string | null;
+    /** DATE the chip was implanted (pets.microchip_implanted_on). Added by
+     *  migration 0023 for exactly the chip-before-rabies check. */
+    microchip_implanted_on: string | null;
   };
   vaccinations: Array<{
     vaccine_type: string;
@@ -165,6 +175,11 @@ export type ComplianceInputs = {
   }>;
   destination: Destination;
   travel_date: string | null; // ISO YYYY-MM-DD or null = unknown
+  /** Where the pet is travelling FROM. "US" (Annex II listed — no titer) is
+   *  the default; "unlisted" turns the titer requirement on. There is no UI
+   *  for this yet — it exists so the titer logic is origin-gated rather than
+   *  wrongly applied to everyone (the pre-2026 engine's central defect). */
+  origin?: "US" | "unlisted";
 };
 
 const FIFTEEN_WEEK_DAYS = 15 * 7;
@@ -193,13 +208,18 @@ function hasTiterOnFile(events: ComplianceInputs["events"]): {
   occurred_on: string | null;
   title: string | null;
 } {
+  // Latest matching event, not first-in-DB-order: the query feeding this has
+  // no ORDER BY, and "which titer" must not depend on row order.
+  let best: ComplianceInputs["events"][number] | null = null;
   for (const e of events) {
     const text = `${e.title} ${e.summary ?? ""} ${e.diagnosis ?? ""}`.toLowerCase();
     if (TITER_KEYWORDS.some((k) => text.includes(k))) {
-      return { found: true, occurred_on: e.occurred_on, title: e.title };
+      if (!best || e.occurred_on > best.occurred_on) best = e;
     }
   }
-  return { found: false, occurred_on: null, title: null };
+  return best
+    ? { found: true, occurred_on: best.occurred_on, title: best.title }
+    : { found: false, occurred_on: null, title: null };
 }
 
 function hasTapewormTreatment(
@@ -230,6 +250,15 @@ export function isValidIsoChip(value: string | null): boolean {
   return /^\d{15}$/.test(trimmed);
 }
 
+/** The EU non-commercial pet regime covers exactly dogs, cats and ferrets. */
+function coveredSpecies(species: string): "dog" | "cat" | "ferret" | null {
+  const s = species.trim().toLowerCase();
+  if (s.startsWith("dog") || s === "canine") return "dog";
+  if (s.startsWith("cat") || s === "feline") return "cat";
+  if (s.startsWith("ferret")) return "ferret";
+  return null;
+}
+
 export function computeEuComplianceReport(
   input: ComplianceInputs,
 ): ComplianceReport {
@@ -237,6 +266,29 @@ export function computeEuComplianceReport(
   const travelDate = input.travel_date ? parseISO(input.travel_date) : null;
 
   const requirements: Requirement[] = [];
+
+  // The regime covers dogs, cats and ferrets only. Anything else gets an
+  // honest "not covered" instead of dog rules applied to a rabbit — which is
+  // what this engine did before species gating.
+  const species = coveredSpecies(input.pet.species);
+  if (!species) {
+    requirements.push({
+      id: "species",
+      label: "Species coverage",
+      status: "warning",
+      detail: `${input.pet.name} is recorded as "${input.pet.species}". The EU non-commercial pet rules encoded here cover dogs, cats and ferrets; other species move under different (often stricter) national rules Pawdex does not model.`,
+      action_required:
+        "Check the destination country's national import rules for this species directly, and talk to your vet.",
+    });
+    return {
+      destination: input.destination,
+      travel_date: input.travel_date,
+      overall_status: "partial",
+      ready_count: 0,
+      blocker_count: 0,
+      requirements,
+    };
+  }
 
   // ── Microchip presence + ISO format
   const chip = input.pet.microchip_number;
@@ -314,8 +366,10 @@ export function computeEuComplianceReport(
         "Schedule a rabies vaccine with a USDA-accredited vet. Note: the vaccine must be administered AFTER microchip implantation, or it doesn't count for EU travel.",
     });
   } else {
+    // Valid THROUGH the travel day: a vaccine expiring on the date of entry
+    // is not current at the border, so the comparison is <=, not <.
     const expired =
-      rabies.expires_on && parseISO(rabies.expires_on) < (travelDate ?? today);
+      rabies.expires_on && parseISO(rabies.expires_on) <= (travelDate ?? today);
     if (expired) {
       // Tense follows reality: with no travel date the comparison is against
       // today, so the vaccine is already expired, not "will be" anything.
@@ -330,37 +384,139 @@ export function computeEuComplianceReport(
           "Re-vaccinate before travel. The 21-day post-vaccine wait period applies — plan accordingly.",
       });
     } else {
+      // APHIS: a PRIMARY rabies vaccination administered in the US counts for
+      // only 1 year for EU travel, even when the product is labeled 3-year.
+      // With a single rabies record on file we cannot tell primary from
+      // booster, so surface the trap instead of silently trusting the label.
+      const rabiesCount = input.vaccinations.filter(
+        (v) => v.is_rabies === true || v.vaccine_family === "rabies",
+      ).length;
+      const primaryCaveat =
+        rabiesCount === 1
+          ? " Note: if this was the pet's FIRST rabies vaccination, USDA treats it as valid for 1 year for EU travel even if labeled 3-year — confirm with your vet."
+          : "";
       requirements.push({
         id: "rabies",
         label: "Current rabies vaccination",
         status: "ok",
-        detail: `${rabies.vaccine_type} on ${rabies.administered_on}${rabies.expires_on ? `, expires ${rabies.expires_on}` : ""}.`,
+        detail: `${rabies.vaccine_type} on ${rabies.administered_on}${rabies.expires_on ? `, expires ${rabies.expires_on}` : ""}.${primaryCaveat}`,
         action_required: null,
       });
     }
   }
 
-  // ── Chip-before-rabies ordering (we can't fully verify; flag for vet review)
-  if (chip && rabies) {
-    requirements.push({
-      id: "chip-before-rabies",
-      label: "Chip implanted before rabies vaccination",
-      status: "todo",
-      detail:
-        "Pawdex doesn't store the chip-implant date. EU requires the rabies vaccine to have been administered AFTER chip implantation, or the vaccine record is invalid for travel.",
-      action_required:
-        "Confirm with your vet that the chip was on record before the rabies date shown. If not, re-vaccinate post-chip.",
-    });
+  // ── 21-day wait after a PRIMARY rabies vaccination (Reg 2026/131 Art
+  //    14(b): "complete primary course ... at least 21 days prior to the date
+  //    of movement"). Previously this rule existed only as advisory strings, so
+  //    a vaccine administered yesterday with travel tomorrow computed "ok".
+  //    An unbroken booster chain does not restart the wait: if the newest
+  //    rabies was administered while the previous one was still valid, the
+  //    primary course was completed long ago.
+  if (rabies) {
+    const rabiesAll = input.vaccinations
+      .filter((v) => v.is_rabies === true || v.vaccine_family === "rabies")
+      .sort((a, b) => (a.administered_on < b.administered_on ? -1 : 1));
+    const prior = rabiesAll.length >= 2 ? rabiesAll[rabiesAll.length - 2] : null;
+    const chainUnbroken =
+      prior?.expires_on != null && rabies.administered_on <= prior.expires_on;
+
+    if (!chainUnbroken) {
+      const eligibleFrom = new Date(parseISO(rabies.administered_on));
+      eligibleFrom.setDate(eligibleFrom.getDate() + 21);
+      const reference = travelDate ?? today;
+      const daysSince = differenceInDays(reference, parseISO(rabies.administered_on));
+      if (daysSince < 21) {
+        requirements.push({
+          id: "rabies-wait",
+          label: "21-day wait after primary vaccination",
+          status: travelDate ? "blocker" : "warning",
+          detail: travelDate
+            ? `Only ${daysSince} day${daysSince === 1 ? "" : "s"} between the rabies vaccination (${rabies.administered_on}) and travel — the EU requires at least 21. Earliest eligible entry: ${formatISO(eligibleFrom, { representation: "date" })}.`
+            : `The rabies vaccination on ${rabies.administered_on} was ${daysSince} day${daysSince === 1 ? "" : "s"} ago. EU entry is allowed from ${formatISO(eligibleFrom, { representation: "date" })} (21 days after vaccination).`,
+          action_required: travelDate
+            ? "Move the travel date to at least 21 days after the vaccination, or confirm with your vet that an earlier valid booster chain applies."
+            : "Plan travel no earlier than 21 days after the vaccination date.",
+        });
+      } else {
+        requirements.push({
+          id: "rabies-wait",
+          label: "21-day wait after primary vaccination",
+          status: "ok",
+          detail: `${daysSince} days since the rabies vaccination — the 21-day post-vaccination wait is satisfied.`,
+          action_required: null,
+        });
+      }
+    } else {
+      requirements.push({
+        id: "rabies-wait",
+        label: "21-day wait after primary vaccination",
+        status: "ok",
+        detail: `Booster administered ${rabies.administered_on} while the previous vaccination was still valid — the primary-course wait doesn't restart.`,
+        action_required: null,
+      });
+    }
   }
 
-  // ── Rabies titer for non-listed third countries (US/CA assumed origin)
+  // ── Chip-before-rabies ordering. Reg: "the date of administration of the
+  //    vaccine does not precede the date of identification". Same-day counts.
+  //    pets.microchip_implanted_on (migration 0023) exists for exactly this
+  //    check — the old code claimed the date wasn't stored and pushed an
+  //    unconditional todo.
+  if (chip && rabies) {
+    const implanted = input.pet.microchip_implanted_on;
+    if (!implanted) {
+      requirements.push({
+        id: "chip-before-rabies",
+        label: "Chip implanted before rabies vaccination",
+        status: "todo",
+        detail:
+          "No chip-implant date on file. The EU requires the rabies vaccine to have been administered on or after the day the chip went in — a vaccine given before the chip does not count for travel.",
+        action_required:
+          "Add the implant date on the pet's edit page (it's on the chip registration or the implanting vet's record), and Pawdex will verify the ordering for you.",
+      });
+    } else if (implanted <= rabies.administered_on) {
+      requirements.push({
+        id: "chip-before-rabies",
+        label: "Chip implanted before rabies vaccination",
+        status: "ok",
+        detail: `Chip implanted ${implanted}, rabies vaccinated ${rabies.administered_on} — ordering satisfied.`,
+        action_required: null,
+      });
+    } else {
+      requirements.push({
+        id: "chip-before-rabies",
+        label: "Chip implanted before rabies vaccination",
+        status: "blocker",
+        detail: `The rabies vaccination (${rabies.administered_on}) predates the chip implant (${implanted}). For EU travel that vaccination does not count.`,
+        action_required:
+          "Re-vaccinate now that the chip is in, then wait 21 days before travel. Ask your vet to record the new vaccination against the chip number.",
+      });
+    }
+  }
+
+  // ── Rabies titer — ONLY for unlisted-origin pets. The US is listed in
+  //    Annex II of Reg (EU) 2026/636, and the Commission is explicit that the
+  //    test "is not required" from listed countries. The pre-2026 engine
+  //    applied this to everyone — its single worst defect: every US household
+  //    was told to ship blood to Kansas and wait 3 months for a test the EU
+  //    dropped for them.
+  const origin = input.origin ?? "US";
+  if (origin === "US") {
+    requirements.push({
+      id: "titer",
+      label: "Rabies titer (FAVN)",
+      status: "na",
+      detail:
+        "Not required from the United States — the US is a listed country (Annex II, Reg (EU) 2026/636), so no rabies antibody test is needed for EU entry.",
+      action_required: null,
+    });
+  }
   const titer = hasTiterOnFile(input.events);
-  if (rabies) {
+  if (origin !== "US" && rabies) {
     if (titer.found && titer.occurred_on) {
       const titerDate = parseISO(titer.occurred_on);
       const vaccineDate = parseISO(rabies.administered_on);
       const daysAfterVaccine = differenceInDays(titerDate, vaccineDate);
-      const minTravel = subMonths(today, -TITER_MIN_LEAD_MONTHS); // travel ≥ 3 months after titer
       const earliestTravel = travelDate
         ? differenceInDays(travelDate, titerDate) >= TITER_MIN_LEAD_MONTHS * 30
         : true; // can't evaluate without travel date
@@ -391,7 +547,6 @@ export function computeEuComplianceReport(
           action_required: null,
         });
       }
-      void minTravel;
     } else {
       requirements.push({
         id: "titer",
@@ -405,8 +560,17 @@ export function computeEuComplianceReport(
     }
   }
 
-  // ── Destination-specific tapeworm
-  if (input.destination.requires_tapeworm) {
+  // ── Destination-specific tapeworm — DOGS ONLY (Reg 2026/131 Art 14(d)
+  //    covers dogs; the engine used to demand praziquantel from cats too).
+  if (input.destination.requires_tapeworm && species !== "dog") {
+    requirements.push({
+      id: "tapeworm",
+      label: `Echinococcus treatment (${input.destination.name})`,
+      status: "na",
+      detail: `${input.destination.name}'s Echinococcus treatment rule applies to dogs only — not required for a ${species}.`,
+      action_required: null,
+    });
+  } else if (input.destination.requires_tapeworm) {
     const tapeworm = hasTapewormTreatment(
       input.medications,
       input.events,
@@ -472,24 +636,34 @@ export function computeEuComplianceReport(
     });
   }
 
-  // ── EU health certificate (USDA APHIS 7001 equivalent — we don't store it,
-  //    flag for owner to procure within 10 days of travel)
+  // ── EU animal health certificate. Two corrections from the audit: this is
+  //    an EU-SPECIFIC certificate, NOT APHIS Form 7001 (APHIS says outright
+  //    not to submit the 7001 when the destination doesn't require it), and
+  //    the workflow is VEHCS — accredited vet issues, USDA endorses with an
+  //    ink signature for the EU. It can only exist within 10 days of entry,
+  //    so it is a calendar action, not a record Pawdex can hold in advance —
+  //    which is why it is excluded from the readiness computation below
+  //    (the old unconditional todo made "ready" unreachable by construction).
   requirements.push({
     id: "ehc",
-    label: "EU Animal Health Certificate (USDA APHIS 7001)",
+    label: "EU animal health certificate (via VEHCS)",
     status: "todo",
     detail:
-      "Required for non-EU origin pets. Issued by a USDA-accredited vet and endorsed by USDA APHIS Veterinary Services within 10 days of travel. Valid 10 days from issue date.",
+      "Issued by a USDA-accredited vet through VEHCS and endorsed (ink-signed) by USDA APHIS, within 10 days of EU entry. This is the EU's own certificate — not APHIS Form 7001. Once checked at entry it covers onward EU movement for 6 months.",
     action_required:
-      "Schedule the certificate appointment within 10 days of your travel date. The vet will validate your microchip, rabies status, and titer at the visit.",
+      "Book the certificate appointment for the 10-day window before your travel date, and allow time for USDA endorsement. The vet validates chip, rabies record and dates at that visit.",
   });
 
-  const blockers = requirements.filter((r) => r.status === "blocker").length;
+  // Readiness reflects the RECORDS. The certificate is inherently a
+  // last-10-days errand, so it never blocks "ready" — the page copy presents
+  // ready as "records ready, certificate appointment remains".
+  const gating = requirements.filter((r) => r.id !== "ehc");
+  const blockers = gating.filter((r) => r.status === "blocker").length;
   const ok = requirements.filter((r) => r.status === "ok").length;
   const overall: ComplianceReport["overall_status"] =
     blockers > 0
       ? "blocked"
-      : requirements.some((r) => r.status === "todo" || r.status === "warning")
+      : gating.some((r) => r.status === "todo" || r.status === "warning")
         ? "partial"
         : "ready";
 
