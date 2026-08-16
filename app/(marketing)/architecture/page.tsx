@@ -18,6 +18,7 @@ import {
 import { SpineDiagram } from "@/components/architecture/spine-diagram";
 import { TopologyDiagram } from "@/components/architecture/topology-diagram";
 import { TransferLedger } from "@/components/architecture/transfer-ledger";
+import { ScrollRail } from "@/components/marketing/scroll-rail";
 
 import "./architecture.css";
 
@@ -102,6 +103,16 @@ function Trade({
 export default function ArchitecturePage() {
   return (
     <main className="arch">
+      <ScrollRail
+        chapters={[
+          { id: "topology", label: "Topology" },
+          { id: "identity", label: "Identity" },
+          { id: "data", label: "Data" },
+          { id: "flow", label: "Flow" },
+          { id: "output", label: "Output" },
+          { id: "tradeoffs", label: "Tradeoffs" },
+        ]}
+      />
       <div className="arch-wrap">
         {/* Hero */}
         <header>
@@ -122,7 +133,7 @@ export default function ArchitecturePage() {
         </header>
 
         {/* 01 Topology */}
-        <Section num="01" eyebrow="Topology">
+        <Section num="01" eyebrow="Topology" id="topology">
           <Claim>
             One region, one database, and a hard line between the browser and the <strong>truth</strong>.
           </Claim>
@@ -158,7 +169,7 @@ export default function ArchitecturePage() {
         </Section>
 
         {/* 02 Identity */}
-        <Section num="02" eyebrow="Identity">
+        <Section num="02" eyebrow="Identity" id="identity">
           <Claim>
             Authorization is enforced in the <strong>database</strong>, not hidden in the UI.
           </Claim>
@@ -190,7 +201,7 @@ export default function ArchitecturePage() {
         </Section>
 
         {/* 03 Data */}
-        <Section num="03" eyebrow="Data">
+        <Section num="03" eyebrow="Data" id="data">
           <Claim>
             Forty-five tables, but really nine domains hanging off <strong>three anchors</strong>.
           </Claim>
@@ -220,7 +231,7 @@ export default function ArchitecturePage() {
         </Section>
 
         {/* 04 Main flow */}
-        <Section num="04" eyebrow="The main flow">
+        <Section num="04" eyebrow="The main flow" id="flow">
           <Claim>
             The AI reads the document. A <strong>human</strong> decides what becomes true.
           </Claim>
@@ -325,7 +336,7 @@ export default function ArchitecturePage() {
         </Section>
 
         {/* 06 Output */}
-        <Section num="06" eyebrow="Output">
+        <Section num="06" eyebrow="Output" id="output">
           <Claim>
             Everything the user sees is the same record, <strong>re-shaped</strong> for a moment of need.
           </Claim>
@@ -407,7 +418,7 @@ export default function ArchitecturePage() {
         </Section>
 
         {/* 09 Tradeoffs */}
-        <Section num="09" eyebrow="Tradeoffs">
+        <Section num="09" eyebrow="Tradeoffs" id="tradeoffs">
           <Claim>
             What I would change next, and what each choice <strong>bought</strong>.
           </Claim>

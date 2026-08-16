@@ -1,7 +1,19 @@
 import { Icon } from "@/components/brand/icon";
+import { SceneCitation } from "@/components/marketing/scene-citation";
 
-// "What we can do that others can't." Four concrete claims, each carrying a
-// small proof artifact instead of an icon-and-blurb card.
+// Chapter 3, the proof. "What we can do that others can't", four concrete
+// claims, each carrying a small proof artifact instead of an icon-and-blurb
+// card.
+//
+// This used to be a three-up grid of equal cards, which is the layout that
+// made the page read as interchangeable blocks. It is now an asymmetric
+// stack: alternating rows, one claim at a time, with room for the proof to be
+// a real artifact rather than a thumbnail. Claim 02 hosts Scene C, where the
+// citation stops being a badge and becomes a thing you watch happen.
+//
+// The quantified stats moved here from the hero. They belong with the rigour
+// argument, not above the fold: numbers persuade someone who is already
+// interested, and the hero's job is to make them interested.
 
 function TransferDiagram() {
   const stop = (initial: string, label: string, active?: boolean) => (
@@ -67,6 +79,17 @@ function TransferDiagram() {
   );
 }
 
+// Quantified, honest, product-true. Concrete numbers beat adjectives.
+const STATS = [
+  { stat: "~1 min", label: "to read a 40-page vet chart, cover to cover" },
+  {
+    stat: "100%",
+    label:
+      "of extracted facts link back to the exact page of the original document",
+  },
+  { stat: "0", label: "records saved without your explicit approval" },
+];
+
 const CLAIMS = [
   {
     index: "02",
@@ -127,45 +150,78 @@ const CLAIMS = [
 
 export function Claims() {
   return (
-    <section id="why-pawdex" className="mk-section" style={{ background: "var(--pw-surface)" }}>
-      <div className="mk-container">
-        <span className="mk-eyebrow mk-reveal">Why Pawdex</span>
-        <h2 className="mk-h2 mk-reveal" style={{ margin: "18px 0 0", maxWidth: "20ch" }}>
+    <section
+      id="why-pawdex"
+      className="mk-section"
+      style={{ background: "var(--pw-surface)" }}
+    >
+      <div className="mk-container mk-crossfade">
+        <span className="mk-eyebrow">Why Pawdex</span>
+        <h2 className="mk-h2" style={{ margin: "18px 0 0", maxWidth: "20ch" }}>
           The parts nobody else does.
         </h2>
+      </div>
 
-        <div className="mk-claims-grid" style={{ marginTop: "clamp(28px, 4vw, 48px)" }}>
-          <div className="mk-card mk-claim mk-claim--wide mk-reveal">
-            <div className="mk-claim-wide-grid">
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <span className="mk-claim-index">01</span>
-                <h3 className="mk-h3" style={{ margin: 0, color: "var(--pw-text)" }}>
-                  The record follows the animal, not the app account.
-                </h3>
-                <p className="mk-lead" style={{ margin: 0, fontSize: 16 }}>
-                  Everywhere else, a pet&apos;s history dies with an owner&apos;s
-                  login. Pawdex treats the animal as the permanent thing: adopt a
-                  dog out with a signup link and their entire cited history
-                  transfers to the new family in one tap.
-                </p>
-              </div>
-              <TransferDiagram />
-            </div>
-          </div>
-
-          {CLAIMS.map((c) => (
-            <div key={c.index} className="mk-card mk-claim mk-reveal">
-              <span className="mk-claim-index">{c.index}</span>
-              <h3 className="mk-h3" style={{ margin: 0, color: "var(--pw-text)" }}>
-                {c.title}
-              </h3>
-              <p className="mk-lead" style={{ margin: 0, fontSize: 15.5 }}>
-                {c.body}
-              </p>
-              {c.proof}
-            </div>
-          ))}
+      {/* 01. The widest claim gets the widest treatment. */}
+      <div className="mk-claim-row mk-crossfade">
+        <div className="mk-claim-row-copy">
+          <span className="mk-claim-index">01</span>
+          <h3 className="mk-h3 mk-claim-row-title">
+            The record follows the animal, not the app account.
+          </h3>
+          <p className="mk-lead mk-claim-row-body">
+            Everywhere else, a pet&apos;s history dies with an owner&apos;s
+            login. Pawdex treats the animal as the permanent thing: adopt a dog
+            out with a signup link and their entire cited history transfers to
+            the new family in one tap.
+          </p>
         </div>
+        <div className="mk-claim-row-proof">
+          <TransferDiagram />
+        </div>
+      </div>
+
+      {/* 02. Proof, not vibes. The claim that earns a scene of its own. */}
+      <div className="mk-claim-row mk-claim-row--flip mk-crossfade">
+        <div className="mk-claim-row-copy">
+          <span className="mk-claim-index">02</span>
+          <h3 className="mk-h3 mk-claim-row-title">Proof, not vibes.</h3>
+          <p className="mk-lead mk-claim-row-body">
+            AI that reads medical records has to show its work. Every extracted
+            fact carries a citation to the exact page and paragraph it came
+            from, kept forever, so you can always check the source yourself.
+          </p>
+        </div>
+      </div>
+      <SceneCitation />
+
+      {/* 03 and 04 alternate. */}
+      {CLAIMS.slice(1).map((c, i) => (
+        <div
+          key={c.index}
+          className={
+            i % 2 === 0
+              ? "mk-claim-row mk-crossfade"
+              : "mk-claim-row mk-claim-row--flip mk-crossfade"
+          }
+        >
+          <div className="mk-claim-row-copy">
+            <span className="mk-claim-index">{c.index}</span>
+            <h3 className="mk-h3 mk-claim-row-title">{c.title}</h3>
+            <p className="mk-lead mk-claim-row-body">{c.body}</p>
+          </div>
+          <div className="mk-claim-row-proof">{c.proof}</div>
+        </div>
+      ))}
+
+      {/* The numbers, where they belong. */}
+      <div className="mk-container mk-stats">
+        {STATS.map((s) => (
+          <div key={s.stat} className="mk-stat">
+            <div className="mk-stat-value">{s.stat}</div>
+            <div className="mk-small mk-stat-label">{s.label}</div>
+          </div>
+        ))}
       </div>
     </section>
   );

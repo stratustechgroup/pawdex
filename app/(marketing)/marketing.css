@@ -139,6 +139,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  /* Buttons never wrap. At 390px the header CTA was breaking "Get early
+     access" across three lines inside a 38px-tall pill. */
+  white-space: nowrap;
   height: 46px;
   padding: 0 22px;
   border-radius: 999px;
@@ -265,6 +268,57 @@
   .mk-hero::after {
     display: none;
   }
+}
+
+/* ---------------------------------------------- hero over the paper field */
+
+/* Taller than the old hero, because the field needs room to read as scattered
+   rather than cropped. min-height, not height, so long copy still fits. */
+.mk-hero--field {
+  /* The 780px cap left a wide, tall screen showing the hero plus a band of
+     dead space and the top of the next scene. Let it grow with the viewport. */
+  min-height: min(92svh, 1040px);
+  display: grid;
+  align-items: center;
+  overflow: hidden;
+}
+.mk-hero-copy {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+/* The display face caps at 92px, which holds a 1440px screen and looks
+   undersized on a 2560px one: the headline is the only thing carrying the left
+   half of the canvas, so it scales further here than it does elsewhere. */
+@media (min-width: 1600px) {
+  .mk-hero--field .mk-display {
+    font-size: clamp(92px, 5.4vw, 132px);
+  }
+  .mk-hero--field .mk-lead {
+    font-size: 21px;
+  }
+  .mk-hero-copy {
+    max-width: 820px;
+  }
+}
+
+@media (min-width: 921px) {
+  .mk-hero-copy {
+    /* Left-aligned inside the centred container, not centred itself: the field
+       lives on the right, and centred type over a right-weighted image reads as
+       an accident. Constrain the column with max-width alone. Adding padding on
+       top of a max-width box subtracts from the text, which crushes the
+       headline into a narrow ribbon. */
+    max-width: 640px;
+    margin-inline: 0;
+  }
+}
+.mk-hero-sentinel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
 }
 
 /* --------------------------------------------------- hero live simulation */
@@ -1052,4 +1106,1284 @@
 .mk-mobile-menu-link:hover,
 .mk-mobile-menu-panel button:hover {
   background: var(--pw-surface-2, rgba(127, 127, 127, 0.1));
+}
+
+/* Header CTA: full wording on desktop, short wording where the menu button
+   needs the room. */
+.mk-header-cta {
+  height: 38px;
+  padding: 0 18px;
+  font-size: 13.5px;
+  flex-shrink: 0;
+}
+.mk-cta-short {
+  display: none;
+}
+@media (max-width: 768px) {
+  .mk-header-cta {
+    padding: 0 14px;
+    font-size: 13px;
+  }
+  .mk-cta-full {
+    display: none;
+  }
+  .mk-cta-short {
+    display: inline;
+  }
+}
+
+/* ─── Paper field ─────────────────────────────────────────────────────────
+   The scattered documents behind the hero and inside Scene A. Absolutely
+   positioned, decorative, and hidden entirely below 920px: a rotated
+   fourteen-element field on a phone is noise, and dropping it is the cheapest
+   available performance win on the device class that needs it most. */
+.mk-paper-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  /* Off-screen sheets cost nothing until they approach. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100svh;
+}
+@media (max-width: 920px) {
+  .mk-paper-field--hero {
+    display: none;
+  }
+}
+
+.mk-paper {
+  position: absolute;
+  left: var(--mk-x);
+  top: var(--mk-y);
+  width: var(--mk-w);
+  rotate: var(--mk-rot);
+  padding: 11px 13px 13px;
+  background: var(--pw-surface);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-r-sm);
+  box-shadow: var(--pw-shadow-md);
+  opacity: 0.92;
+}
+/* Depth read as contrast as well as motion: the furthest sheets sit back into
+   the page instead of competing with the headline. */
+.mk-paper--fax {
+  opacity: 0.78;
+}
+.mk-paper--handwritten {
+  background: var(--pw-surface-2);
+}
+
+.mk-paper-head {
+  font: 600 7.5px/1 var(--mk-mono);
+  letter-spacing: 0.1em;
+  color: var(--pw-text-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--pw-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mk-paper-lines {
+  display: grid;
+  gap: 6px;
+  padding-top: 9px;
+}
+.mk-paper-lines span {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--pw-surface-3);
+}
+.mk-paper-stamp {
+  margin-top: 9px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--mk-amber) 55%, transparent);
+}
+
+/* ─── Scene A: the shoebox ────────────────────────────────────────────────
+   Static baseline first. Without scroll-driven animation, or with reduced
+   motion, this section is a centred record card and nothing else: the three
+   decorative beats are removed from the layout entirely rather than stacked up
+   as confusing debris. The record is the point; the rest is how you get there. */
+.mk-shoebox-fx {
+  display: none;
+}
+/* No position here. The generic .mk-scene-stage rule already sets relative in
+   the static baseline and sticky inside the support gate, and a two-class
+   selector like this one would outrank the gated sticky no matter where it
+   sits in the file. That silently un-pins the scene. */
+.mk-shoebox .mk-scene-stage {
+  padding-block: clamp(48px, 8vw, 96px);
+}
+
+/* In the hero the sheets are texture behind a headline and want to recede. In
+   this scene they are the thing you are looking at, so they get their contrast
+   back: full opacity, a stronger edge, and a deeper shadow to separate the pile
+   from the page. */
+.mk-shoebox .mk-paper {
+  opacity: 1;
+  border-color: var(--pw-border-strong);
+  box-shadow: var(--pw-shadow-lg);
+}
+.mk-shoebox .mk-paper-head {
+  color: var(--pw-text-secondary);
+}
+.mk-shoebox .mk-paper-lines span {
+  background: color-mix(in srgb, var(--pw-text) 12%, transparent);
+}
+
+.mk-shoebox-record-card {
+  width: min(560px, 92vw);
+  padding: 22px 22px 18px;
+  position: relative;
+  z-index: 2;
+}
+.mk-shoebox-record-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-shoebox-record-name {
+  font: 600 16px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-shoebox-record-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mk-shoebox-record-rows li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-shoebox-record-label {
+  flex: 1;
+  min-width: 0;
+  font: 550 13.5px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-shoebox-record-date {
+  font: 500 11.5px var(--mk-mono);
+  color: var(--pw-text-muted);
+  white-space: nowrap;
+}
+.mk-shoebox-reviewed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  font: 500 12.5px var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+
+.mk-shoebox-captions {
+  position: absolute;
+  left: clamp(18px, 5vw, 64px);
+  bottom: clamp(24px, 5vw, 56px);
+  z-index: 3;
+}
+.mk-shoebox-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  white-space: nowrap;
+  font: 500 12px var(--mk-mono);
+  letter-spacing: 0.06em;
+  color: var(--pw-text-muted);
+}
+
+/* The pile lands left of centre so the facts have somewhere to land. A fact
+   lifting off a page and coming to rest beside it is the whole idea; chips
+   stacked on top of the pile would read as a menu. */
+.mk-shoebox {
+  --mk-pile-x: 34;
+}
+.mk-shoebox-read {
+  position: absolute;
+  inset: 0;
+}
+.mk-shoebox-scan {
+  position: absolute;
+  left: calc(var(--mk-pile-x) * 1%);
+  top: 50%;
+  width: min(320px, 70vw);
+  height: 2px;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--mk-amber),
+    transparent
+  );
+}
+.mk-shoebox-chips {
+  position: absolute;
+  left: 58%;
+  top: 50%;
+  transform: translateY(-50%);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  z-index: 2;
+}
+.mk-shoebox-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--pw-surface);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-r-pill);
+  box-shadow: var(--pw-shadow-sm);
+  font: 550 12.5px var(--mk-body);
+  color: var(--pw-text);
+  white-space: nowrap;
+}
+
+/* ─── Scene B: the life ───────────────────────────────────────────────────
+   Static baseline: four articles in document order, each a readable age with
+   its own copy and its own card. That is a sensible vertical timeline on its
+   own, which is exactly what a screen reader and a no-motion visitor get. */
+.mk-life-beat {
+  width: min(1140px, calc(100% - 48px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: clamp(28px, 5vw, 68px);
+  align-items: center;
+  padding-block: clamp(40px, 6vw, 72px);
+}
+@media (max-width: 880px) {
+  .mk-life-beat {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+.mk-life-age {
+  display: inline-block;
+  font: 600 11px/1 var(--mk-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mk-amber);
+}
+.mk-life-lede {
+  margin: 18px 0 0;
+  color: var(--pw-text);
+  text-wrap: balance;
+}
+.mk-life-body {
+  margin: 16px 0 0;
+  max-width: 46ch;
+}
+
+.mk-life-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-life-card-title {
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-life-card-meta {
+  margin-left: auto;
+  color: var(--pw-text-muted);
+}
+.mk-life-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-life-row-label {
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-life-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 13px;
+  font: 450 12px var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+
+/* The one warm surface on the page, and it belongs to the hardest moment. */
+.mk-life-night-card {
+  background: linear-gradient(
+    165deg,
+    var(--mk-ink-band),
+    var(--mk-ink-band-2)
+  );
+  border-color: color-mix(in srgb, #8fc7a6 22%, transparent);
+}
+.mk-life-night-card .mk-life-card-title,
+.mk-life-night-card .mk-life-row-label {
+  color: #f3f0e7;
+}
+.mk-life-night-card .mk-small,
+.mk-life-night-card .mk-life-card-foot {
+  color: color-mix(in srgb, #efece3 74%, transparent);
+}
+.mk-life-night-card .mk-life-row {
+  border-bottom-color: color-mix(in srgb, #efece3 14%, transparent);
+}
+
+/* Deliberately never shown. An earlier version drew a spine down the left of
+   this scene, and next to the progress rail it read as two competing vertical
+   lines. The rail already says "you are moving through something"; the scene
+   does not need to say it twice. Kept as a no-op so the markup hook stays
+   available if the rail is ever removed. */
+.mk-life-spine {
+  display: none;
+}
+
+/* ─── Legal contents ──────────────────────────────────────────────────────
+   No motion on these pages at all. Just a way in. */
+.mk-legal-toc {
+  margin: 32px 0 40px;
+  padding: 18px 20px;
+  background: var(--pw-surface-2);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-r-lg);
+}
+.mk-legal-toc-head {
+  margin: 0 0 12px;
+  font: 600 10.5px/1 var(--mk-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pw-text-subtle);
+}
+.mk-legal-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  counter-reset: toc;
+}
+.mk-legal-toc li {
+  counter-increment: toc;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.mk-legal-toc li::before {
+  content: counter(toc, decimal-leading-zero);
+  font: 500 10.5px var(--mk-mono);
+  color: var(--pw-text-subtle);
+  flex-shrink: 0;
+}
+.mk-legal-toc a {
+  font: 400 14px/1.5 var(--mk-body);
+  color: var(--pw-text-secondary);
+  text-decoration: none;
+}
+.mk-legal-toc a:hover,
+.mk-legal-toc a:focus-visible {
+  color: var(--pw-text);
+  text-decoration: underline;
+}
+/* Jumping to a heading must not tuck it under the sticky header. */
+.mk-legal h2[id] {
+  scroll-margin-top: 84px;
+}
+
+/* ─── Plan fit finder ─────────────────────────────────────────────────────
+   Three cards, always all three on screen at desktop. Hiding two tiers behind
+   a drag interaction on the page people came to compare prices on would be
+   making them work to see the thing they came for.
+
+   Every visual state keys off [data-fit], which is set by the recommendation.
+   That gives the optional GSAP layer exactly one thing to react to. */
+.pf {
+  padding-block: clamp(64px, 9vw, 120px);
+}
+.pf-headline {
+  margin: 18px 0 0;
+  max-width: 30ch;
+  color: var(--pw-text);
+  /* Smaller than a section title, because it is a sentence making an argument
+     rather than a label. At full mk-h2 size it eats an entire screen before the
+     visitor reaches a single price. */
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1.14;
+}
+
+.pf-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: clamp(18px, 3vw, 36px);
+  align-items: end;
+  margin-top: clamp(28px, 4vw, 44px);
+  padding: 22px 24px;
+  background: var(--pw-surface-2);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-r-lg);
+}
+.pf-control {
+  display: grid;
+  gap: 10px;
+}
+.pf-control-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text);
+}
+.pf-control-value {
+  font: 600 15px var(--mk-mono);
+  color: var(--pw-accent);
+}
+.pf-control input[type="range"] {
+  width: 100%;
+  accent-color: var(--pw-accent);
+  /* 44px of pointer target without 44px of visual weight. Precise dragging on
+     a small screen is miserable otherwise. */
+  height: 24px;
+}
+
+.pf-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text);
+  cursor: pointer;
+}
+.pf-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--pw-accent);
+}
+
+.pf-result {
+  margin: 20px 0 0;
+  font: 400 15px/1.6 var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+.pf-result strong {
+  color: var(--pw-text);
+}
+
+.pf-interval {
+  display: inline-flex;
+  margin-top: 22px;
+  padding: 4px;
+  border-radius: var(--pw-r-pill);
+  background: var(--pw-surface-2);
+  border: 1px solid var(--pw-border);
+}
+.pf-interval button {
+  border: 0;
+  background: transparent;
+  border-radius: var(--pw-r-pill);
+  padding: 9px 18px;
+  min-height: 40px;
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text-secondary);
+  cursor: pointer;
+}
+.pf-interval button[data-active="true"] {
+  background: var(--pw-surface);
+  color: var(--pw-text);
+  box-shadow: var(--pw-shadow-sm);
+}
+.pf-save {
+  color: var(--pw-accent);
+}
+
+.pf-viewport {
+  margin-top: clamp(26px, 4vw, 40px);
+}
+.pf-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  /* Below this the three cards cannot coexist, so the track becomes a swipeable
+     row. GSAP Draggable upgrades this to inertia and snap when it loads; with
+     no JS it is still a perfectly usable scroll-snap carousel. */
+  .pf-viewport {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin-inline: -24px;
+    padding-inline: 24px;
+    scrollbar-width: none;
+  }
+  .pf-viewport::-webkit-scrollbar {
+    display: none;
+  }
+  .pf-track {
+    grid-template-columns: repeat(3, minmax(78vw, 1fr));
+  }
+  .pf-card {
+    scroll-snap-align: center;
+  }
+}
+
+.pf-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 22px;
+  transition:
+    transform 0.35s cubic-bezier(0.2, 0.6, 0.2, 1),
+    opacity 0.35s ease,
+    border-color 0.35s ease;
+}
+.pf-card[data-fit="true"] {
+  border-color: var(--pw-accent);
+  box-shadow: var(--pw-shadow-lg);
+  transform: translateY(-8px) scale(1.02);
+}
+.pf-card[data-fit="false"] {
+  /* De-emphasis by scale and border only, never opacity. Fading a card to 62%
+     drags its body text below the 4.5:1 contrast floor, and on a pricing page
+     the two cards you did NOT recommend are exactly the ones a visitor wants
+     to read in order to disagree with you. */
+  transform: scale(0.985);
+  border-color: var(--pw-border);
+}
+
+.pf-card-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 17px var(--mk-body);
+  color: var(--pw-text);
+}
+.pf-badge {
+  font: 600 10px/1 var(--mk-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 8px;
+  border-radius: var(--pw-r-pill);
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent-fg-on-soft);
+}
+.pf-tagline {
+  margin: 0;
+  font: 400 13.5px/1.55 var(--mk-body);
+  color: var(--pw-text-muted);
+}
+.pf-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.pf-amount {
+  font: 600 34px var(--mk-mono);
+  letter-spacing: -0.03em;
+  color: var(--pw-text);
+}
+.pf-per {
+  font: 500 14px var(--mk-mono);
+  color: var(--pw-text-muted);
+}
+.pf-price-note {
+  margin-top: 4px;
+  font: 400 12px var(--mk-body);
+  color: var(--pw-text-muted);
+}
+
+.pf-meter {
+  padding: 12px 14px;
+  border-radius: var(--pw-r-md);
+  background: var(--pw-surface-2);
+  border: 1px solid var(--pw-border);
+}
+.pf-meter[data-over="true"] {
+  border-color: var(--pw-status-due-dot);
+  background: var(--pw-status-due-bg);
+}
+.pf-meter-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font: 500 11.5px var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+.pf-meter[data-over="true"] .pf-meter-head {
+  color: var(--pw-status-due-fg);
+}
+.pf-meter-count {
+  font-family: var(--mk-mono);
+}
+.pf-meter-track {
+  margin-top: 8px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--pw-surface-3);
+  overflow: hidden;
+}
+.pf-meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--pw-accent);
+  transition: width 0.25s ease;
+}
+.pf-meter[data-over="true"] .pf-meter-fill {
+  background: var(--pw-status-due-dot);
+}
+.pf-meter-over {
+  margin: 8px 0 0;
+  font: 500 11.5px var(--mk-body);
+  color: var(--pw-status-due-fg);
+}
+
+.pf-cta {
+  width: 100%;
+}
+.pf-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+.pf-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font: 400 13.5px/1.5 var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+.pf-feature .pf-check {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--pw-accent);
+}
+.pf-feature--off {
+  color: var(--pw-text-muted);
+}
+.pf-feature--off .pf-check {
+  color: var(--pw-text-muted);
+}
+
+.pf-softcap,
+.pf-disclosure {
+  margin: 0;
+  font: 400 11.5px/1.5 var(--mk-body);
+  color: var(--pw-text-muted);
+}
+.pf-waitlist {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(28px, 4vw, 44px);
+}
+
+/* Once GSAP has loaded it owns transform and opacity on the cards. Leaving the
+   CSS transitions on would mean two systems animating the same properties. */
+.pf--gsap .pf-card {
+  transition: border-color 0.35s ease;
+}
+.pf--gsap .pf-card[data-fit="true"] {
+  transform: none;
+}
+
+/* Draggable replaces the native scroll rather than layering on top of it. */
+.pf--drag .pf-viewport {
+  overflow: hidden;
+  scroll-snap-type: none;
+}
+.pf--drag .pf-track {
+  width: max-content;
+  cursor: grab;
+}
+.pf--drag .pf-track:active {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-card,
+  .pf-meter-fill {
+    transition: none;
+  }
+}
+
+/* ─── Claim rows ──────────────────────────────────────────────────────────
+   Asymmetric on purpose. The old three-up grid gave every claim the same
+   weight and the same shape, which is precisely what made the page read as
+   interchangeable blocks. Alternating rows force the eye to move and give each
+   claim its own moment. */
+.mk-claim-row {
+  width: min(1140px, calc(100% - 48px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 76px);
+  align-items: center;
+  padding-block: clamp(40px, 6vw, 76px);
+}
+.mk-claim-row--flip .mk-claim-row-copy {
+  order: 2;
+}
+.mk-claim-row--flip .mk-claim-row-proof {
+  order: 1;
+}
+/* A row with no proof column (claim 02, whose proof is the scene below it)
+   keeps the copy in one column rather than stretching it across the full
+   width, so the measure stays readable. */
+.mk-claim-row:not(:has(.mk-claim-row-proof)) .mk-claim-row-copy {
+  grid-column: 1 / -1;
+  max-width: 62ch;
+  margin-inline: auto;
+  text-align: center;
+}
+@media (max-width: 880px) {
+  .mk-claim-row {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .mk-claim-row--flip .mk-claim-row-copy,
+  .mk-claim-row--flip .mk-claim-row-proof {
+    order: initial;
+  }
+}
+
+.mk-claim-row-title {
+  margin: 14px 0 0;
+  color: var(--pw-text);
+  text-wrap: balance;
+}
+.mk-claim-row-body {
+  margin: 16px 0 0;
+  max-width: 52ch;
+}
+.mk-claim-row:not(:has(.mk-claim-row-proof)) .mk-claim-row-body {
+  margin-inline: auto;
+}
+
+/* ─── Stats ───────────────────────────────────────────────────────────────
+   Relocated out of the hero. Same numbers, same words. */
+.mk-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  border-top: 1px solid var(--pw-border);
+  margin-top: clamp(32px, 5vw, 64px);
+}
+.mk-stat {
+  padding: 22px 24px 4px;
+  border-left: 1px solid var(--pw-border);
+}
+.mk-stat:first-child {
+  border-left: 0;
+}
+@media (max-width: 640px) {
+  .mk-stat {
+    border-left: 0;
+  }
+}
+.mk-stat-value {
+  font: 600 clamp(22px, 2.6vw, 30px) var(--mk-mono);
+  letter-spacing: -0.02em;
+  color: var(--pw-accent);
+}
+.mk-stat-label {
+  margin-top: 6px;
+  max-width: 30ch;
+}
+
+/* ─── Scene C: the citation ───────────────────────────────────────────────
+   Static baseline: source page and fact side by side, both fully visible, with
+   the connector drawn. A visitor with no motion sees the finished proof, which
+   is the entire point of the scene anyway. */
+.mk-cit-grid {
+  width: min(1140px, calc(100% - 48px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 0;
+}
+@media (max-width: 880px) {
+  .mk-cit-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .mk-cit-link {
+    display: none;
+  }
+}
+
+.mk-cit-source {
+  margin: 0;
+  justify-self: end;
+  width: min(300px, 100%);
+}
+.mk-cit-page {
+  padding: 16px 16px 18px;
+}
+.mk-cit-page-head {
+  font: 600 8.5px/1 var(--mk-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pw-text-muted);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-cit-page-lines {
+  display: grid;
+  gap: 9px;
+  padding-top: 12px;
+}
+.mk-cit-line {
+  display: block;
+  height: 5px;
+  border-radius: 2px;
+  background: var(--pw-surface-3);
+}
+.mk-cit-line--hl {
+  background: color-mix(in srgb, var(--mk-amber) 42%, var(--pw-surface-3));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mk-amber) 16%, transparent);
+}
+.mk-cit-page-label {
+  margin: 10px 0 0;
+  text-align: center;
+  font: 500 10.5px/1 var(--mk-mono);
+  letter-spacing: 0.08em;
+  color: var(--pw-text-muted);
+}
+
+.mk-cit-link {
+  width: 120px;
+  height: 40px;
+}
+.mk-cit-link-path {
+  stroke: var(--pw-border-strong);
+  stroke-width: 1.5;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 0;
+}
+
+.mk-cit-fact-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  width: min(360px, 100%);
+}
+.mk-cit-fact-label {
+  flex: 1;
+  min-width: 0;
+  font: 600 14px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-cit-fact-date {
+  font: 500 11.5px var(--mk-mono);
+  color: var(--pw-text-muted);
+  white-space: nowrap;
+}
+.mk-cit-fact-note {
+  margin: 14px 0 0;
+  max-width: 34ch;
+}
+
+/* ─── Progress rail ───────────────────────────────────────────────────────
+   A 2px track in the left gutter with one tick per chapter. The chapter name is
+   a tooltip, not a permanent label, so the rail occupies a fixed 12px of width
+   no matter what the chapters are called and can never push into the text.
+
+   Hidden below 1180px, where there is no gutter to put it in. */
+.mk-rail {
+  position: fixed;
+  left: max(14px, calc((100vw - 1140px) / 2 - 30px));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: none;
+  width: 12px;
+}
+@media (min-width: 1180px) {
+  .mk-rail {
+    display: block;
+  }
+}
+
+.mk-rail-track {
+  position: absolute;
+  left: 5px;
+  top: 0;
+  width: 2px;
+  height: 200px;
+  background: var(--pw-border);
+  border-radius: 2px;
+}
+.mk-rail-fill {
+  width: 2px;
+  height: 100%;
+  background: var(--pw-accent);
+  border-radius: 2px;
+  transform-origin: top;
+  /* Baseline is empty; the scroll timeline fills it. Under reduced motion the
+     override below shows it filled and dimmed, so it reads as a position
+     marker rather than a broken progress bar. */
+  transform: scaleY(0);
+}
+
+.mk-rail-list {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  height: 200px;
+  display: grid;
+  align-content: space-between;
+}
+.mk-rail-tick {
+  display: block;
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  text-decoration: none;
+}
+.mk-rail-tick::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pw-border-strong);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.mk-rail-tick:hover::before,
+.mk-rail-tick:focus-visible::before {
+  background: var(--pw-accent);
+  transform: scale(1.4);
+}
+
+/* The name, on demand only. */
+.mk-rail-label {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px 9px;
+  border-radius: var(--pw-r-sm);
+  background: var(--pw-surface);
+  border: 1px solid var(--pw-border);
+  box-shadow: var(--pw-shadow-md);
+  font: 500 10.5px/1 var(--mk-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pw-text);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.mk-rail-tick:hover .mk-rail-label,
+.mk-rail-tick:focus-visible .mk-rail-label {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-rail-fill {
+    transform: scaleY(1);
+    opacity: 0.35;
+  }
+}
+
+/* ─── Scroll system ───────────────────────────────────────────────────────
+   Four primitives, used by every marketing page. No page invents its own
+   scroll behaviour.
+
+   Everything motion-related lives inside a double gate:
+     @supports (animation-timeline: view())  +  prefers-reduced-motion: no-preference
+   That is deliberately opt-in rather than opt-out. The plain rules below the
+   gate ARE the fallback, so a browser without scroll-driven animation and a
+   visitor with reduced motion both get the same complete static page, and
+   there is nothing to unwind. No JS polyfill, ever.
+
+   Author API:
+     .mk-parallax   reads --mk-depth   (1 = slowest / furthest back)
+     .mk-scene      reads --mk-beats   (one viewport of scroll per beat)
+     .mk-beat       reads --mk-beat-index (0-based)
+     .mk-crossfade  no properties, animates its direct children on entry  */
+
+/* Static baseline. This is what unsupported browsers and reduced-motion
+   visitors see: a plain document, everything visible, nothing pinned. */
+.mk-scene {
+  position: relative;
+}
+.mk-scene-stage {
+  position: relative;
+}
+.mk-beat {
+  position: relative;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* ---- Ambient depth ------------------------------------------------- */
+    .mk-parallax {
+      --mk-depth: 1;
+      will-change: transform;
+      animation: mk-drift linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+    @keyframes mk-drift {
+      from {
+        transform: translate3d(0, calc(var(--mk-depth) * 6vh), 0);
+      }
+      to {
+        transform: translate3d(0, calc(var(--mk-depth) * -6vh), 0);
+      }
+    }
+
+    /* ---- Pinned scenes -------------------------------------------------- */
+    /* Pinned scenes are a desktop affordance, deliberately.
+       On a phone a four-beat scene is four screens of scroll you cannot skim,
+       the stage is where iOS Safari's URL-bar collapse causes the worst
+       jitter, and the paper field has to be hidden anyway because the pile is
+       wider than the viewport. Below 921px every scene renders in the static
+       form that the no-support and reduced-motion paths already use: complete,
+       ordered, readable, and much shorter. */
+    @media (min-width: 921px) {
+      .mk-scene {
+        --mk-beats: 3;
+        min-height: calc((var(--mk-beats) + 1) * 100svh);
+        /* view-timeline, NOT scroll-timeline. .mk-scene has no scrollbar of
+           its own; what we track is its journey through the viewport. A named
+           scroll-timeline here would attach to nothing and never advance. */
+        view-timeline: --scene block;
+        content-visibility: auto;
+        contain-intrinsic-size: auto 100svh;
+      }
+
+      /* Beats occupy the same grid cell so they overlay instead of stacking.
+         Without this the stage lays them out in a column and a four-beat scene is
+         four screens of content crammed into one viewport. In the static baseline
+         the stage is not a grid at all, so children flow normally, which is
+         exactly what the no-motion fallback wants. */
+      .mk-scene-stage > * {
+        grid-area: 1 / 1;
+      }
+      .mk-scene-stage {
+        position: sticky;
+        top: 0;
+        /* svh, not vh. On iOS Safari vh is the URL-bar-collapsed height, so a
+           vh-tall sticky stage is a few pixels too tall while the bar is showing
+           and the whole scene jitters as you scroll. */
+        height: 100svh;
+        display: grid;
+        place-items: center;
+        overflow: visible;
+      }
+
+      /* A beat owns one slice of its scene's progress.
+
+         The range is `contain`: the span during which the scene fully covers the
+         viewport, which is exactly the span during which the stage is pinned.
+         `entry` would run every beat out during the first viewport of scroll and
+         then leave the stage frozen for the rest of the scene. */
+      .mk-beat {
+        --mk-beat-index: 0;
+        animation: mk-beat-inout linear both;
+        animation-timeline: --scene;
+        animation-range: contain
+            calc(var(--mk-beat-index) / var(--mk-beats) * 100%) contain
+            calc((var(--mk-beat-index) + 1) / var(--mk-beats) * 100%);
+      }
+      @keyframes mk-beat-inout {
+        0% {
+          opacity: 0;
+          transform: translate3d(0, 3svh, 0) scale(0.98);
+        }
+        18% {
+          opacity: 1;
+          transform: none;
+        }
+        82% {
+          opacity: 1;
+          transform: none;
+        }
+        100% {
+          opacity: 0;
+          transform: translate3d(0, -3svh, 0) scale(1.02);
+        }
+      }
+
+      /* ---- Scene A behaviour ---------------------------------------------- */
+      .mk-shoebox-fx {
+        display: block;
+      }
+      .mk-shoebox-papers {
+        position: absolute;
+        inset: 0;
+      }
+      /* Stretch across the cell so the scan line and the chips have the full
+         stage to position against. */
+      .mk-shoebox-read {
+        place-self: stretch;
+      }
+      /* Inside the scene the sheets stop drifting and start converging. Two
+         animations on one element, each on its own slice of the scene: one owns
+         transform and rotate, the other owns opacity. They never touch the same
+         property, so they compose instead of fighting. */
+      .mk-shoebox .mk-paper {
+        animation:
+          mk-shoebox-converge linear both,
+          mk-shoebox-recede linear both;
+        animation-timeline: --scene, --scene;
+        animation-range:
+          contain 2% contain 42%,
+          contain 60% contain 76%;
+      }
+      @keyframes mk-shoebox-converge {
+        from {
+          transform: translate3d(0, 0, 0);
+          rotate: var(--mk-rot);
+        }
+        to {
+          /* The field spans the stage, so viewport units stand in for "percent
+             of the field". The trailing -50% is what actually centres the sheet:
+             percentages inside a translate resolve against the element's own box,
+             so it pulls each sheet back by half its own width and height. Without
+             it you centre the top-left corner and the pile sits low and right.
+
+             The scale is not decoration. In the hero these sheets are texture; in
+             this scene they are the subject, and a subject has to be big enough
+             to look at. */
+          /* The depth-derived offset is what stops the pile turning to mush.
+             Converge every sheet on the exact same point and fourteen sets of
+             ruled lines overlap into noise; nudging each one a few pixels by its
+             own depth gives the stack visible edges, like paper actually behaves.
+             Depths run 0.8 to 3.2, so this lands in roughly -8px to +8px. */
+          transform: translate3d(
+              calc(
+                (var(--mk-pile-x) - var(--mk-x-n)) * 1vw - 50% +
+                  (var(--mk-depth) - 2) * 7px
+              ),
+              calc(
+                (50 - var(--mk-y-n)) * 1svh - 50% + (var(--mk-depth) - 2) * 5px
+              ),
+              0
+            )
+            scale(1.35);
+          rotate: calc((var(--mk-depth) - 2) * 0.9deg);
+        }
+      }
+      @keyframes mk-shoebox-recede {
+        from {
+          opacity: 0.92;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+
+      .mk-shoebox-chip {
+        /* Chips detach in sequence rather than all at once, so the eye reads it
+           as extraction rather than a reveal. */
+        animation: mk-shoebox-chip-out linear both;
+        animation-timeline: --scene;
+        animation-range: contain calc(52% + var(--mk-chip-i) * 2%) contain
+          calc(62% + var(--mk-chip-i) * 2%);
+      }
+      @keyframes mk-shoebox-chip-out {
+        from {
+          opacity: 0;
+          transform: translate3d(-40px, 0, 0) scale(0.94);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      .mk-shoebox-scan {
+        animation: mk-shoebox-scan linear both;
+        animation-timeline: --scene;
+        animation-range: contain 46% contain 64%;
+      }
+      @keyframes mk-shoebox-scan {
+        from {
+          transform: translate(-50%, -220%);
+          opacity: 0;
+        }
+        20% {
+          opacity: 1;
+        }
+        80% {
+          opacity: 1;
+        }
+        to {
+          transform: translate(-50%, 220%);
+          opacity: 0;
+        }
+      }
+
+      /* ---- Scene C behaviour ---------------------------------------------- */
+      /* The source arrives second, and the connector draws itself as it lands.
+         stroke-dashoffset is a paint-only property, which normally would not earn
+         a place in this system, but the path is 120px long and there is exactly
+         one of them on the page. */
+      .mk-cit-link-path {
+        stroke-dashoffset: 300;
+        animation: mk-cit-draw linear both;
+        animation-timeline: --scene;
+        animation-range: contain 42% contain 72%;
+      }
+      @keyframes mk-cit-draw {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      /* ---- Progress rail fill --------------------------------------------- */
+      .mk-rail-fill {
+        animation: mk-rail-fill linear both;
+        animation-timeline: scroll(root block);
+      }
+      @keyframes mk-rail-fill {
+        to {
+          transform: scaleY(1);
+        }
+      }
+    }
+
+    /* ---- Entry crossfade, the cheap version ----------------------------- */
+    .mk-crossfade > * {
+      animation: mk-crossfade linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 40%;
+    }
+    @keyframes mk-crossfade {
+      from {
+        opacity: 0;
+        transform: translate3d(0, 24px, 0);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
 }

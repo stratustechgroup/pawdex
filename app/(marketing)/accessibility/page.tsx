@@ -9,9 +9,21 @@ export const metadata: Metadata = {
   alternates: { canonical: "/accessibility" },
 };
 
+// Section list for the in-page table of contents. Kept beside the content
+// it describes so the two cannot drift apart unnoticed.
+const SECTIONS = [
+  { id: "conformance-target", label: "Conformance target" },
+  { id: "what-that-means-in-practice", label: "What that means in practice" },
+  { id: "how-we-test", label: "How we test" },
+  { id: "known-limitations", label: "Known limitations" },
+  { id: "contact-us", label: "Contact us" },
+  { id: "change-log", label: "Change log" },
+];
+
 export default function AccessibilityPage() {
   return (
     <LegalShell
+      sections={SECTIONS}
       eyebrow="Commitment"
       title="Accessibility"
       updated="Last reviewed July 10, 2026"
@@ -22,7 +34,7 @@ export default function AccessibilityPage() {
         contrast, and understandable with a screen reader.
       </p>
 
-      <h2>Conformance target</h2>
+      <h2 id="conformance-target">Conformance target</h2>
       <p>
         Pawdex aims to conform to the{" "}
         <a
@@ -36,7 +48,7 @@ export default function AccessibilityPage() {
         measure the existing product against.
       </p>
 
-      <h2>What that means in practice</h2>
+      <h2 id="what-that-means-in-practice">What that means in practice</h2>
       <ul>
         <li>
           Every page has a skip-to-content link, landmark regions, and a
@@ -60,7 +72,7 @@ export default function AccessibilityPage() {
         </li>
       </ul>
 
-      <h2>How we test</h2>
+      <h2 id="how-we-test">How we test</h2>
       <p>
         We run automated accessibility checks (axe) against our core pages as
         part of getting this product to launch, and we fix the serious and
@@ -69,14 +81,14 @@ export default function AccessibilityPage() {
         ongoing work, not a one-time pass.
       </p>
 
-      <h2>Known limitations</h2>
+      <h2 id="known-limitations">Known limitations</h2>
       <p>
         Pawdex is in early access and still growing. Some newer or less-traveled
         corners of the product may not yet meet our AA target. If you hit one,
         please tell us: real reports are the fastest way we improve.
       </p>
 
-      <h2>Contact us</h2>
+      <h2 id="contact-us">Contact us</h2>
       <p>
         If something in Pawdex is hard or impossible to use, email{" "}
         <a href="mailto:support@pawdex.co">support@pawdex.co</a> with what you
@@ -84,7 +96,7 @@ export default function AccessibilityPage() {
         you directly and prioritize a fix.
       </p>
 
-      <h2>Change log</h2>
+      <h2 id="change-log">Change log</h2>
       <p>
         July 10, 2026: Reviewed as part of the pre-launch compliance pass. No
         changes to our WCAG 2.1 Level AA target; effective date refreshed.

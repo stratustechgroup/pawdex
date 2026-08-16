@@ -15,8 +15,12 @@ export function Section({
   id?: string;
   children: ReactNode;
 }) {
+  // mk-crossfade rises each direct child in as the section enters the
+  // viewport. Ambient only: this page never pins. Someone reading a system
+  // walkthrough is reading, and pinning would fight them for control of the
+  // scroll.
   return (
-    <section className="arch-section" id={id}>
+    <section className="arch-section mk-crossfade" id={id}>
       <p className="arch-eyebrow">
         <span className="arch-eyebrow-num">{num}</span>
         {eyebrow}
@@ -57,7 +61,15 @@ export function DiagramFrame({
 }) {
   return (
     <>
-      <div className="arch-frame">
+      {/* The frame scrolls horizontally on narrow viewports, so it needs to be
+          reachable and scrollable from the keyboard. A scrollable region with
+          no tab stop is content a keyboard user simply cannot get to. */}
+      <div
+        className="arch-frame"
+        tabIndex={0}
+        role="group"
+        aria-label={caption ? `Diagram: ${caption}` : "Diagram"}
+      >
         <div className="arch-frame-pad">{children}</div>
       </div>
       {caption ? <p className="arch-caption">{caption}</p> : null}

@@ -4,11 +4,13 @@ import { Wordmark } from "@/components/brand/wordmark";
 
 type FooterLink = { href: string; label: string };
 
+// Anchors track the six-chapter home page. Breeders is an episode in the life
+// scene now, not a section of its own.
 const PRODUCT: FooterLink[] = [
-  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#scene-shoebox", label: "How it works" },
   { href: "/#why-pawdex", label: "Why Pawdex" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/#breeders", label: "Breeders" },
+  { href: "/#life-8w", label: "Breeders" },
   { href: "/#faq", label: "FAQ" },
 ];
 

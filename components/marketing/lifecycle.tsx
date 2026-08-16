@@ -4,7 +4,7 @@ import { Icon } from "@/components/brand/icon";
 // eras of owning an animal, each shown as the product actually behaves.
 // CSS-only tabs (radio inputs + sibling selectors in marketing.css).
 
-function DayOneVignette() {
+export function DayOneVignette() {
   return (
     <div className="mk-vignette" aria-hidden="true">
       <div className="mk-card" style={{ padding: 18 }}>
@@ -64,7 +64,7 @@ function DayOneVignette() {
   );
 }
 
-function EveryVisitVignette() {
+export function EveryVisitVignette() {
   return (
     <div className="mk-vignette" aria-hidden="true">
       <div className="mk-card" style={{ padding: 18 }}>
@@ -81,7 +81,9 @@ function EveryVisitVignette() {
           <span style={{ font: "550 13px var(--mk-body)", color: "var(--pw-text)" }}>
             Fwd: Baxter visit summary
           </span>
-          <span className="mk-mono-tag" style={{ marginLeft: "auto", color: "var(--pw-text-subtle)" }}>
+          {/* muted, not subtle: --pw-text-subtle lands at 2.8:1 on the dark
+              surface, which fails AA for 11.5px body text. */}
+          <span className="mk-mono-tag" style={{ marginLeft: "auto", color: "var(--pw-text-muted)" }}>
             2 min ago
           </span>
         </div>
@@ -162,7 +164,7 @@ function EveryVisitVignette() {
   );
 }
 
-function YearsLaterVignette() {
+export function YearsLaterVignette() {
   return (
     <div className="mk-vignette" aria-hidden="true">
       <div className="mk-card" style={{ padding: 18 }}>

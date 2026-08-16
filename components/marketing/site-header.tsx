@@ -7,11 +7,16 @@ import { ContactModalTrigger } from "@/components/marketing/contact-modal";
 // Anchors route home-first ("/#id") so they work from any marketing route, not
 // just the home page. Pricing and About are real pages. On the home page the
 // anchors still resolve to same-page jumps.
+//
+// Travel and Breeders no longer have sections of their own: they are episodes
+// in the life scene now (3 years and 8 weeks), so the anchors point at those
+// beats. Keeping the old /#travel and /#breeders hrefs would have left the two
+// links pointing at ids that no longer exist anywhere on the page.
 const LINKS = [
-  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#scene-shoebox", label: "How it works" },
   { href: "/#why-pawdex", label: "Why Pawdex" },
-  { href: "/#travel", label: "Travel" },
-  { href: "/#breeders", label: "Breeders" },
+  { href: "/#life-3y", label: "Travel" },
+  { href: "/#life-8w", label: "Breeders" },
   { href: "/pricing", label: "Pricing" },
   { href: "/#faq", label: "FAQ" },
   { href: "/about", label: "About" },
@@ -38,8 +43,14 @@ export function SiteHeader() {
           <ContactModalTrigger label="Contact" />
         </nav>
         <div style={{ flex: 1 }} />
-        <Link href="/#waitlist" className="mk-btn" style={{ height: 38, padding: "0 18px", fontSize: 13.5 }}>
-          Get early access
+        {/* Two labels, one link. Below 768px the full wording plus the menu
+            button does not fit in 390px: making the button nowrap pushed the
+            menu trigger clean off the screen, and letting it wrap put three
+            lines of text inside a 38px pill. A shorter label at small widths is
+            the only version where both controls fit and neither is mangled. */}
+        <Link href="/#waitlist" className="mk-btn mk-header-cta">
+          <span className="mk-cta-full">Get early access</span>
+          <span className="mk-cta-short">Early access</span>
           <Icon name="arrowRight" size={14} className="mk-btn-arrow" />
         </Link>
 
