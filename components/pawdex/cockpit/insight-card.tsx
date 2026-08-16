@@ -13,7 +13,21 @@ export function InsightCards({ insights }: { insights: Insight[] }) {
   if (insights.length === 0) return null;
 
   return (
-    <section aria-label="Insights" style={{ display: "grid", gap: 10 }}>
+    <section
+      aria-label="Insights"
+      style={{
+        display: "grid",
+        // minmax(0, 1fr), not the implicit default. A grid with no
+        // grid-template-columns creates one implicit track sized `auto`, which
+        // resolves to MAX-CONTENT — so each card took its full intrinsic width
+        // (506px, set by the nowrap citation line), the track grew to match,
+        // and the whole dashboard scrolled sideways at 360px. The 0 minimum is
+        // the part that matters: it lets the track shrink below its content so
+        // the citation's ellipsis can finally engage.
+        gridTemplateColumns: "minmax(0, 1fr)",
+        gap: 10,
+      }}
+    >
       {insights.map((it) => (
         <Link key={it.id} href={it.href} className="pw-insight">
           <span

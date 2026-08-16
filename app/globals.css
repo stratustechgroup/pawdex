@@ -741,7 +741,11 @@
 /* --- Pet health tiles --- */
 .pw-tile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  /* min(300px, 100%) so the track can collapse below 300px on a phone, and the
+     1fr maximum is paired with an explicit 0 minimum below — a bare `1fr`
+     means minmax(auto, 1fr), whose auto minimum is min-content, so a long pet
+     name would force the track wider than its container. */
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: 14px;
 }
 .pw-tile {
@@ -1106,11 +1110,15 @@ a.pw-timeline-row:hover {
 }
 
 @media (max-width: 640px) {
+  /* minmax(0, 1fr), not a bare 1fr: the implicit `auto` minimum resolves to
+     min-content, which lets a long pet name or insight citation push the track
+     past the viewport. The explicit 0 is what allows children to shrink and
+     their ellipsis to engage. */
   .pw-action-strip {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .pw-tile-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1211,7 +1219,15 @@ a.pw-timeline-row:hover {
     min-width: 0;
   }
   /* The switcher is the elastic one: its label is a user-supplied household
-     name of arbitrary length. Everything else is a fixed-size control. */
+     name of arbitrary length. Everything else is a fixed-size control.
+     Its ROOT wrapper sets flexShrink: 0 inline (correct at desktop, where the
+     name shouldn't be squeezed), so that has to be relaxed here too — relaxing
+     only the inner button leaves the rigid wrapper holding ~199px and pushes
+     the avatar past the edge. */
+  .pw-topnav .pw-switcher-root {
+    flex-shrink: 1 !important;
+    min-width: 0;
+  }
   .pw-topnav [aria-haspopup="menu"] {
     flex-shrink: 1;
     min-width: 0;
@@ -1221,5 +1237,18 @@ a.pw-timeline-row:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+/* Narrowest phones (360px and below is the modal device width). Even with the
+   switcher shrunk, the fixed-size controls — search, theme, notifications,
+   avatar — plus 12px padding still ran ~8px past the edge. Tightening the frame
+   buys that back without hiding any control. The real cure is de-crowding the
+   nav (docs/mobile-audit.md systemic #4), which is a design change, not a
+   layout patch. */
+@media (max-width: 400px) {
+  .pw-topnav {
+    padding: 0 8px !important;
+    gap: 4px !important;
   }
 }

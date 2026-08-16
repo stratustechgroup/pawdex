@@ -368,11 +368,18 @@ export default async function PetLayout({
             holds Briefing / EU travel / Emergency / Edit so the header isn't
             a 6-button traffic jam. */}
         <div
+          // flexWrap + shrink, not flexShrink: 0. Held rigid, this cluster is
+          // ~261px wide and sits beside an 88px photo in a ~312px content
+          // column, so it pushed the pet page ~49px past the viewport at 360px.
+          // Wrapping to a second row costs vertical space that a phone has and
+          // horizontal space it doesn't.
           style={{
             display: "flex",
             gap: 8,
             alignItems: "center",
-            flexShrink: 0,
+            flexWrap: "wrap",
+            flexShrink: 1,
+            minWidth: 0,
           }}
         >
           <Link

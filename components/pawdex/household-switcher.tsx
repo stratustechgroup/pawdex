@@ -77,7 +77,17 @@ export function HouseholdSwitcher({
   }
 
   return (
-    <div ref={rootRef} style={{ position: "relative", flexShrink: 0 }}>
+    <div
+      ref={rootRef}
+      // pw-switcher-root: the mobile rule in globals.css relaxes this
+      // flexShrink. The wrapper holds a user-supplied household name, so it is
+      // the one genuinely elastic item in the top nav — but flexShrink: 0 made
+      // it rigid at ~199px, pushing the avatar past the viewport edge on every
+      // authenticated page at 360px. It stays rigid at desktop widths, where
+      // the name should not be squeezed.
+      className="pw-switcher-root"
+      style={{ position: "relative", flexShrink: 0 }}
+    >
       {/* Scoped spin keyframe for the switching indicator, so the trigger gives
           immediate feedback the instant a household is picked without depending
           on a shared stylesheet another agent may be editing. */}

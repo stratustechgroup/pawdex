@@ -27,17 +27,42 @@
 >   `minmax(min(Npx, 100%), …)`; the emergency card is fluid to `maxWidth: 360`
 >   instead of a hard `width: 360`. Pet pages: **169px → 49px**.
 >
-> **Still outstanding — do not treat this audit as closed:**
-> - **The dashboard (`/`) still overflows ~168px at 360px.** The offending
->   element was not isolated; `min-width: 0` on the grid children and the insight
->   card did not resolve it. Highest-traffic authenticated page, so this is the
->   top remaining mobile item.
-> - Residual 8px on list pages and 49px on pet pages.
+> - **Horizontal overflow: now zero on every page measured.** `/home`,
+>   `/pricing`, `/` (dashboard), `/insurance`, `/vets`, `/inbox`, `/expiring`,
+>   `/reminders`, pet overview and emergency-card all measure `scrollWidth -
+>   clientWidth === 0` at 360px. Desktop verified unchanged (switcher still
+>   rigid at 199px, nav padding 24/24, three tile columns).
+>
+> The overflow had four distinct causes, three of them the same underlying CSS
+> trap — **an implicit `auto`/min-content minimum that refuses to shrink**:
+> 1. `<section aria-label="Insights">` was `display: grid` with NO
+>    `grid-template-columns`. The implicit track is sized `auto` = max-content,
+>    so each card took its intrinsic 506px width. Fixed with `minmax(0, 1fr)`.
+> 2. `.pw-tile-grid` used a bare `1fr`, which means `minmax(auto, 1fr)` — the
+>    `auto` minimum is min-content, so a long pet name forced a 354px track
+>    inside a 312px box. Fixed with `minmax(0, 1fr)`.
+> 3. `household-switcher.tsx` set `flexShrink: 0` on its root wrapper, holding
+>    ~199px rigid and pushing the avatar past the edge. Relaxed on mobile only.
+> 4. The pet-header action cluster was `flexShrink: 0` and non-wrapping (~261px
+>    beside an 88px photo). Now wraps.
+>
+> Method that found them, worth reusing: measure `scrollWidth > clientWidth` per
+> element to find what is forced open from the INSIDE, then filter out anything
+> that legitimately clips (`overflow-x: auto`, `text-overflow: ellipsis`) — those
+> contain their overflow and are false positives. `.pet-tabs` is the example: its
+> tabs extend to 496px but scroll within their own container and never reach the
+> document.
+>
+> **Still outstanding:**
+> - #5 top-nav de-crowding. No longer overflows, but at 360px the household name
+>   sits tight against the search control. That is a design change, not a layout
+>   patch.
 > - #4 remainder: packet/aphis tables, share-link table, briefing table,
->   destination-selector.
-> - #5 top-nav de-crowding, #7 remaining inline grids and table wrappers,
->   #8 PWA manifest and safe-area metadata.
+>   destination-selector (not re-measured).
+> - #7 remaining inline grids and table wrappers, #8 PWA manifest and safe-area
+>   metadata.
 > - The review-form fixed footer still lacks `safe-area-inset-bottom`.
+
 
 
 Read-only audit of the committed structure. No files were modified.
