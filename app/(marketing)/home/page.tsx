@@ -4,6 +4,7 @@ import { WaitlistForm } from "@/components/marketing/waitlist-form";
 import { FormatTicker } from "@/components/marketing/format-ticker";
 import { Lifecycle } from "@/components/marketing/lifecycle";
 import { Claims } from "@/components/marketing/claims";
+import { TravelStrip } from "@/components/marketing/travel-strip";
 import { BreederStrip } from "@/components/marketing/breeder-strip";
 import { Faq, FAQS } from "@/components/marketing/faq";
 import { SiteFooter } from "@/components/marketing/site-footer";
@@ -104,6 +105,7 @@ export default function MarketingHome() {
 
       <Lifecycle />
       <Claims />
+      <TravelStrip />
       <BreederStrip />
       <Faq />
 
