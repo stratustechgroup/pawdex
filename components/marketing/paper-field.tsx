@@ -92,6 +92,13 @@ export function PaperField({
               "--mk-y": `${s.y}%`,
               "--mk-rot": `${s.rot}deg`,
               "--mk-w": `${s.w}px`,
+              // Unitless twins of x and y. Scene A converges every sheet on the
+              // middle of the stage, and a transform is the only compositor-safe
+              // way to move them. Percentages in a translate resolve against the
+              // element's own box, not the field's, so the distance has to be
+              // computed from these numbers in viewport units instead.
+              "--mk-x-n": s.x,
+              "--mk-y-n": s.y,
             } as React.CSSProperties
           }
         >

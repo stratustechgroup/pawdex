@@ -1160,6 +1160,154 @@
   border: 1.5px dashed color-mix(in srgb, var(--mk-amber) 55%, transparent);
 }
 
+/* ─── Scene A: the shoebox ────────────────────────────────────────────────
+   Static baseline first. Without scroll-driven animation, or with reduced
+   motion, this section is a centred record card and nothing else: the three
+   decorative beats are removed from the layout entirely rather than stacked up
+   as confusing debris. The record is the point; the rest is how you get there. */
+.mk-shoebox-fx {
+  display: none;
+}
+/* No position here. The generic .mk-scene-stage rule already sets relative in
+   the static baseline and sticky inside the support gate, and a two-class
+   selector like this one would outrank the gated sticky no matter where it
+   sits in the file. That silently un-pins the scene. */
+.mk-shoebox .mk-scene-stage {
+  padding-block: clamp(48px, 8vw, 96px);
+}
+
+/* In the hero the sheets are texture behind a headline and want to recede. In
+   this scene they are the thing you are looking at, so they get their contrast
+   back: full opacity, a stronger edge, and a deeper shadow to separate the pile
+   from the page. */
+.mk-shoebox .mk-paper {
+  opacity: 1;
+  border-color: var(--pw-border-strong);
+  box-shadow: var(--pw-shadow-lg);
+}
+.mk-shoebox .mk-paper-head {
+  color: var(--pw-text-secondary);
+}
+.mk-shoebox .mk-paper-lines span {
+  background: color-mix(in srgb, var(--pw-text) 12%, transparent);
+}
+
+.mk-shoebox-record-card {
+  width: min(560px, 92vw);
+  padding: 22px 22px 18px;
+  position: relative;
+  z-index: 2;
+}
+.mk-shoebox-record-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-shoebox-record-name {
+  font: 600 16px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-shoebox-record-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mk-shoebox-record-rows li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-shoebox-record-label {
+  flex: 1;
+  min-width: 0;
+  font: 550 13.5px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-shoebox-record-date {
+  font: 500 11.5px var(--mk-mono);
+  color: var(--pw-text-muted);
+  white-space: nowrap;
+}
+.mk-shoebox-reviewed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  font: 500 12.5px var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+
+.mk-shoebox-captions {
+  position: absolute;
+  left: clamp(18px, 5vw, 64px);
+  bottom: clamp(24px, 5vw, 56px);
+  z-index: 3;
+}
+.mk-shoebox-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  white-space: nowrap;
+  font: 500 12px var(--mk-mono);
+  letter-spacing: 0.06em;
+  color: var(--pw-text-subtle);
+}
+
+/* The pile lands left of centre so the facts have somewhere to land. A fact
+   lifting off a page and coming to rest beside it is the whole idea; chips
+   stacked on top of the pile would read as a menu. */
+.mk-shoebox {
+  --mk-pile-x: 34;
+}
+.mk-shoebox-read {
+  position: absolute;
+  inset: 0;
+}
+.mk-shoebox-scan {
+  position: absolute;
+  left: calc(var(--mk-pile-x) * 1%);
+  top: 50%;
+  width: min(320px, 70vw);
+  height: 2px;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--mk-amber),
+    transparent
+  );
+}
+.mk-shoebox-chips {
+  position: absolute;
+  left: 58%;
+  top: 50%;
+  transform: translateY(-50%);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  z-index: 2;
+}
+.mk-shoebox-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--pw-surface);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-r-pill);
+  box-shadow: var(--pw-shadow-sm);
+  font: 550 12.5px var(--mk-body);
+  color: var(--pw-text);
+  white-space: nowrap;
+}
+
 /* ─── Progress rail ───────────────────────────────────────────────────────
    Fixed to the left gutter, outside the content column. Only appears when the
    viewport is wide enough to have a gutter to put it in: below that it would
@@ -1285,6 +1433,14 @@
       content-visibility: auto;
       contain-intrinsic-size: auto 100svh;
     }
+    /* Beats occupy the same grid cell so they overlay instead of stacking.
+       Without this the stage lays them out in a column and a four-beat scene is
+       four screens of content crammed into one viewport. In the static baseline
+       the stage is not a grid at all, so children flow normally, which is
+       exactly what the no-motion fallback wants. */
+    .mk-scene-stage > * {
+      grid-area: 1 / 1;
+    }
     .mk-scene-stage {
       position: sticky;
       top: 0;
@@ -1327,6 +1483,116 @@
       100% {
         opacity: 0;
         transform: translate3d(0, -3svh, 0) scale(1.02);
+      }
+    }
+
+    /* ---- Scene A behaviour ---------------------------------------------- */
+    .mk-shoebox-fx {
+      display: block;
+    }
+    .mk-shoebox-papers {
+      position: absolute;
+      inset: 0;
+    }
+    /* Stretch across the cell so the scan line and the chips have the full
+       stage to position against. */
+    .mk-shoebox-read {
+      place-self: stretch;
+    }
+    /* Inside the scene the sheets stop drifting and start converging. Two
+       animations on one element, each on its own slice of the scene: one owns
+       transform and rotate, the other owns opacity. They never touch the same
+       property, so they compose instead of fighting. */
+    .mk-shoebox .mk-paper {
+      animation:
+        mk-shoebox-converge linear both,
+        mk-shoebox-recede linear both;
+      animation-timeline: --scene, --scene;
+      animation-range:
+        contain 2% contain 42%,
+        contain 60% contain 76%;
+    }
+    @keyframes mk-shoebox-converge {
+      from {
+        transform: translate3d(0, 0, 0);
+        rotate: var(--mk-rot);
+      }
+      to {
+        /* The field spans the stage, so viewport units stand in for "percent
+           of the field". The trailing -50% is what actually centres the sheet:
+           percentages inside a translate resolve against the element's own box,
+           so it pulls each sheet back by half its own width and height. Without
+           it you centre the top-left corner and the pile sits low and right.
+
+           The scale is not decoration. In the hero these sheets are texture; in
+           this scene they are the subject, and a subject has to be big enough
+           to look at. */
+        /* The depth-derived offset is what stops the pile turning to mush.
+           Converge every sheet on the exact same point and fourteen sets of
+           ruled lines overlap into noise; nudging each one a few pixels by its
+           own depth gives the stack visible edges, like paper actually behaves.
+           Depths run 0.8 to 3.2, so this lands in roughly -8px to +8px. */
+        transform: translate3d(
+            calc(
+              (var(--mk-pile-x) - var(--mk-x-n)) * 1vw - 50% +
+                (var(--mk-depth) - 2) * 7px
+            ),
+            calc(
+              (50 - var(--mk-y-n)) * 1svh - 50% + (var(--mk-depth) - 2) * 5px
+            ),
+            0
+          )
+          scale(1.35);
+        rotate: calc((var(--mk-depth) - 2) * 0.9deg);
+      }
+    }
+    @keyframes mk-shoebox-recede {
+      from {
+        opacity: 0.92;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+
+    .mk-shoebox-chip {
+      /* Chips detach in sequence rather than all at once, so the eye reads it
+         as extraction rather than a reveal. */
+      animation: mk-shoebox-chip-out linear both;
+      animation-timeline: --scene;
+      animation-range: contain calc(52% + var(--mk-chip-i) * 2%) contain
+        calc(62% + var(--mk-chip-i) * 2%);
+    }
+    @keyframes mk-shoebox-chip-out {
+      from {
+        opacity: 0;
+        transform: translate3d(-40px, 0, 0) scale(0.94);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .mk-shoebox-scan {
+      animation: mk-shoebox-scan linear both;
+      animation-timeline: --scene;
+      animation-range: contain 46% contain 64%;
+    }
+    @keyframes mk-shoebox-scan {
+      from {
+        transform: translate(-50%, -220%);
+        opacity: 0;
+      }
+      20% {
+        opacity: 1;
+      }
+      80% {
+        opacity: 1;
+      }
+      to {
+        transform: translate(-50%, 220%);
+        opacity: 0;
       }
     }
 

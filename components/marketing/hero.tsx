@@ -17,7 +17,12 @@ export function Hero() {
     <section className="mk-hero mk-hero--field" id="hero">
       <PaperField variant="hero" />
 
-      <div className="mk-container mk-hero-copy">
+      {/* The container and the copy column are separate elements on purpose.
+          Putting both classes on one box means the column's max-width and
+          margin-inline fight the container's centring and padding, and the text
+          ends up flush against the viewport edge. */}
+      <div className="mk-container">
+      <div className="mk-hero-copy">
         <span className="mk-eyebrow mk-reveal">
           The permanent record for pets
         </span>
@@ -39,6 +44,7 @@ export function Hero() {
         <div className="mk-reveal" style={{ marginTop: 32 }}>
           <WaitlistForm source="hero" />
         </div>
+      </div>
       </div>
 
       {/* Sentinel for the header's persistent CTA. Zero height, no paint: its

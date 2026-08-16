@@ -9,6 +9,7 @@ import { Faq, FAQS } from "@/components/marketing/faq";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { ScrollRail } from "@/components/marketing/scroll-rail";
 import { Hero } from "@/components/marketing/hero";
+import { SceneShoebox } from "@/components/marketing/scene-shoebox";
 import {
   JsonLd,
   softwareApplicationSchema,
@@ -33,6 +34,7 @@ export default function MarketingHome() {
         ]}
       />
       <Hero />
+      <SceneShoebox />
 
       {/* Reads-everything ticker */}
       <FormatTicker />
