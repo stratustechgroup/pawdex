@@ -1410,6 +1410,319 @@
   display: none;
 }
 
+/* ─── Plan fit finder ─────────────────────────────────────────────────────
+   Three cards, always all three on screen at desktop. Hiding two tiers behind
+   a drag interaction on the page people came to compare prices on would be
+   making them work to see the thing they came for.
+
+   Every visual state keys off [data-fit], which is set by the recommendation.
+   That gives the optional GSAP layer exactly one thing to react to. */
+.pf {
+  padding-block: clamp(64px, 9vw, 120px);
+}
+.pf-headline {
+  margin: 18px 0 0;
+  max-width: 30ch;
+  color: var(--pw-text);
+  /* Smaller than a section title, because it is a sentence making an argument
+     rather than a label. At full mk-h2 size it eats an entire screen before the
+     visitor reaches a single price. */
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1.14;
+}
+
+.pf-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: clamp(18px, 3vw, 36px);
+  align-items: end;
+  margin-top: clamp(28px, 4vw, 44px);
+  padding: 22px 24px;
+  background: var(--pw-surface-2);
+  border: 1px solid var(--pw-border);
+  border-radius: var(--pw-r-lg);
+}
+.pf-control {
+  display: grid;
+  gap: 10px;
+}
+.pf-control-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text);
+}
+.pf-control-value {
+  font: 600 15px var(--mk-mono);
+  color: var(--pw-accent);
+}
+.pf-control input[type="range"] {
+  width: 100%;
+  accent-color: var(--pw-accent);
+  /* 44px of pointer target without 44px of visual weight. Precise dragging on
+     a small screen is miserable otherwise. */
+  height: 24px;
+}
+
+.pf-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text);
+  cursor: pointer;
+}
+.pf-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--pw-accent);
+}
+
+.pf-result {
+  margin: 20px 0 0;
+  font: 400 15px/1.6 var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+.pf-result strong {
+  color: var(--pw-text);
+}
+
+.pf-interval {
+  display: inline-flex;
+  margin-top: 22px;
+  padding: 4px;
+  border-radius: var(--pw-r-pill);
+  background: var(--pw-surface-2);
+  border: 1px solid var(--pw-border);
+}
+.pf-interval button {
+  border: 0;
+  background: transparent;
+  border-radius: var(--pw-r-pill);
+  padding: 9px 18px;
+  min-height: 40px;
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text-secondary);
+  cursor: pointer;
+}
+.pf-interval button[data-active="true"] {
+  background: var(--pw-surface);
+  color: var(--pw-text);
+  box-shadow: var(--pw-shadow-sm);
+}
+.pf-save {
+  color: var(--pw-accent);
+}
+
+.pf-viewport {
+  margin-top: clamp(26px, 4vw, 40px);
+}
+.pf-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  /* Below this the three cards cannot coexist, so the track becomes a swipeable
+     row. GSAP Draggable upgrades this to inertia and snap when it loads; with
+     no JS it is still a perfectly usable scroll-snap carousel. */
+  .pf-viewport {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin-inline: -24px;
+    padding-inline: 24px;
+    scrollbar-width: none;
+  }
+  .pf-viewport::-webkit-scrollbar {
+    display: none;
+  }
+  .pf-track {
+    grid-template-columns: repeat(3, minmax(78vw, 1fr));
+  }
+  .pf-card {
+    scroll-snap-align: center;
+  }
+}
+
+.pf-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 22px;
+  transition:
+    transform 0.35s cubic-bezier(0.2, 0.6, 0.2, 1),
+    opacity 0.35s ease,
+    border-color 0.35s ease;
+}
+.pf-card[data-fit="true"] {
+  border-color: var(--pw-accent);
+  box-shadow: var(--pw-shadow-lg);
+  transform: translateY(-8px) scale(1.02);
+}
+.pf-card[data-fit="false"] {
+  opacity: 0.62;
+}
+
+.pf-card-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 17px var(--mk-body);
+  color: var(--pw-text);
+}
+.pf-badge {
+  font: 600 10px/1 var(--mk-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 8px;
+  border-radius: var(--pw-r-pill);
+  background: var(--pw-accent-soft);
+  color: var(--pw-accent-fg-on-soft);
+}
+.pf-tagline {
+  margin: 0;
+  font: 400 13.5px/1.55 var(--mk-body);
+  color: var(--pw-text-muted);
+}
+.pf-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.pf-amount {
+  font: 600 34px var(--mk-mono);
+  letter-spacing: -0.03em;
+  color: var(--pw-text);
+}
+.pf-per {
+  font: 500 14px var(--mk-mono);
+  color: var(--pw-text-muted);
+}
+.pf-price-note {
+  margin-top: 4px;
+  font: 400 12px var(--mk-body);
+  color: var(--pw-text-subtle);
+}
+
+.pf-meter {
+  padding: 12px 14px;
+  border-radius: var(--pw-r-md);
+  background: var(--pw-surface-2);
+  border: 1px solid var(--pw-border);
+}
+.pf-meter[data-over="true"] {
+  border-color: var(--pw-status-due-dot);
+  background: var(--pw-status-due-bg);
+}
+.pf-meter-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font: 500 11.5px var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+.pf-meter[data-over="true"] .pf-meter-head {
+  color: var(--pw-status-due-fg);
+}
+.pf-meter-count {
+  font-family: var(--mk-mono);
+}
+.pf-meter-track {
+  margin-top: 8px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--pw-surface-3);
+  overflow: hidden;
+}
+.pf-meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--pw-accent);
+  transition: width 0.25s ease;
+}
+.pf-meter[data-over="true"] .pf-meter-fill {
+  background: var(--pw-status-due-dot);
+}
+.pf-meter-over {
+  margin: 8px 0 0;
+  font: 500 11.5px var(--mk-body);
+  color: var(--pw-status-due-fg);
+}
+
+.pf-cta {
+  width: 100%;
+}
+.pf-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+.pf-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font: 400 13.5px/1.5 var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+.pf-feature .pf-check {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--pw-accent);
+}
+.pf-feature--off {
+  color: var(--pw-text-subtle);
+}
+.pf-feature--off .pf-check {
+  color: var(--pw-text-subtle);
+}
+
+.pf-softcap,
+.pf-disclosure {
+  margin: 0;
+  font: 400 11.5px/1.5 var(--mk-body);
+  color: var(--pw-text-subtle);
+}
+.pf-waitlist {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(28px, 4vw, 44px);
+}
+
+/* Once GSAP has loaded it owns transform and opacity on the cards. Leaving the
+   CSS transitions on would mean two systems animating the same properties. */
+.pf--gsap .pf-card {
+  transition: border-color 0.35s ease;
+}
+.pf--gsap .pf-card[data-fit="true"] {
+  transform: none;
+}
+
+/* Draggable replaces the native scroll rather than layering on top of it. */
+.pf--drag .pf-viewport {
+  overflow: hidden;
+  scroll-snap-type: none;
+}
+.pf--drag .pf-track {
+  width: max-content;
+  cursor: grab;
+}
+.pf--drag .pf-track:active {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-card,
+  .pf-meter-fill {
+    transition: none;
+  }
+}
+
 /* ─── Claim rows ──────────────────────────────────────────────────────────
    Asymmetric on purpose. The old three-up grid gave every claim the same
    weight and the same shape, which is precisely what made the page read as

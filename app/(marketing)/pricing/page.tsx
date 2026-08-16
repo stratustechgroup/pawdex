@@ -4,7 +4,7 @@ import "./pricing.css";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
-import { PricingTiers } from "@/components/marketing/pricing-tiers";
+import { PlanFit } from "@/components/marketing/plan-fit";
 import { PricingFaq } from "@/components/marketing/pricing-faq";
 import {
   JsonLd,
@@ -81,8 +81,8 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section id="pricing-tiers" className="mk-container">
-          <PricingTiers disclosure={TIER_DISCLOSURE} />
+        <section id="pricing-tiers">
+          <PlanFit disclosure={TIER_DISCLOSURE} cta="checkout" />
 
           <p
             className="mk-small"
