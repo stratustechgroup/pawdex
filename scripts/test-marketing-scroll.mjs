@@ -170,6 +170,20 @@ const RAIL_PROBE = `(() => {
   });
 })()`;
 
+/* Diagram groups start at opacity 0 and are raised by a view() animation. If
+   that animation ever fails to attach, the diagrams are simply invisible and
+   nothing else on the page would tell you. Under reduced motion the base
+   opacity rule must not apply at all, so every group must read as fully
+   opaque. This is the assertion that catches "the fallback silently hides the
+   content", which is the worst outcome of the whole design. */
+const DIAGRAM_PROBE = `(() => {
+  const groups = [...document.querySelectorAll('.arch-frame svg > g')];
+  return JSON.stringify({
+    total: groups.length,
+    transparent: groups.filter((g) => Number(getComputedStyle(g).opacity) < 0.99).length,
+  });
+})()`;
+
 async function evalJson(cdp, expr) {
   const r = await cdp.send("Runtime.evaluate", {
     expression: expr,
@@ -199,6 +213,7 @@ async function loadAndProbe(cdp, url) {
     scenes: await evalJson(cdp, SCENE_PROBE),
     beats: await evalJson(cdp, BEAT_PROBE),
     rail: await evalJson(cdp, RAIL_PROBE),
+    diagrams: await evalJson(cdp, DIAGRAM_PROBE),
   };
 }
 
@@ -286,9 +301,16 @@ async function main() {
   });
 
   for (const path of PAGES) {
-    const { scenes, beats, rail } = await loadAndProbe(cdp, ORIGIN + path);
+    const { scenes, beats, rail, diagrams } = await loadAndProbe(
+      cdp,
+      ORIGIN + path,
+    );
     console.log(
-      `reduced   ${path}: ${scenes.length} scene(s), ${beats.length} beat(s)`,
+      `reduced   ${path}: ${scenes.length} scene(s), ${beats.length} beat(s), ${diagrams.total} diagram group(s)`,
+    );
+    check(
+      diagrams.transparent === 0,
+      `${path}: under reduced motion ${diagrams.transparent} of ${diagrams.total} diagram groups are transparent, the fallback is hiding content`,
     );
     if (rail) {
       check(

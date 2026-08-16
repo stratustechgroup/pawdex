@@ -336,3 +336,54 @@
   .arch { --arch-gap: 68px; }
   .arch-wrap { padding: 52px 18px 90px; }
 }
+
+/* ─── Diagram assembly ────────────────────────────────────────────────────
+   A system diagram is a sequential argument, so it earns being drawn in
+   sequence rather than appearing whole. Scoped to .arch-frame so no diagram
+   component needs to know this exists: nodes fade up in document order and
+   connectors draw themselves.
+
+   Same double gate as the rest of the scroll system. Without support, or with
+   reduced motion, every diagram renders complete and static, which is the
+   correct default for a page whose entire purpose is being read. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .arch-frame svg > g {
+      opacity: 0;
+      animation: arch-node-in linear both;
+      animation-timeline: view();
+      animation-range: entry 20% cover 30%;
+    }
+    /* Stagger by document order. Ten steps is plenty: the largest diagram on
+       the page has nineteen shapes but far fewer top-level groups. */
+    .arch-frame svg > g:nth-of-type(1) { animation-delay: 0ms; }
+    .arch-frame svg > g:nth-of-type(2) { animation-range: entry 24% cover 34%; }
+    .arch-frame svg > g:nth-of-type(3) { animation-range: entry 28% cover 38%; }
+    .arch-frame svg > g:nth-of-type(4) { animation-range: entry 32% cover 42%; }
+    .arch-frame svg > g:nth-of-type(5) { animation-range: entry 36% cover 46%; }
+    .arch-frame svg > g:nth-of-type(6) { animation-range: entry 40% cover 50%; }
+    .arch-frame svg > g:nth-of-type(7) { animation-range: entry 44% cover 54%; }
+    .arch-frame svg > g:nth-of-type(8) { animation-range: entry 48% cover 58%; }
+    .arch-frame svg > g:nth-of-type(9) { animation-range: entry 52% cover 62%; }
+    .arch-frame svg > g:nth-of-type(n + 10) { animation-range: entry 56% cover 66%; }
+
+    @keyframes arch-node-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* Connectors draw rather than fade. 2000 user units comfortably exceeds
+       the longest edge in any diagram on this page, so one rule covers all of
+       them without adding pathLength to every component. */
+    .arch-frame svg > path {
+      stroke-dasharray: 2000;
+      stroke-dashoffset: 2000;
+      animation: arch-edge-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 30% cover 45%;
+    }
+    @keyframes arch-edge-draw {
+      to { stroke-dashoffset: 0; }
+    }
+  }
+}
