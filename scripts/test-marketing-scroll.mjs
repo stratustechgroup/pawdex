@@ -216,6 +216,29 @@ const LCP_PROBE = `new Promise((resolve) => {
   } : null)), 1500);
 })`;
 
+/* Restructuring a page is how in-page anchors die: a section gets absorbed into
+   a scene, its id goes with it, and the header link that pointed at it silently
+   becomes a no-op. Nothing catches that except checking.
+
+   The header and footer deliberately use home-first hrefs ("/#id") so they work
+   from any marketing route, so those only have to resolve ON the home page.
+   Bare "#id" links are same-page anywhere and must always resolve. */
+const ANCHOR_PROBE = `(() => {
+  const bad = [];
+  const onHome = location.pathname === '/';
+  for (const a of document.querySelectorAll('a[href*="#"]')) {
+    const href = a.getAttribute('href') || '';
+    let hash = null;
+    if (href.startsWith('#')) hash = href.slice(1);
+    else if (href.startsWith('/#') && onHome) hash = href.slice(2);
+    if (!hash) continue;
+    if (!document.getElementById(hash)) {
+      bad.push({ href, text: (a.textContent || '').trim().slice(0, 30) });
+    }
+  }
+  return JSON.stringify(bad);
+})()`;
+
 async function evalJson(cdp, expr) {
   const r = await cdp.send("Runtime.evaluate", {
     expression: expr,
@@ -249,6 +272,7 @@ async function loadAndProbe(cdp, url) {
     diagrams: await evalJson(cdp, DIAGRAM_PROBE),
     lcp: await evalJson(cdp, LCP_PROBE),
     headline: await evalJson(cdp, HEADLINE_PROBE),
+    anchors: await evalJson(cdp, ANCHOR_PROBE),
   };
 }
 
@@ -272,11 +296,18 @@ async function main() {
 
   let total = 0;
   for (const path of PAGES) {
-    const { scenes, beats, rail, lcp, headline } = await loadAndProbe(
+    const { scenes, beats, rail, lcp, headline, anchors } = await loadAndProbe(
       cdp,
       ORIGIN + path,
     );
     total += scenes.length;
+
+    check(
+      anchors.length === 0,
+      `${path}: ${anchors.length} same-page anchor(s) point at ids that do not exist: ${anchors
+        .map((a) => `${a.href} ("${a.text}")`)
+        .join(", ")}`,
+    );
 
     if (headline) {
       check(

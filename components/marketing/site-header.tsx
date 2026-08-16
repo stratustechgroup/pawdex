@@ -7,11 +7,16 @@ import { ContactModalTrigger } from "@/components/marketing/contact-modal";
 // Anchors route home-first ("/#id") so they work from any marketing route, not
 // just the home page. Pricing and About are real pages. On the home page the
 // anchors still resolve to same-page jumps.
+//
+// Travel and Breeders no longer have sections of their own: they are episodes
+// in the life scene now (3 years and 8 weeks), so the anchors point at those
+// beats. Keeping the old /#travel and /#breeders hrefs would have left the two
+// links pointing at ids that no longer exist anywhere on the page.
 const LINKS = [
-  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#scene-shoebox", label: "How it works" },
   { href: "/#why-pawdex", label: "Why Pawdex" },
-  { href: "/#travel", label: "Travel" },
-  { href: "/#breeders", label: "Breeders" },
+  { href: "/#life-3y", label: "Travel" },
+  { href: "/#life-8w", label: "Breeders" },
   { href: "/pricing", label: "Pricing" },
   { href: "/#faq", label: "FAQ" },
   { href: "/about", label: "About" },
