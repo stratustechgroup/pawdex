@@ -28,6 +28,8 @@ import {
   canRunAiExtraction,
   hasBreederTools,
   hasInsuranceTools,
+  hasTravelChecker,
+  hasTravelPackets,
   isOverSoftAnimalCap,
   planFor,
   remainingAiExtractions,
@@ -148,6 +150,18 @@ const h = (plan: PlanId) => ({ plan });
   check(!hasBreederTools(h("household")), "household: no breeder tools");
   check(hasBreederTools(h("breeder")), "breeder: breeder tools");
   check(hasBreederTools(h("early_access")), "early_access: everything, incl breeder");
+
+  // Travel: the DOCUMENTS are the paid gate, the CHECKER is free everywhere.
+  // These assertions were missing while travel became the flagship — the
+  // billing suite asserted insurance and breeder gates but never travel.
+  check(!hasTravelPackets(h("free")), "free: no travel documents");
+  check(hasTravelPackets(h("household")), "household: travel documents");
+  check(hasTravelPackets(h("breeder")), "breeder: travel documents");
+  check(hasTravelPackets(h("early_access")), "early_access: travel documents");
+  check(hasTravelChecker(h("free")), "free: readiness checker included");
+  check(hasTravelChecker(h("household")), "household: readiness checker");
+  check(hasTravelChecker(h("breeder")), "breeder: readiness checker");
+  check(hasTravelChecker(h("early_access")), "early_access: readiness checker");
 }
 
 // ── Entitlements: breeder soft cap is advisory and only on breeder ──

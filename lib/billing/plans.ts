@@ -29,6 +29,11 @@ export type PlanLimits = {
   insuranceTools: boolean;
   /** EU passport / health-certificate travel bundles. */
   travelPackets: boolean;
+  /** The travel readiness checker (EU/GB rules + US re-entry) — free on every
+   *  plan by design: it is the acquisition wedge, and the anxiety it kills is
+   *  exactly what brings a hard-deadline visitor in. Paid gates apply to the
+   *  DOCUMENTS (packet, certificate worksheet), not the answers. */
+  travelChecker: boolean;
   /** Breeder operations: litters, placement transfers, kennel branding. */
   breederTools: boolean;
   /** Additional household members beyond the owner may be invited. */
@@ -77,10 +82,11 @@ const FREE: Plan = {
     { label: "Up to 2 pets", included: true },
     { label: "Full records, reminders & sharing", included: true },
     { label: "10 document AI extractions / month", included: true },
+    { label: "Travel readiness checker (EU, GB + US return)", included: true },
     { label: "Export & view, always free", included: true },
     { label: "Unlimited pets", included: false },
     { label: "Unlimited document AI", included: false },
-    { label: "Insurance tools & travel packets", included: false },
+    { label: "Insurance tools & travel documents", included: false },
     { label: "Breeder operations", included: false },
   ],
   limits: {
@@ -89,6 +95,7 @@ const FREE: Plan = {
     ingestionPriority: "standard",
     insuranceTools: false,
     travelPackets: false,
+    travelChecker: true,
     breederTools: false,
     multiUser: true,
     softActiveAnimalCap: null,
@@ -108,7 +115,7 @@ const HOUSEHOLD: Plan = {
     { label: "Unlimited document AI", included: true },
     { label: "Priority ingestion", included: true },
     { label: "Insurance tools", included: true },
-    { label: "Travel packets", included: true },
+    { label: "Travel packet & certificate worksheet", included: true },
     { label: "Breeder operations", included: false },
   ],
   limits: {
@@ -117,6 +124,7 @@ const HOUSEHOLD: Plan = {
     ingestionPriority: "priority",
     insuranceTools: true,
     travelPackets: true,
+    travelChecker: true,
     breederTools: false,
     multiUser: true,
     softActiveAnimalCap: null,
@@ -144,6 +152,7 @@ const BREEDER: Plan = {
     ingestionPriority: "priority",
     insuranceTools: true,
     travelPackets: true,
+    travelChecker: true,
     breederTools: true,
     multiUser: true,
     // Soft only, surfaced as a prompt, never a lock. See entitlements.ts.
@@ -168,6 +177,7 @@ const EARLY_ACCESS: Plan = {
     ingestionPriority: "priority",
     insuranceTools: true,
     travelPackets: true,
+    travelChecker: true,
     breederTools: true,
     multiUser: true,
     softActiveAnimalCap: null,

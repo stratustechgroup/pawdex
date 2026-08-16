@@ -140,8 +140,16 @@ export default async function BillingPage({
           <Detail>{limitText(limits.aiExtractionsPerMonth)}</Detail>
           <Term>Insurance tools</Term>
           <Detail>{limits.insuranceTools ? "Included" : "Not on this plan"}</Detail>
-          <Term>Travel packets</Term>
-          <Detail>{limits.travelPackets ? "Included" : "Not on this plan"}</Detail>
+          <Term>Travel readiness checker</Term>
+          <Detail>Included on every plan</Detail>
+          <Term>Travel documents (packet & worksheet)</Term>
+          {/* Enforcement is off during early access, so "Not on this plan"
+              would contradict the pages actually serving. Say what's true. */}
+          <Detail>
+            {limits.travelPackets
+              ? "Included"
+              : "Included during early access · Household feature at launch"}
+          </Detail>
           <Term>Breeder operations</Term>
           <Detail>{limits.breederTools ? "Included" : "Not on this plan"}</Detail>
         </dl>

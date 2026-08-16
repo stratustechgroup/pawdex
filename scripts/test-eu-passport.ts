@@ -20,6 +20,11 @@ import {
   computeComplianceReport,
   GB_DESTINATION,
 } from "../lib/compliance/destinations";
+import { AIRLINES } from "../lib/compliance/airlines";
+import {
+  provenanceFor,
+  rulesNeedingVerification,
+} from "../lib/compliance/provenance";
 
 let pass = 0;
 let fail = 0;
@@ -291,6 +296,31 @@ console.log("\n(14) EU list no longer contains GB");
   assert("GB absent from EU_DESTINATIONS", !EU_DESTINATIONS.some((d) => d.code === "GB"));
   assert("GB present in ALL_DESTINATIONS with gb regime", ALL_DESTINATIONS.some((d) => d.code === "GB" && d.regime === "gb"));
   assert("EU destinations all carry eu regime", EU_DESTINATIONS.every((d) => d.regime === "eu"));
+}
+
+
+console.log("\n(15) every rendered rule carries provenance");
+{
+  const eu = computeComplianceReport(base());
+  const gb = computeComplianceReport(base({ destination: GB_DESTINATION }));
+  for (const [report, regime] of [[eu, "eu"], [gb, "gb"]] as const) {
+    const missing = report.requirements
+      .filter((r) => r.id !== "species" && r.id !== "us-reentry" )
+      .filter((r) => !provenanceFor(r.id, regime));
+    assert(`${regime}: all rule rows have a source stamp`, missing.length === 0, missing.map((m) => m.id).join(","));
+  }
+  assert("overdue check flags the EU cert changeover by Oct 1", rulesNeedingVerification("2026-10-01").some((r) => r.rule_id === "ehc"));
+  assert("nothing overdue at ship time", rulesNeedingVerification("2026-08-20").length === 0);
+}
+
+console.log("\n(16) airline entries are links-with-dates, never bare claims");
+{
+  for (const a of AIRLINES) {
+    const ok = /^https:\/\//.test(a.policy_url) && /\d{4}-\d{2}-\d{2}/.test(a.retrieved_at) && (a.facts.length > 0 || !!a.unverified_note);
+    assert(`${a.name}: url + date + (facts or unverified note)`, ok);
+  }
+  const united = AIRLINES.find((a) => a.name === "United")!;
+  assert("United carries no encoded facts (unverifiable site)", united.facts.length === 0 && !!united.unverified_note);
 }
 
 console.log(`\neu passport engine: ${pass} passed, ${fail} failed`);

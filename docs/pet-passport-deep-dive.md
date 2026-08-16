@@ -155,6 +155,15 @@ Options, with tradeoffs:
 
 ## 9. Pre-launch plan
 
+> **Status (2026-08-16): Phases 0–3 SHIPPED** (commits 446d2cd, 28c13b5,
+> b453432 + the Phase 3 commit). All defects in §2 fixed and re-verified, the
+> §3 corrections encoded with a 57-assertion suite, GB + US re-entry live,
+> provenance stamps and the airline card rendering, pricing wired per §7
+> option A (checker free on every plan; documents remain the Household gate;
+> enforcement still off). Remaining from this plan: Japan (fast-follow),
+> AU/NZ + trips persistence + QR card (deliberately cut), and the §6
+> re-verification calendar — first hard date 2026-09-30.
+
 Estimates are working days for one person. Phases 0-3 are the launch scope; the Gate A delta is their sum.
 
 **Phase 0: fix what's broken (~3 days). Non-negotiable before any travel marketing.**

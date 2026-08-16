@@ -12,6 +12,8 @@ import {
   ALL_DESTINATIONS,
   computeComplianceReport,
 } from "@/lib/compliance/destinations";
+import { AIRLINES } from "@/lib/compliance/airlines";
+import { provenanceFor, sourceDomain } from "@/lib/compliance/provenance";
 import { createClient } from "@/lib/supabase/server";
 
 import { PrintButton } from "../packet/print-button";
@@ -265,10 +267,105 @@ export default async function EuTravelPage({
                     {r.action_required}
                   </p>
                 )}
+                {(() => {
+                  // Trust stamp: which primary source this rule was last
+                  // verified against, and when. Rules engines rot into
+                  // quarantines; the stamp keeps the rot visible.
+                  const prov = provenanceFor(r.id, destination.regime);
+                  return prov ? (
+                    <p
+                      style={{
+                        margin: "7px 0 0",
+                        font: "400 11px var(--font-inter)",
+                        color: "var(--pw-text-muted)",
+                      }}
+                    >
+                      Last verified {prov.retrieved_at} ·{" "}
+                      {sourceDomain(prov.source_url)}
+                    </p>
+                  ) : null;
+                })()}
               </div>
             </li>
           ))}
         </ul>
+
+        {/* Airline policies: curated dated links, deliberately not encoded as
+            rules — they churn too fast to trust as data (see
+            lib/compliance/airlines.ts). */}
+        <section className="pw-card pw-print-hide" style={{ marginTop: 18, padding: 16 }}>
+          <div
+            style={{
+              font: "600 13.5px var(--font-inter)",
+              color: "var(--pw-text)",
+              marginBottom: 4,
+            }}
+          >
+            Airline pet policies
+          </div>
+          <p
+            style={{
+              margin: "0 0 12px",
+              font: "400 12px var(--font-inter)",
+              color: "var(--pw-text-muted)",
+              lineHeight: 1.5,
+            }}
+          >
+            Airline rules change often and are checked at booking, not at the
+            border — always confirm with the carrier. Snapshots below are from
+            the official policy pages on the date shown.
+          </p>
+          <ul
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
+              gap: 10,
+            }}
+          >
+            {AIRLINES.map((a) => (
+              <li
+                key={a.name}
+                style={{
+                  border: "1px solid var(--pw-border)",
+                  borderRadius: 8,
+                  padding: "10px 12px",
+                  minWidth: 0,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  <a
+                    href={a.policy_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      font: "600 12.5px var(--font-inter)",
+                      color: "var(--pw-text)",
+                    }}
+                  >
+                    {a.name} ↗
+                  </a>
+                  <span style={{ font: "400 10.5px var(--font-inter)", color: "var(--pw-text-muted)" }}>
+                    checked {a.retrieved_at}
+                  </span>
+                </div>
+                {a.unverified_note ? (
+                  <p style={{ margin: "6px 0 0", font: "400 11.5px var(--font-inter)", color: "var(--pw-status-due-fg, var(--pw-text-secondary))", lineHeight: 1.5 }}>
+                    {a.unverified_note}
+                  </p>
+                ) : (
+                  a.facts.map((f) => (
+                    <p key={f} style={{ margin: "6px 0 0", font: "400 11.5px var(--font-inter)", color: "var(--pw-text-secondary)", lineHeight: 1.5 }}>
+                      {f}
+                    </p>
+                  ))
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
 
         {/* Disclaimer */}
         <footer

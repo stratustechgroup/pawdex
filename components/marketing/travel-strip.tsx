@@ -116,9 +116,11 @@ export function TravelStrip() {
             color: "var(--mk-text-muted, inherit)",
           }}
         >
-          Pawdex prepares and tracks the paperwork. It doesn&apos;t file anything
-          on your behalf, and requirements change: always confirm against the
-          destination&apos;s official guidance and your vet before you travel.
+          The readiness checker (EU, GB and the US return trip) is included on
+          every plan, free ones included. Pawdex prepares and tracks the
+          paperwork; it doesn&apos;t file anything on your behalf, and
+          requirements change: always confirm against the destination&apos;s
+          official guidance and your vet before you travel.
         </p>
       </div>
     </section>

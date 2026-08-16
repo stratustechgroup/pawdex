@@ -86,6 +86,10 @@ export function hasInsuranceTools(h: HouseholdForEntitlements): boolean {
 export function hasTravelPackets(h: HouseholdForEntitlements): boolean {
   return planFor(h).travelPackets;
 }
+/** The readiness checker is free on every plan — see plans.ts for why. */
+export function hasTravelChecker(h: HouseholdForEntitlements): boolean {
+  return planFor(h).travelChecker;
+}
 export function hasBreederTools(h: HouseholdForEntitlements): boolean {
   return planFor(h).breederTools;
 }
