@@ -9,7 +9,7 @@ set -euo pipefail
 PORT=${SCROLL_PORT:-3210}
 CDP_PORT=${CDP_PORT:-9445}
 # Raised as scenes land: Task 5 -> 1, Task 6 -> 2, Task 7 -> 3.
-EXPECTED_SCENES=${EXPECTED_SCENES:-1}
+EXPECTED_SCENES=${EXPECTED_SCENES:-2}
 PROFILE=$(mktemp -d)
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 

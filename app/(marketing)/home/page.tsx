@@ -1,15 +1,13 @@
 import { SiteHeader } from "@/components/marketing/site-header";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
 import { FormatTicker } from "@/components/marketing/format-ticker";
-import { Lifecycle } from "@/components/marketing/lifecycle";
 import { Claims } from "@/components/marketing/claims";
-import { TravelStrip } from "@/components/marketing/travel-strip";
-import { BreederStrip } from "@/components/marketing/breeder-strip";
 import { Faq, FAQS } from "@/components/marketing/faq";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { ScrollRail } from "@/components/marketing/scroll-rail";
 import { Hero } from "@/components/marketing/hero";
 import { SceneShoebox } from "@/components/marketing/scene-shoebox";
+import { SceneLife } from "@/components/marketing/scene-life";
 import {
   JsonLd,
   softwareApplicationSchema,
@@ -39,10 +37,8 @@ export default function MarketingHome() {
       {/* Reads-everything ticker */}
       <FormatTicker />
 
-      <Lifecycle />
+      <SceneLife />
       <Claims />
-      <TravelStrip />
-      <BreederStrip />
       <Faq />
 
       {/* -------------------------------------------------------- Final CTA */}

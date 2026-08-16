@@ -1308,29 +1308,135 @@
   white-space: nowrap;
 }
 
+/* ─── Scene B: the life ───────────────────────────────────────────────────
+   Static baseline: four articles in document order, each a readable age with
+   its own copy and its own card. That is a sensible vertical timeline on its
+   own, which is exactly what a screen reader and a no-motion visitor get. */
+.mk-life-beat {
+  width: min(1140px, calc(100% - 48px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: clamp(28px, 5vw, 68px);
+  align-items: center;
+  padding-block: clamp(40px, 6vw, 72px);
+}
+@media (max-width: 880px) {
+  .mk-life-beat {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+.mk-life-age {
+  display: inline-block;
+  font: 600 11px/1 var(--mk-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mk-amber);
+}
+.mk-life-lede {
+  margin: 18px 0 0;
+  color: var(--pw-text);
+  text-wrap: balance;
+}
+.mk-life-body {
+  margin: 16px 0 0;
+  max-width: 46ch;
+}
+
+.mk-life-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-life-card-title {
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-life-card-meta {
+  margin-left: auto;
+  color: var(--pw-text-subtle);
+}
+.mk-life-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--pw-border);
+}
+.mk-life-row-label {
+  font: 550 13px var(--mk-body);
+  color: var(--pw-text);
+}
+.mk-life-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 13px;
+  font: 450 12px var(--mk-body);
+  color: var(--pw-text-secondary);
+}
+
+/* The one warm surface on the page, and it belongs to the hardest moment. */
+.mk-life-night-card {
+  background: linear-gradient(
+    165deg,
+    var(--mk-ink-band),
+    var(--mk-ink-band-2)
+  );
+  border-color: color-mix(in srgb, #8fc7a6 22%, transparent);
+}
+.mk-life-night-card .mk-life-card-title,
+.mk-life-night-card .mk-life-row-label {
+  color: #f3f0e7;
+}
+.mk-life-night-card .mk-small,
+.mk-life-night-card .mk-life-card-foot {
+  color: color-mix(in srgb, #efece3 74%, transparent);
+}
+.mk-life-night-card .mk-life-row {
+  border-bottom-color: color-mix(in srgb, #efece3 14%, transparent);
+}
+
+/* Deliberately never shown. An earlier version drew a spine down the left of
+   this scene, and next to the progress rail it read as two competing vertical
+   lines. The rail already says "you are moving through something"; the scene
+   does not need to say it twice. Kept as a no-op so the markup hook stays
+   available if the rail is ever removed. */
+.mk-life-spine {
+  display: none;
+}
+
 /* ─── Progress rail ───────────────────────────────────────────────────────
-   Fixed to the left gutter, outside the content column. Only appears when the
-   viewport is wide enough to have a gutter to put it in: below that it would
-   either overlap the text or steal width from it, and neither is worth it. */
+   A 2px track in the left gutter with one tick per chapter. The chapter name is
+   a tooltip, not a permanent label, so the rail occupies a fixed 12px of width
+   no matter what the chapters are called and can never push into the text.
+
+   Hidden below 1180px, where there is no gutter to put it in. */
 .mk-rail {
   position: fixed;
-  left: max(16px, calc((100vw - 1180px) / 2 - 44px));
+  left: max(14px, calc((100vw - 1140px) / 2 - 30px));
   top: 50%;
   transform: translateY(-50%);
   z-index: 30;
   display: none;
+  width: 12px;
 }
 @media (min-width: 1180px) {
   .mk-rail {
-    display: grid;
-    grid-template-columns: 2px auto;
-    gap: 14px;
+    display: block;
   }
 }
 
 .mk-rail-track {
+  position: absolute;
+  left: 5px;
+  top: 0;
   width: 2px;
-  height: 180px;
+  height: 200px;
   background: var(--pw-border);
   border-radius: 2px;
 }
@@ -1340,31 +1446,69 @@
   background: var(--pw-accent);
   border-radius: 2px;
   transform-origin: top;
-  /* Baseline is empty; the scroll timeline below fills it. Under reduced
-     motion the override further down shows it filled and dimmed, so it reads
-     as a position marker rather than a progress animation. */
+  /* Baseline is empty; the scroll timeline fills it. Under reduced motion the
+     override below shows it filled and dimmed, so it reads as a position
+     marker rather than a broken progress bar. */
   transform: scaleY(0);
 }
 
 .mk-rail-list {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0;
-  height: 180px;
+  height: 200px;
   display: grid;
   align-content: space-between;
 }
-.mk-rail-link {
+.mk-rail-tick {
+  display: block;
+  position: relative;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  text-decoration: none;
+}
+.mk-rail-tick::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pw-border-strong);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.mk-rail-tick:hover::before,
+.mk-rail-tick:focus-visible::before {
+  background: var(--pw-accent);
+  transform: scale(1.4);
+}
+
+/* The name, on demand only. */
+.mk-rail-label {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px 9px;
+  border-radius: var(--pw-r-sm);
+  background: var(--pw-surface);
+  border: 1px solid var(--pw-border);
+  box-shadow: var(--pw-shadow-md);
   font: 500 10.5px/1 var(--mk-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--pw-text-subtle);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.mk-rail-link:hover,
-.mk-rail-link:focus-visible {
   color: var(--pw-text);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.mk-rail-tick:hover .mk-rail-label,
+.mk-rail-tick:focus-visible .mk-rail-label {
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

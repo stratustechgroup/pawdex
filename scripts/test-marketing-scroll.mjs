@@ -163,7 +163,7 @@ const RAIL_PROBE = `(() => {
   const anims = fill ? fill.getAnimations() : [];
   return JSON.stringify({
     display: getComputedStyle(rail).display,
-    links: rail.querySelectorAll('.mk-rail-link').length,
+    links: rail.querySelectorAll('.mk-rail-tick').length,
     fillAnims: anims.length,
     fillHasTimeline: !!(anims[0] && anims[0].timeline),
     fillTransform: fill ? getComputedStyle(fill).transform : null,
@@ -299,10 +299,10 @@ async function main() {
 
     if (rail) {
       check(
-        rail.display === "grid",
+        rail.display === "block",
         `${path}: rail must be visible at 1440px, display is "${rail.display}"`,
       );
-      check(rail.links > 0, `${path}: rail rendered with no chapter links`);
+      check(rail.links > 0, `${path}: rail rendered with no chapter ticks`);
       check(
         rail.fillAnims > 0 && rail.fillHasTimeline,
         `${path}: rail fill is not attached to a scroll timeline, progress will never move`,
