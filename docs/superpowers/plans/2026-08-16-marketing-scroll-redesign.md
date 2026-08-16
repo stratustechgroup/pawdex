@@ -24,6 +24,11 @@
 - **Maple gets no adjectives.** Dates, weights, doses, clinic names only. No "beloved", no "furry friend", no personality.
 - **Main auto-deploys to production.** `pnpm check` must pass and the manual matrix in Task 12 must be run before any push.
 
+**Verify empirically, do not assume:**
+
+- Whether `calc()` is accepted inside `animation-range` in the target browsers. If it is not, replace the generic `.mk-beat` rule with precomputed per-index classes (`.mk-beat--1of4`, `.mk-beat--2of4`, and so on). Check this in Task 1 before building anything on top of it.
+- The `gsap/Draggable` and `gsap/InertiaPlugin` import paths against what actually ships in `node_modules/gsap` after install (Task 10).
+
 ---
 
 ## File Structure
@@ -209,7 +214,10 @@ Append to `app/(marketing)/marketing.css`:
     .mk-scene {
       --mk-beats: 3;
       min-height: calc((var(--mk-beats) + 1) * 100svh);
-      scroll-timeline: --scene block;
+      /* view-timeline, NOT scroll-timeline. .mk-scene has no scrollbar of its
+         own; what we track is its journey through the viewport. A named
+         scroll-timeline here would simply never advance. */
+      view-timeline: --scene block;
       content-visibility: auto;
       contain-intrinsic-size: auto 100svh;
     }
@@ -223,14 +231,21 @@ Append to `app/(marketing)/marketing.css`:
     }
 
     /* A beat owns one slice of the parent scene's progress. --mk-beat-index
-       is 0-based; the slice width is 1/--mk-beats of the timeline. */
+       is 0-based; the slice width is 1/--mk-beats of the timeline.
+
+       The range is `contain`, not `entry` and not `cover`. `contain` is the
+       span during which the scene fully covers the viewport, which is exactly
+       the span during which the sticky stage is pinned. `entry` would run all
+       beats out during the first viewport of scroll and then leave the stage
+       frozen for the rest of the scene. This supersedes the illustrative
+       `cover 25% -> 50%` figures in the spec's Section 3. */
     .mk-beat {
       --mk-beat-index: 0;
       animation: mk-beat-inout linear both;
       animation-timeline: --scene;
       animation-range:
-        entry calc(var(--mk-beat-index) / var(--mk-beats) * 100%)
-        entry calc((var(--mk-beat-index) + 1) / var(--mk-beats) * 100%);
+        contain calc(var(--mk-beat-index) / var(--mk-beats) * 100%)
+        contain calc((var(--mk-beat-index) + 1) / var(--mk-beats) * 100%);
     }
     @keyframes mk-beat-inout {
       0%   { opacity: 0; transform: translate3d(0, 3svh, 0) scale(0.98); }
@@ -271,13 +286,23 @@ Expected: PASS. Scene taller than stage, stage sticky, no overflow-hidden ancest
 
 If `badAncestor` reports a hit, find the offending `overflow: hidden` in `marketing.css` and scope it away from scene ancestors. Do not remove the assertion.
 
-- [ ] **Step 8: Revert the throwaway scene**
+- [ ] **Step 8: Revert the throwaway scene and relax the guard**
 
-Restore `app/(marketing)/home/page.tsx` to its committed state. The harness will fail its "at least one scene" guard again; change that guard to skip pages with zero scenes and instead assert a total across all pages of at least one, so it stays green until Task 5 lands real scenes.
+Restore `app/(marketing)/home/page.tsx` to its committed state.
+
+Zero scenes exist anywhere until Task 5 (Task 3's architecture page adds none by design), so the "at least one scene" guard from Step 4 cannot stay as an assertion. Replace it with an expected-count read from the environment, defaulting to 0:
+
+```js
+const EXPECTED_SCENES = Number(process.env.EXPECTED_SCENES ?? 0);
+check(total >= EXPECTED_SCENES,
+  `expected at least ${EXPECTED_SCENES} scenes across all pages, found ${total}`);
+```
+
+The per-scene release, sticky, and overflow assertions still run against whatever scenes exist. Task 5 raises `EXPECTED_SCENES` to 1, Task 6 to 2, Task 7 to 3, by editing the default in `run-marketing-scroll.sh`.
 
 - [ ] **Step 9: Wire into the test suite**
 
-In `package.json`, append to the `test:live` script: ` && bash scripts/run-marketing-scroll.sh`.
+Do not add this to `test:live` yet: it asserts nothing meaningful until Task 5. Wire it in at Task 5 Step 5 instead, once the first real scene exists. Leave `package.json` untouched in this task.
 
 - [ ] **Step 10: Commit**
 
@@ -550,7 +575,9 @@ Wrap the stage contents in four `.mk-beat` elements with `--mk-beat-index` 0 thr
 
 A single mono line, pinned bottom-left of the stage, one word-phrase per beat: `a shoebox`, `a tidy shoebox`, `read, cited`, `a record`. Each is a `.mk-beat` sharing the same index as its scene beat.
 
-- [ ] **Step 5: Run the harness**
+- [ ] **Step 5: Run the harness and wire it into the suite**
+
+Set `EXPECTED_SCENES=1` as the default in `scripts/run-marketing-scroll.sh`, then append ` && bash scripts/run-marketing-scroll.sh` to the `test:live` script in `package.json`. This is the point at which the harness starts asserting something real.
 
 Run: `bash scripts/run-marketing-scroll.sh`
 Expected: PASS. Scene height is 5x stage height (4 beats + 1), stage sticky, no overflow-hidden ancestor, reduced-motion pass shows a static timeline card.
@@ -603,9 +630,15 @@ Beat content:
 2. `3 years`: APHIS 7001 worksheet, destination readiness, boarder share link, from `travel-strip.tsx`.
 3. `9 years`: stage background transitions toward `var(--mk-ink-band)`; emergency card, one-link history handover, insurance claim with pre-existing-condition review. One line of copy, in `--mk-display` at lead size: `9:42pm. Someone asks when her last rabies was. You already know.`
 
-- [ ] **Step 5: Switch the rail to ages inside this scene**
+- [ ] **Step 5: Show the ages beside the rail**
 
-Export `LIFE_AGES` and have the home page pass those as the rail's chapters while `#scene-life` is in view. Do this with CSS only: render both label sets in the rail and toggle their opacity with a `view()`-driven animation scoped to the scene. No JS, no IntersectionObserver.
+A named view timeline is only visible to descendants of the element that declares it. `.mk-rail` is `position: fixed` and lives outside `#scene-life`, so it cannot read `--scene`, and an anonymous `view()` on the rail would track the rail's own permanent visibility, which never changes. Two workable options; take the second.
+
+Option A: declare `timeline-scope: --scene` on a shared ancestor so the name is visible to both.
+
+Option B (take this one): render the age labels *inside* the scene stage, in a column aligned to the rail's left offset, as `.mk-beat` elements sharing each beat's index. They then read `--scene` as descendants, for free. The rail's own chapter labels stay static and simply show `The life` while this scene is on screen. Export `LIFE_AGES` for the stage to consume.
+
+Option B keeps the rail a dumb, always-correct component and avoids a `timeline-scope` dependency whose browser support has to be verified separately.
 
 - [ ] **Step 6: Read it aloud**
 
