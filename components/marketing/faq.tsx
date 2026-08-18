@@ -42,7 +42,6 @@ export function Faq() {
       <div className="mk-container">
         <div className="mk-faq-grid">
           <div className="mk-faq-sticky">
-            <span className="mk-eyebrow">Questions</span>
             <h2 className="mk-h2" style={{ margin: "18px 0 0" }}>
               Fair questions, straight answers.
             </h2>

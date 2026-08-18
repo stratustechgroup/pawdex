@@ -156,7 +156,7 @@
 }
 
 .mk-section {
-  padding-block: clamp(72px, 10vw, 128px);
+  padding-block: clamp(52px, 6vw, 84px);
 }
 
 .mk-hairline {
@@ -1008,6 +1008,382 @@
   background: var(--mk-rule);
 }
 
+/* ─── Plan fit finder ─────────────────────────────────────────────────────
+   Three cards, always all three on screen at desktop. Hiding two tiers behind
+   a drag interaction on the page people came to compare prices on would be
+   making them work to see the thing they came for.
+
+   Every visual state keys off [data-fit], which is set by the recommendation.
+   That gives the optional GSAP layer exactly one thing to react to. */
+.pf {
+  padding-block: clamp(64px, 9vw, 120px);
+}
+.pf-headline {
+  margin: 18px 0 0;
+  max-width: 30ch;
+  color: var(--mk-ink);
+  /* Smaller than a section title, because it is a sentence making an argument
+     rather than a label. At full mk-h2 size it eats an entire screen before the
+     visitor reaches a single price. */
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1.14;
+}
+
+.pf-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: clamp(18px, 3vw, 36px);
+  align-items: end;
+  margin-top: clamp(28px, 4vw, 44px);
+  padding: 22px 24px;
+  background: var(--mk-paper-2);
+  border: 1px solid var(--mk-rule);
+  border-radius: 0;
+}
+.pf-control {
+  display: grid;
+  gap: 10px;
+}
+.pf-control-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font: 550 13px var(--mk-body);
+  color: var(--mk-ink);
+}
+.pf-control-value {
+  font: 600 15px var(--mk-mono);
+  color: var(--mk-accent);
+}
+.pf-control input[type="range"] {
+  width: 100%;
+  accent-color: var(--mk-accent);
+  /* 44px of pointer target without 44px of visual weight. Precise dragging on
+     a small screen is miserable otherwise. */
+  height: 24px;
+}
+
+.pf-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font: 550 13px var(--mk-body);
+  color: var(--mk-ink);
+  cursor: pointer;
+}
+.pf-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--mk-accent);
+}
+
+.pf-result {
+  margin: 20px 0 0;
+  font: 400 15px/1.6 var(--mk-body);
+  color: var(--mk-ink-2);
+}
+.pf-result strong {
+  color: var(--mk-ink);
+}
+
+.pf-interval {
+  display: inline-flex;
+  margin-top: 22px;
+  padding: 4px;
+  border-radius: 0;
+  background: var(--mk-paper-2);
+  border: 1px solid var(--mk-rule);
+}
+.pf-interval button {
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  padding: 9px 18px;
+  min-height: 40px;
+  font: 550 13px var(--mk-body);
+  color: var(--mk-ink-2);
+  cursor: pointer;
+}
+.pf-interval button[data-active="true"] {
+  background: var(--mk-paper);
+  color: var(--mk-ink);
+}
+.pf-save {
+  color: var(--mk-accent);
+}
+
+.pf-viewport {
+  margin-top: clamp(26px, 4vw, 40px);
+}
+/* The mobile carousel is gone with the three-card layout it existed for. One
+   recommended plan and two rows stack on their own; a swipeable track carrying
+   a single card is machinery with nothing to carry. */
+
+.pf-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 22px;
+  transition:
+    opacity 0.35s cubic-bezier(0.2, 0.6, 0.2, 1),
+    opacity 0.35s ease,
+    border-color 0.35s ease;
+}
+.pf-card[data-fit="true"] {
+  border-color: var(--mk-accent);
+  transform: translateY(-8px) scale(1.02);
+}
+.pf-card[data-fit="false"] {
+  /* De-emphasis by scale and border only, never opacity. Fading a card to 62%
+     drags its body text below the 4.5:1 contrast floor, and on a pricing page
+     the two cards you did NOT recommend are exactly the ones a visitor wants
+     to read in order to disagree with you. */
+  transform: scale(0.985);
+  border-color: var(--mk-rule);
+}
+
+.pf-card-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 17px var(--mk-body);
+  color: var(--mk-ink);
+}
+.pf-badge {
+  font: 600 10px/1 var(--mk-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 8px;
+  border-radius: 0;
+  background: var(--mk-paper-2);
+  color: var(--mk-accent);
+}
+.pf-tagline {
+  margin: 0;
+  font: 400 13.5px/1.55 var(--mk-body);
+  color: var(--mk-ink-3);
+}
+.pf-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.pf-amount {
+  font: 600 34px var(--mk-mono);
+  letter-spacing: -0.03em;
+  color: var(--mk-ink);
+}
+.pf-per {
+  font: 500 14px var(--mk-mono);
+  color: var(--mk-ink-3);
+}
+.pf-price-note {
+  margin-top: 4px;
+  font: 400 12px var(--mk-body);
+  color: var(--mk-ink-3);
+}
+
+.pf-meter {
+  padding: 12px 14px;
+  border-radius: 0;
+  background: var(--mk-paper-2);
+  border: 1px solid var(--mk-rule);
+}
+.pf-meter[data-over="true"] {
+  border-color: var(--mk-accent);
+  background: var(--mk-paper-2);
+}
+.pf-meter-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font: 500 11.5px var(--mk-body);
+  color: var(--mk-ink-2);
+}
+.pf-meter[data-over="true"] .pf-meter-head {
+  color: var(--mk-ink);
+}
+.pf-meter-count {
+  font-family: var(--mk-mono);
+}
+.pf-meter-track {
+  margin-top: 8px;
+  height: 5px;
+  border-radius: 0;
+  background: var(--mk-paper-3);
+  overflow: hidden;
+}
+.pf-meter-fill {
+  height: 100%;
+  border-radius: 0;
+  background: var(--mk-accent);
+  transition: width 0.25s ease;
+}
+.pf-meter[data-over="true"] .pf-meter-fill {
+  background: var(--mk-accent);
+}
+.pf-meter-over {
+  margin: 8px 0 0;
+  font: 500 11.5px var(--mk-body);
+  color: var(--mk-ink);
+}
+
+.pf-cta {
+  align-self: start;
+}
+.pf-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+.pf-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font: 400 13.5px/1.5 var(--mk-body);
+  color: var(--mk-ink-2);
+}
+.pf-feature .pf-check {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--mk-accent);
+}
+.pf-feature--off {
+  color: var(--mk-ink-3);
+}
+.pf-feature--off .pf-check {
+  color: var(--mk-ink-3);
+}
+
+.pf-softcap,
+.pf-disclosure {
+  margin: 0;
+  font: 400 11.5px/1.5 var(--mk-body);
+  color: var(--mk-ink-3);
+}
+.pf-waitlist {
+  display: flex;
+  justify-content: center;
+  margin-top: clamp(28px, 4vw, 44px);
+}
+
+/* Once GSAP has loaded it owns transform and opacity on the cards. Leaving the
+   CSS transitions on would mean two systems animating the same properties. */
+.pf--gsap .pf-card {
+  transition: border-color 0.35s ease;
+}
+.pf--gsap .pf-card[data-fit="true"] {
+  transform: none;
+}
+
+/* Draggable replaces the native scroll rather than layering on top of it. */
+.pf--drag .pf-viewport {
+  overflow: hidden;
+  scroll-snap-type: none;
+}
+.pf--drag .pf-track {
+  width: max-content;
+  cursor: grab;
+}
+.pf--drag .pf-track:active {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-card,
+  .pf-meter-fill {
+    transition: none;
+  }
+}
+
+/* ─── Claim rows ──────────────────────────────────────────────────────────
+   Asymmetric on purpose. The old three-up grid gave every claim the same
+   weight and the same shape, which is precisely what made the page read as
+   interchangeable blocks. Alternating rows force the eye to move and give each
+   claim its own moment. */
+.mk-claim-row {
+  width: min(1140px, calc(100% - 48px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 76px);
+  align-items: center;
+  padding-block: clamp(40px, 6vw, 76px);
+}
+.mk-claim-row--flip .mk-claim-row-copy {
+  order: 2;
+}
+.mk-claim-row--flip .mk-claim-row-proof {
+  order: 1;
+}
+/* A row with no proof column (claim 02, whose proof is the scene below it)
+   keeps the copy in one column rather than stretching it across the full
+   width, so the measure stays readable. */
+.mk-claim-row:not(:has(.mk-claim-row-proof)) .mk-claim-row-copy {
+  grid-column: 1 / -1;
+  max-width: 62ch;
+  margin-inline: auto;
+  text-align: center;
+}
+@media (max-width: 880px) {
+  .mk-claim-row {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .mk-claim-row--flip .mk-claim-row-copy,
+  .mk-claim-row--flip .mk-claim-row-proof {
+    order: initial;
+  }
+}
+
+.mk-claim-row-title {
+  margin: 14px 0 0;
+  color: var(--mk-ink);
+  text-wrap: balance;
+}
+.mk-claim-row-body {
+  margin: 16px 0 0;
+  max-width: 52ch;
+}
+.mk-claim-row:not(:has(.mk-claim-row-proof)) .mk-claim-row-body {
+  margin-inline: auto;
+}
+
+/* ─── Stats ───────────────────────────────────────────────────────────────
+   Relocated out of the hero. Same numbers, same words. */
+.mk-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  border-top: 1px solid var(--mk-rule);
+  margin-top: clamp(32px, 5vw, 64px);
+}
+.mk-stat {
+  padding: 22px 24px 4px;
+  border-left: 1px solid var(--mk-rule);
+}
+.mk-stat:first-child {
+  border-left: 0;
+}
+@media (max-width: 640px) {
+  .mk-stat {
+    border-left: 0;
+  }
+}
+.mk-stat-value {
+  font: 600 clamp(22px, 2.6vw, 30px) var(--mk-mono);
+  letter-spacing: -0.02em;
+  color: var(--mk-accent);
+}
+.mk-stat-label {
+  margin-top: 6px;
+  max-width: 30ch;
+}
+
+
 /* ─── Progress rail ───────────────────────────────────────────────────────
    A 2px track in the left gutter with one tick per chapter. The chapter name is
    a tooltip, not a permanent label, so the rail occupies a fixed 12px of width
@@ -1556,4 +1932,108 @@
   letter-spacing: -0.03em;
   text-transform: none;
   color: var(--mk-accent);
+}
+
+/* ─── How it works ────────────────────────────────────────────────────────
+   One screen. Claim on the left, the real product on the right. */
+.mk-how {
+  border-bottom: 1px solid var(--mk-rule);
+}
+.mk-how-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .mk-how-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+.mk-how-title {
+  margin: 0;
+  max-width: 18ch;
+  color: var(--mk-ink);
+}
+.mk-how-steps {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+}
+.mk-how-steps li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  padding: 18px 0;
+  border-top: 1px solid var(--mk-rule);
+}
+.mk-how-n {
+  font: 600 12px/1.6 var(--mk-mono);
+  color: var(--mk-accent);
+}
+.mk-how-step-title {
+  margin: 0;
+  font: 650 15px var(--mk-display);
+  font-variation-settings: "wdth" 104;
+  color: var(--mk-ink);
+}
+.mk-how-step-body {
+  margin: 5px 0 0;
+  font: 400 14px/1.55 var(--mk-body);
+  color: var(--mk-ink-2);
+  max-width: 46ch;
+}
+.mk-how-visuals {
+  display: grid;
+  gap: 20px;
+}
+
+/* ─── Citation proof, static ──────────────────────────────────────────────
+   What is left of a three-screen pinned scene. */
+.mk-cite-proof {
+  margin: 0;
+}
+.mk-cite-proof-fact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--mk-rule);
+  background: var(--mk-paper);
+}
+.mk-cite-proof-label {
+  flex: 1;
+  min-width: 0;
+  font: 600 14px var(--mk-body);
+  color: var(--mk-ink);
+}
+.mk-cite-proof-date {
+  font: 500 12px var(--mk-mono);
+  color: var(--mk-ink-3);
+  white-space: nowrap;
+}
+.mk-cite-proof-cap {
+  margin-top: 10px;
+  font: 400 12px/1.5 var(--mk-body);
+  color: var(--mk-ink-3);
+}
+
+/* ─── Close ───────────────────────────────────────────────────────────────*/
+.mk-final-title {
+  margin: 0 auto;
+  max-width: 14ch;
+  text-align: center;
+  font-size: clamp(34px, 4.4vw, 58px);
+  color: var(--mk-ink);
+}
+.mk-final-lead {
+  margin: 16px auto 0;
+  max-width: 40ch;
+  text-align: center;
+}
+.mk-final-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 26px;
 }

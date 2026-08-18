@@ -4,7 +4,6 @@ import { MkIcon } from "@/components/marketing/mk-icon";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
-import { Icon } from "@/components/brand/icon";
 import { WaitlistForm } from "@/components/marketing/waitlist-form";
 import {
   PLANS,
@@ -177,7 +176,7 @@ export function PlanFit({
         {/* Announced, not just shown. A sighted visitor sees the card lift; a
             screen reader user hears the tier change as they move the slider. */}
         <p className="pf-result" role="status" aria-live="polite">
-          <strong>{PLANS[fit.planId].name}</strong> {fit.reason}
+          <strong>{PLANS[fit.planId].name}.</strong> {fit.reason}
           {cta === "waitlist"
             ? " Here's what you'd be on after beta. It's free until then."
             : ""}
@@ -289,21 +288,27 @@ function PlanCard({
         <MkIcon name="arrowRight" size={15} />
       </a>
 
+      {/* Ticks and crosses down the side of a feature list are the default
+          pricing-table furniture. Two plain groups say the same thing. */}
       <ul className="pf-features">
-        {plan.features.map((f) => (
-          <li
-            key={f.label}
-            className={`pf-feature${f.included ? "" : " pf-feature--off"}`}
-          >
-            <Icon
-              name={f.included ? "check" : "x"}
-              size={14}
-              className="pf-check"
-            />
-            <span>{f.label}</span>
-          </li>
-        ))}
+        {plan.features
+          .filter((f) => f.included)
+          .map((f) => (
+            <li key={f.label} className="pf-feature">
+              {f.label}
+            </li>
+          ))}
       </ul>
+      {plan.features.some((f) => !f.included) ? (
+        <p className="pf-excluded">
+          <span className="pf-excluded-head">Not included</span>
+          {plan.features
+            .filter((f) => !f.included)
+            .map((f) => f.label)
+            .join(", ")}
+          .
+        </p>
+      ) : null}
 
       {/* Rendered as what plans.ts actually says it is. Calling a soft cap a
           hard limit would be the easy thing and it would be a lie. */}

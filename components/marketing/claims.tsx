@@ -1,5 +1,4 @@
 import { Icon } from "@/components/brand/icon";
-import { SceneCitation } from "@/components/marketing/scene-citation";
 
 // Chapter 3, the proof. "What we can do that others can't", four concrete
 // claims, each carrying a small proof artifact instead of an icon-and-blurb
@@ -181,19 +180,33 @@ export function Claims() {
         </div>
       </div>
 
-      {/* 02. Proof, not vibes. The claim that earns a scene of its own. */}
+      {/* 02. This used to be a two-beat pinned scene, three screens tall, to
+          make one point: the citation is real and you can follow it. The point
+          survives as a static side-by-side. */}
       <div className="mk-claim-row mk-claim-row--flip mk-crossfade">
         <div className="mk-claim-row-copy">
           <span className="mk-claim-index">02</span>
-          <h3 className="mk-h3 mk-claim-row-title">Every fact shows its source.</h3>
+          <h3 className="mk-h3 mk-claim-row-title">
+            Every fact shows its source.
+          </h3>
           <p className="mk-lead mk-claim-row-body">
-            AI that reads medical records has to show its work. Every extracted
-            fact carries a citation to the exact page and paragraph it came
-            from, kept forever, so you can always check the source yourself.
+            Every extracted fact carries a citation to the exact page it came
+            from, kept forever, so you can check it yourself.
           </p>
         </div>
+        <div className="mk-claim-row-proof">
+          <figure className="mk-cite-proof">
+            <div className="mk-cite-proof-fact">
+              <span className="mk-cite-proof-label">Rabies, 3 year</span>
+              <time className="mk-cite-proof-date">2024-03-11</time>
+              <span className="mk-cite">p. 14</span>
+            </div>
+            <figcaption className="mk-cite-proof-cap">
+              The badge opens the source page, with the line highlighted.
+            </figcaption>
+          </figure>
+        </div>
       </div>
-      <SceneCitation />
 
       {/* 03 and 04 alternate. */}
       {CLAIMS.slice(1).map((c, i) => (

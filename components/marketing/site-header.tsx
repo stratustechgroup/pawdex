@@ -9,16 +9,14 @@ import { ContactModalTrigger } from "@/components/marketing/contact-modal";
 // just the home page. Pricing and About are real pages. On the home page the
 // anchors still resolve to same-page jumps.
 //
-// Travel and Breeders no longer have sections of their own: they are episodes
-// in the life scene now (3 years and 8 weeks), so the anchors point at those
-// beats. Keeping the old /#travel and /#breeders hrefs would have left the two
-// links pointing at ids that no longer exist anywhere on the page.
+// Travel and Breeders were dropped from the nav rather than repointed. Their
+// content lived inside the life scene, the scene is gone, and a nav item that
+// scrolls somewhere vaguely related is worse than one that is not there. Six
+// items, all of which land on something real.
 const LINKS = [
-  { href: "/#scene-shoebox", label: "How it works" },
+  { href: "/#how-it-works", label: "How it works" },
   { href: "/#why-pawdex", label: "Why Pawdex" },
-  { href: "/#life-3y", label: "Travel" },
-  { href: "/#life-8w", label: "Breeders" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/#pricing", label: "Pricing" },
   { href: "/#faq", label: "FAQ" },
   { href: "/about", label: "About" },
 ];

@@ -8,8 +8,10 @@ set -euo pipefail
 
 PORT=${SCROLL_PORT:-3210}
 CDP_PORT=${CDP_PORT:-9445}
-# Raised as scenes land: Task 5 -> 1, Task 6 -> 2, Task 7 -> 3.
-EXPECTED_SCENES=${EXPECTED_SCENES:-3}
+# Zero: the pinned scenes were removed. The per-scene assertions still run
+# against any scene that exists, and the anchor, overflow, header and LCP
+# checks are the ones that matter on the short page.
+EXPECTED_SCENES=${EXPECTED_SCENES:-0}
 PROFILE=$(mktemp -d)
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 

@@ -129,14 +129,25 @@ scan("transition on transform (hover motion)", /transition:[^;]*transform/, {
   );
 }
 
-// Feature lists must not carry tick/cross glyph columns.
+// Feature lists must not carry tick/cross glyph columns. The first version of
+// this check looked for a literal name="check", and missed
+// name={f.included ? "check" : "x"} entirely, which is exactly how the
+// checkmarks came back. Match the icon name anywhere in a feature list block.
 {
-  const hits = tsx.filter(([, t]) =>
-    /name=\{?["']?(check|x)["']?\}?[^>]*className="[^"]*(feature|check)/.test(
-      code(t, false),
-    ),
+  const hits = [];
+  for (const [f, t] of tsx) {
+    const body = code(t, false);
+    // Any icon whose name expression mentions "check" or "x" sitting inside a
+    // list item that also carries a feature class.
+    const re =
+      /<li[^>]*className=\{?`?[^>]*(?:pf-feature|mk-feature|feature)[^>]*>[\s\S]{0,240}?<[A-Z]\w*Icon?[^>]*name=\{?[^>]*["'](?:check|x)["']/;
+    if (re.test(body)) hits.push(f);
+    if (/className="pf-check"/.test(body)) hits.push(f);
+  }
+  check(
+    hits.length === 0,
+    `checkmark bullets in a feature list: ${[...new Set(hits)].join(", ")}`,
   );
-  check(hits.length === 0, `checkmark bullets in a feature list: ${hits.map(([f]) => f)}`);
 }
 
 // Three equal pricing columns.

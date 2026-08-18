@@ -70,7 +70,7 @@ export type Plan = {
 const FREE: Plan = {
   id: "free",
   name: "Free",
-  tagline: "A real home for one or two pets. Forever, not a trial.",
+  tagline: "A real home for one or two pets, free for as long as you use it.",
   priceMonthlyCents: 0,
   priceAnnualCents: null,
   features: [
