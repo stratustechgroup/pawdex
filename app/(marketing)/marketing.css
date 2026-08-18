@@ -351,55 +351,6 @@
   }
 }
 
-/* ---------------------------------------------------- hero, split layout */
-
-.mk-hero--split {
-  padding-block: clamp(48px, 6vw, 88px) clamp(56px, 7vw, 104px);
-  border-bottom: 1px solid var(--mk-rule);
-}
-.mk-hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: clamp(32px, 5vw, 80px);
-  align-items: center;
-}
-@media (max-width: 900px) {
-  .mk-hero-grid {
-    grid-template-columns: 1fr;
-    gap: 36px;
-  }
-}
-.mk-hero-copy {
-  min-width: 0;
-}
-/* Two lines at desktop, which is the cap. The previous scale ran the headline
-   to four lines and pushed the form toward the fold. */
-/* Two lines at desktop. The measure and the size are set together: a 15ch
-   measure at 54px ran to three lines, which pushes the form toward the fold and
-   is a font-size error rather than a copy-length one. */
-.mk-hero-title {
-  margin: 20px 0 0;
-  font-size: clamp(30px, 3.2vw, 42px);
-  max-width: 24ch;
-}
-.mk-hero-lead {
-  margin: 20px 0 0;
-  max-width: 42ch;
-}
-.mk-hero-cta {
-  margin-top: 28px;
-}
-.mk-hero-visual {
-  min-width: 0;
-}
-.mk-hero-sentinel {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-}
-
 /* The hero's div-built product simulation used to live here. It has been
    deleted, not restyled: a product preview assembled from styled divs is a
    drawing of the product, not the product. The marketing surface now embeds
@@ -1746,22 +1697,15 @@
       }
     }
 
-    /* ---- Entry crossfade, the cheap version ----------------------------- */
-    .mk-crossfade > * {
-      animation: mk-crossfade linear both;
-      animation-timeline: view();
-      animation-range: entry 10% cover 40%;
-    }
-    @keyframes mk-crossfade {
-      from {
-        opacity: 0;
-        transform: translate3d(0, 24px, 0);
-      }
-      to {
-        opacity: 1;
-        transform: none;
-      }
-    }
+    /* The entry crossfade lived here and has been removed.
+
+       It held every element below the fold at opacity 0 until its view()
+       timeline advanced. That is correct behaviour for a reveal and a genuine
+       hazard: an audit reads the text as invisible, and so does anyone whose
+       animation never advances, for any reason. On a five-screen flat page a
+       fade-up on entry was buying almost nothing, and it was the last piece of
+       decoration on a surface that has spent this whole redesign removing
+       decoration. */
   }
 }
 
@@ -2174,4 +2118,136 @@
 }
 .mk-claim-row-proof {
   padding-top: 6px;
+}
+
+/* ─── Hero, rebuilt against references ────────────────────────────────────
+   Read Linear, Mercury and Oura side by side first. All three: short headline
+   set large, starting well down the viewport; one sentence of lead; one small
+   call to action; and then one big real visual carrying the rest of the fold.
+
+   The version before this put a 42px headline in a narrow column beside a
+   500px card and left the rest of the fold empty, which is what a wireframe
+   looks like. */
+.mk-hero {
+  padding-block: clamp(72px, 11vh, 132px) 0;
+  border-bottom: 1px solid var(--mk-rule);
+  overflow: hidden;
+}
+.mk-hero-copy {
+  /* No measure here. The headline carries its own line break, and a measure on
+     the wrapper squeezes the lead and the form along with it. */
+  max-width: none;
+}
+.mk-hero-title {
+  margin: 0;
+  /* Larger than anything else on the page by a wide margin. On the references
+     the headline is the loudest thing in the viewport and everything else is
+     quiet around it. */
+  font-size: clamp(38px, 5.4vw, 72px);
+  line-height: 1.03;
+  letter-spacing: -0.03em;
+}
+.mk-hero-lead {
+  margin: 22px 0 0;
+  max-width: 46ch;
+  font-size: clamp(16px, 1.5vw, 18px);
+}
+.mk-hero-cta {
+  margin-top: 30px;
+  max-width: 460px;
+}
+.mk-hero-visual {
+  margin-top: clamp(48px, 6vw, 80px);
+  padding-inline: clamp(16px, 4vw, 56px);
+}
+
+/* ─── The product surface ─────────────────────────────────────────────────
+   Wide, dense, and real. It is deliberately cropped at the bottom of the fold
+   rather than fitted into it: a surface that continues past the edge reads as a
+   real application, a surface that ends neatly reads as a picture of one. */
+.mk-surface {
+  margin: 0 auto;
+  max-width: 1320px;
+}
+.mk-surface-frame {
+  border: 1px solid var(--mk-rule-strong);
+  border-bottom: 0;
+  background: var(--mk-paper-2);
+  overflow: hidden;
+}
+.mk-surface-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--mk-rule);
+  background: var(--mk-paper);
+}
+.mk-surface-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--mk-accent);
+}
+.mk-surface-title {
+  font: 600 12.5px var(--mk-body);
+  color: var(--mk-ink);
+}
+.mk-surface-meta {
+  margin-left: auto;
+  font: 500 11px var(--mk-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mk-ink-3);
+}
+.mk-surface-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr) minmax(0, 0.95fr);
+  gap: 1px;
+  background: var(--mk-rule);
+  padding: 1px 0 0;
+}
+.mk-surface-col {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: 18px 16px 28px;
+  background: var(--mk-paper);
+}
+.mk-surface-panel {
+  border: 1px solid var(--mk-rule);
+  padding: 14px;
+}
+.mk-surface-panel-head {
+  font: 600 10.5px/1 var(--mk-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mk-ink-3);
+  margin-bottom: 12px;
+}
+.mk-surface-chart {
+  height: 190px;
+}
+.mk-surface-caption {
+  margin: 14px auto 0;
+  max-width: 60ch;
+  text-align: center;
+  font: 400 12.5px/1.55 var(--mk-body);
+  color: var(--mk-ink-3);
+  padding-bottom: clamp(36px, 4vw, 56px);
+}
+
+@media (max-width: 1000px) {
+  .mk-surface-body {
+    grid-template-columns: 1fr;
+  }
+  /* Only the first two columns survive on a phone: three columns of dense app
+     UI shrunk to 390px is a picture of nothing. */
+  .mk-surface-col:last-child {
+    display: none;
+  }
+}
+@media (max-width: 620px) {
+  .mk-surface-chart {
+    height: 150px;
+  }
 }
