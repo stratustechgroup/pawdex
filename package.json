@@ -8,14 +8,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "pnpm dlx tsx scripts/test-extraction-dedup.ts && pnpm dlx tsx scripts/test-eu-passport.ts && pnpm dlx tsx scripts/test-course-duration.ts && pnpm dlx tsx scripts/test-pims-classifier.ts && pnpm dlx tsx scripts/test-form51-anchor.ts && pnpm dlx tsx scripts/test-pec-prefilter.ts && pnpm dlx tsx scripts/test-transfer-logic.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-email-unsub-token.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-insurance-calculator.ts && pnpm dlx tsx scripts/test-first-year.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-billing-entitlements.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-sentry-scrub.ts && pnpm dlx tsx scripts/test-plan-recommend.ts",
+    "test": "pnpm dlx tsx scripts/test-extraction-dedup.ts && pnpm dlx tsx scripts/test-eu-passport.ts && pnpm dlx tsx scripts/test-course-duration.ts && pnpm dlx tsx scripts/test-pims-classifier.ts && pnpm dlx tsx scripts/test-form51-anchor.ts && pnpm dlx tsx scripts/test-pec-prefilter.ts && pnpm dlx tsx scripts/test-transfer-logic.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-email-unsub-token.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-insurance-calculator.ts && pnpm dlx tsx scripts/test-first-year.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-billing-entitlements.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-sentry-scrub.ts && pnpm dlx tsx scripts/test-plan-recommend.ts && node scripts/test-design-bans.mjs",
     "check": "tsc --noEmit && pnpm test",
-    "test:live": "bash scripts/run-email-webhook-tests.sh && pnpm dlx tsx scripts/test-insurance-live.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-waitlist-ratelimit.ts && bash scripts/run-billing-webhook-tests.sh && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-qa-index-e2e.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-spend-guard.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-ai-usage.ts && bash scripts/run-marketing-scroll.sh && bash scripts/run-plan-fit.sh",
+    "test:live": "bash scripts/run-email-webhook-tests.sh && pnpm dlx tsx scripts/test-insurance-live.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-waitlist-ratelimit.ts && bash scripts/run-billing-webhook-tests.sh && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-qa-index-e2e.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-spend-guard.ts && pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/test-ai-usage.ts && bash scripts/run-marketing-scroll.sh && bash scripts/run-plan-fit.sh && bash scripts/run-playwright.sh",
     "ai:spend": "pnpm dlx tsx --tsconfig scripts/tsconfig.scripts.json scripts/ai-spend.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
     "@openrouter/ai-sdk-provider": "^2.9.0",
+    "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "@sentry/nextjs": "^10.70.0",
@@ -50,6 +51,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

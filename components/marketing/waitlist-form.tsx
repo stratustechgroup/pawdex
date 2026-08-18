@@ -1,4 +1,5 @@
 "use client";
+import { MkIcon } from "@/components/marketing/mk-icon";
 
 import { useActionState } from "react";
 
@@ -108,7 +109,7 @@ export function WaitlistForm({
         />
         <button type="submit" disabled={pending} className="mk-btn" style={{ opacity: pending ? 0.7 : 1 }}>
           {pending ? "Joining…" : "Join the waitlist"}
-          {!pending && <Icon name="arrowRight" size={15} className="mk-btn-arrow" />}
+          {!pending && <MkIcon name="arrowRight" size={15} />}
         </button>
       </div>
 

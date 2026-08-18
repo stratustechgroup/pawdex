@@ -203,7 +203,7 @@ const TABS = [
     id: "mk-tab-1",
     index: "01",
     label: "Day one",
-    heading: "Start with a history, not a blank page.",
+    heading: "Start with a history already attached.",
     body: "Adopt from a breeder on Pawdex and the record arrives with the dog: birth weight, first shots, dewormings, parentage. Starting from scratch instead? Tell us the birthday and we project the whole first year of vaccines and checkups before your first vet visit.",
     vignette: <DayOneVignette />,
   },
@@ -231,7 +231,7 @@ export function Lifecycle() {
       <div className="mk-container">
         <span className="mk-eyebrow mk-reveal">How it works</span>
         <h2 className="mk-h2 mk-reveal" style={{ margin: "18px 0 0", maxWidth: "22ch" }}>
-          Built for the whole life, not just the next visit.
+          Built for the whole life.
         </h2>
 
         <div className="mk-tabs" style={{ marginTop: "clamp(28px, 4vw, 44px)", position: "relative" }}>

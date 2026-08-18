@@ -72,9 +72,9 @@ export default function MarketingHome() {
             to stop moving. No parallax, no scene, no ornament. */}
         <section id="waitlist" className="mk-final">
           <div className="mk-container" style={{ position: "relative" }}>
-            <span className="mk-eyebrow" style={{ justifyContent: "center" }}>
-              Early access
-            </span>
+            {/* No eyebrow here either. The page's whole eyebrow budget is two
+                (hero and the proof section), and the closing headline needs no
+                label above it to explain what it is. */}
             <h2
               className="mk-display"
               style={{

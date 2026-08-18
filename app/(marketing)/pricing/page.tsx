@@ -66,9 +66,6 @@ export default function PricingPage() {
             </p>
 
             <div className="pr-banner">
-              <span aria-hidden style={{ display: "inline-flex" }}>
-                ✨
-              </span>
               Everything is free during early access.{" "}
               <a
                 href="#pricing-waitlist"

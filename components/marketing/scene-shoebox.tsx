@@ -78,7 +78,7 @@ function RecordCard() {
 
       <p className="mk-shoebox-reviewed">
         <span className="mk-status-dot" />
-        Reviewed and approved by you before anything was saved.
+        You approve every fact before it is saved.
       </p>
     </div>
   );

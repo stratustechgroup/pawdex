@@ -1,4 +1,5 @@
 "use client";
+import { MkIcon } from "@/components/marketing/mk-icon";
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
@@ -99,12 +100,9 @@ export function PlanFit({
   return (
     <div className="pf" ref={rootRef}>
       <div className="mk-container">
-        {/* The pricing page already announces itself in its own hero; a second
-            "Pricing" eyebrow directly beneath it is noise. On the home page,
-            where this is one chapter among six, the eyebrow earns its place. */}
-        {cta === "waitlist" ? (
-          <span className="mk-eyebrow">Pricing</span>
-        ) : null}
+        {/* No eyebrow. Small uppercase labels above every section headline are
+            the rhythm that made this page read as templated, and the budget for
+            them across the whole page is two. The headline says what this is. */}
         <h2 className="mk-h2 pf-headline">
           The record is unlimited on every plan. Reading documents at scale is
           the only thing that costs us anything, so it&apos;s the{" "}
@@ -161,6 +159,21 @@ export function PlanFit({
           </label>
         </div>
 
+        {/* The one real meter in the product, shown against the one plan that
+            has a limit. Always visible, because the moment worth creating is
+            the slider crossing the cap, and that is exactly when the Free plan
+            stops being the recommendation and would otherwise vanish. */}
+        <p className="pf-meter" data-over={fit.outgrewFree ? "true" : "false"}>
+          <span className="pf-meter-count">
+            {docs} of {FREE_DOC_CAP}
+          </span>
+          <span>
+            {fit.outgrewFree
+              ? `documents a month. Free reads ${FREE_DOC_CAP} of them.`
+              : "documents a month, inside what Free reads."}
+          </span>
+        </p>
+
         {/* Announced, not just shown. A sighted visitor sees the card lift; a
             screen reader user hears the tier change as they move the slider. */}
         <p className="pf-result" role="status" aria-live="polite">
@@ -192,20 +205,34 @@ export function PlanFit({
           </div>
         ) : null}
 
+        {/* The recommended plan, at full size. Then the others as rows.
+            Three side-by-side tier cards is the single most recognisable
+            pricing layout on the web, and it makes the visitor do the
+            comparison the sliders just did for them. */}
         <div className="pf-viewport">
           <div className="pf-track">
-            {PURCHASABLE_PLANS.map((plan) => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                interval={interval}
-                fits={plan.id === fit.planId}
-                docs={docs}
-                outgrewFree={fit.outgrewFree}
-                disclosure={disclosure}
-                cta={cta}
-              />
-            ))}
+            <PlanCard
+              plan={PLANS[fit.planId]}
+              interval={interval}
+              fits
+              disclosure={disclosure}
+              cta={cta}
+            />
+            <ul className="pf-others">
+              {PURCHASABLE_PLANS.filter((pl) => pl.id !== fit.planId).map(
+                (pl) => (
+                  <li key={pl.id} className="pf-other">
+                    <span className="pf-other-name">{pl.name}</span>
+                    <span className="pf-other-price">
+                      {pl.priceMonthlyCents === 0
+                        ? "Free"
+                        : `${formatUsd(pl.priceMonthlyCents)}/mo`}
+                    </span>
+                    <span className="pf-other-note">{pl.tagline}</span>
+                  </li>
+                ),
+              )}
+            </ul>
           </div>
         </div>
 
@@ -225,28 +252,17 @@ function PlanCard({
   plan,
   interval,
   fits,
-  docs,
-  outgrewFree,
   disclosure,
   cta,
 }: {
   plan: Plan;
   interval: Interval;
   fits: boolean;
-  docs: number;
-  outgrewFree: boolean;
   disclosure: string;
   cta: "checkout" | "waitlist";
 }) {
   const price = priceDisplay(plan, interval);
   const paid = isPaidPlan(plan.id);
-  const isFree = plan.id === "free";
-
-  // The Free card's meter. As the slider passes the cap the bar fills and then
-  // overflows, and the card steps back on its own. The visitor watches
-  // themselves outgrow the free tier instead of being told they will, and it is
-  // exactly what the entitlement code does.
-  const meterPct = Math.min(100, (docs / FREE_DOC_CAP) * 100);
 
   return (
     <article className="mk-card pf-card" data-fit={fits ? "true" : "false"}>
@@ -264,29 +280,13 @@ function PlanCard({
         <div className="pf-price-note">{price.note}</div>
       </div>
 
-      {isFree ? (
-        <div className="pf-meter" data-over={outgrewFree ? "true" : "false"}>
-          <div className="pf-meter-head">
-            <span>{FREE_DOC_CAP} documents a month</span>
-            <span className="pf-meter-count">
-              {Math.min(docs, FREE_DOC_CAP)} / {FREE_DOC_CAP}
-            </span>
-          </div>
-          <div className="pf-meter-track">
-            <div className="pf-meter-fill" style={{ width: `${meterPct}%` }} />
-          </div>
-          {outgrewFree ? (
-            <p className="pf-meter-over">You are past what Free reads.</p>
-          ) : null}
-        </div>
-      ) : null}
 
       <a
         href={cta === "waitlist" ? "#waitlist" : "#pricing-waitlist"}
         className={`mk-btn${fits ? "" : " mk-btn--ghost"} pf-cta`}
       >
         {plan.priceMonthlyCents === 0 ? "Start free" : "Join the waitlist"}
-        <Icon name="arrowRight" size={15} className="mk-btn-arrow" />
+        <MkIcon name="arrowRight" size={15} />
       </a>
 
       <ul className="pf-features">

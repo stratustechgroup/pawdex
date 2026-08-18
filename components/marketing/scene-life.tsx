@@ -110,7 +110,7 @@ const BEATS = [
   {
     ...LIFE_AGES[0],
     lede: "She arrives already knowing things.",
-    body: "Transferred from the kennel with the litter record attached: weights from birth, first vaccines, dewormings. Not a photocopied packet destined for a junk drawer.",
+    body: "Transferred from the kennel with the litter record attached: weights from birth, first vaccines, dewormings. All of it already in the record on day one.",
     visual: <DayOneVignette />,
   },
   {

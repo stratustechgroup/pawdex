@@ -1,13 +1,18 @@
-// The mess, before it is a record.
+// An abstract motif for "many loose pieces of paper", and deliberately nothing
+// more than that.
 //
-// Fourteen vet documents rendered in DOM from the existing tokens: no raster
-// images, no extra fonts, correct in dark mode, and cheap enough to sit behind
-// the hero without costing LCP. They are the first thing a visitor sees, and
-// they should read as "this is my kitchen drawer" before they read as anything
-// else.
+// An earlier version drew fake vet documents here: mock headers reading RABIES
+// VACCINATION CERTIFICATE, mock ruled lines standing in for body text, a mock
+// stamp. That is a fake screenshot, and a fake screenshot is worse than no
+// image at all: it invites the visitor to read something that does not exist,
+// and it tells them nobody involved has seen the real product.
 //
-// Entirely decorative. The whole field is aria-hidden and none of the text is
-// real, so a screen reader walks straight past it to the headline.
+// What remains is unmistakably a geometric abstraction. Blank sheets, one rule
+// each, no words. The real product is shown elsewhere on the page by rendering
+// the real components (see product-preview.tsx). This is the "before", and the
+// "before" is a pile of paper, not a document you are meant to read.
+//
+// Entirely decorative and aria-hidden.
 
 type Kind = "cert" | "invoice" | "discharge" | "fax" | "handwritten";
 
@@ -40,34 +45,25 @@ const SHEETS: Sheet[] = [
   { kind: "fax", depth: 1.9, x: 64, y: 76, rot: 10, w: 160 },
 ];
 
-const HEADERS: Record<Kind, string> = {
-  cert: "RABIES VACCINATION CERTIFICATE",
-  invoice: "INVOICE · SMALL ANIMAL",
-  discharge: "DISCHARGE SUMMARY",
-  fax: "FAX TRANSMITTAL",
-  handwritten: "WEIGHT LOG",
-};
-
-/** Ruled lines. Widths vary so no two sheets look stamped from one template. */
-const LINES: Record<Kind, number[]> = {
-  cert: [92, 64, 78],
-  invoice: [88, 71, 95, 55],
-  discharge: [95, 83, 68, 90, 47],
-  fax: [76, 88, 61],
-  handwritten: [58, 72, 49, 65],
+/* Sheet proportions vary so the pile does not look stamped from one template.
+   That is the only thing that differs between them now. */
+const RULE_INSET: Record<Kind, number> = {
+  cert: 30,
+  invoice: 22,
+  discharge: 38,
+  fax: 26,
+  handwritten: 34,
 };
 
 function Sheet({ kind }: { kind: Kind }) {
+  // One rule near the top, at a height that varies per sheet. No text, no
+  // stamp, no fake fields.
   return (
-    <>
-      <div className="mk-paper-head">{HEADERS[kind]}</div>
-      <div className="mk-paper-lines">
-        {LINES[kind].map((w, i) => (
-          <span key={i} style={{ width: `${w}%` }} />
-        ))}
-      </div>
-      {kind === "cert" ? <div className="mk-paper-stamp" /> : null}
-    </>
+    <span
+      className="mk-paper-rule"
+      style={{ top: `${RULE_INSET[kind]}%` }}
+      aria-hidden="true"
+    />
   );
 }
 

@@ -110,6 +110,7 @@ const STATE = `(() => {
   const ranges = [...document.querySelectorAll('.pf input[type=range]')];
   return JSON.stringify({
     cards: cards.length,
+    others: document.querySelectorAll('.pf-other').length,
     fit: cards.findIndex((c) => c.dataset.fit === 'true'),
     fitName: cards.find((c) => c.dataset.fit === 'true')?.querySelector('.pf-card-name')?.textContent ?? null,
     live: result ? result.getAttribute('aria-live') : null,
@@ -156,7 +157,17 @@ async function main() {
   await sleep(2500);
 
   let s = await evalJson(cdp, STATE);
-  check(s.cards === 3, `expected 3 plan cards, found ${s.cards}`);
+  // One recommended plan rendered large, the rest as rows. Three equal tier
+  // columns is the layout this design deliberately does not use, so the check
+  // is that all three plans are REPRESENTED, not that there are three cards.
+  check(
+    s.cards === 1,
+    `expected exactly one recommended plan card, found ${s.cards}`,
+  );
+  check(
+    s.cards + s.others === 3,
+    `all three plans must be represented, found ${s.cards + s.others}`,
+  );
   check(s.ranges === 2, `expected 2 range inputs, found ${s.ranges}`);
   check(
     s.live === "polite",
@@ -195,7 +206,7 @@ async function main() {
   );
   check(
     s.meterOver === "true",
-    `the Free card's meter must show the overflow state, data-over is "${s.meterOver}"`,
+    `past the cap the document meter must flip to its over state, data-over is "${s.meterOver}"`,
   );
   console.log(`  after arrows: ${s.fitName} (${s.resultText})`);
 

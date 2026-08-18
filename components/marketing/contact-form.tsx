@@ -1,4 +1,5 @@
 "use client";
+import { MkIcon } from "@/components/marketing/mk-icon";
 
 import { useActionState } from "react";
 
@@ -178,7 +179,7 @@ export function ContactForm({ compact = false }: { compact?: boolean }) {
         >
           {pending ? "Sending…" : "Send message"}
           {!pending && (
-            <Icon name="arrowRight" size={15} className="mk-btn-arrow" />
+            <MkIcon name="arrowRight" size={15} />
           )}
         </button>
         <p className="cf-note">

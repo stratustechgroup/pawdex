@@ -1,3 +1,4 @@
+import { MkIcon } from "@/components/marketing/mk-icon";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -376,7 +377,7 @@ export default function AboutPage() {
             <div style={{ display: "flex", justifyContent: "center", marginTop: 30 }}>
               <Link href="/#waitlist" className="mk-btn">
                 Join the waitlist
-                <Icon name="arrowRight" size={15} className="mk-btn-arrow" />
+                <MkIcon name="arrowRight" size={15} />
               </Link>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces } from "next/font/google";
+import { Archivo } from "next/font/google";
 
 import "./marketing.css";
 import { MarketingThemeInit } from "@/components/marketing/theme-init";
@@ -9,12 +9,19 @@ import {
   webSiteSchema,
 } from "@/components/marketing/structured-data";
 
-// Display face for the marketing surface only. The app itself stays on Inter;
-// Fraunces at high optical sizes gives the public page its editorial voice.
-const fraunces = Fraunces({
+// One family for the whole marketing surface, carried by its width axis:
+// Archivo Expanded for display, normal width for body. Archivo is a grotesque
+// drawn for signage and print at small sizes, which is the right register for a
+// product whose entire promise is a permanent, legible record.
+//
+// It replaces Fraunces (display) and Inter (body). Both were deliberate
+// removals: an editorial serif plus Inter is the single most recognisable
+// machine-generated type pairing on the web, and neither said anything about
+// what this product is.
+const archivo = Archivo({
   subsets: ["latin"],
-  variable: "--font-fraunces",
-  axes: ["opsz", "SOFT", "WONK"],
+  variable: "--font-archivo",
+  axes: ["wdth"],
 });
 
 const TITLE = "Pawdex: every vet record, one timeline, for life";
@@ -52,7 +59,7 @@ export default function MarketingLayout({
       {/* Sitewide structured data: present on every marketing route. */}
       <JsonLd data={organizationSchema()} />
       <JsonLd data={webSiteSchema()} />
-      <div className={`mk ${fraunces.variable}`}>{children}</div>
+      <div className={`mk ${archivo.variable}`}>{children}</div>
     </>
   );
 }

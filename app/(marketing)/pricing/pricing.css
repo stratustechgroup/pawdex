@@ -15,7 +15,6 @@
   flex-wrap: wrap;
   margin-top: 28px;
   padding: 14px 20px;
-  border-radius: 999px;
   background: var(--pw-accent-soft);
   color: var(--pw-accent-fg-on-soft);
   font: 500 13.5px var(--mk-body);

@@ -90,7 +90,7 @@ export function recommendPlan(input: FitInput): FitResult {
 
   return {
     planId: "free",
-    reason: "Free covers this. Forever, not a trial.",
+    reason: "Free covers this, and it stays free.",
     outgrewFree: false,
   };
 }

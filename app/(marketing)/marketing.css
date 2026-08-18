@@ -8,41 +8,139 @@
    ------------------------------------------------------------------------ */
 
 .mk {
-  --mk-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
-  --mk-body: var(--font-inter), system-ui, sans-serif;
+  /* ── Type ───────────────────────────────────────────────────────────────
+     One family, carried by its width axis. Archivo Expanded does display work,
+     Archivo normal does body work, JetBrains Mono carries data: dates, doses,
+     page citations, prices. Numbers are always mono on this surface, because
+     the product is a record and records are read as data.
+
+     Fraunces and Inter were both removed. An editorial serif over Inter is the
+     most recognisable machine-generated pairing on the web, and neither face
+     said anything about a permanent medical record. */
+  --mk-display: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+  --mk-body: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
   --mk-mono: var(--font-jetbrains), "SF Mono", monospace;
 
-  /* Darker amber than the brand's mid-tone so the 11px eyebrow/index labels
-     clear AA (4.5:1) on the cream and white surfaces. The dark theme restores a
-     warmer amber below, where the darker value would fail against the dark bg. */
-  --mk-amber: #955c1b;
-  --mk-ink-band: #17382a;
-  --mk-ink-band-2: #122c21;
+  /* ── Surface ────────────────────────────────────────────────────────────
+     A cooler paper than the old cream. The previous #FAF9F6 sat squarely in
+     the warm-craft family that every generated "premium" page reaches for. This
+     is still paper, still not pure white, but the warmth is dialled back so the
+     green reads as the only warm thing on the page. */
+  --mk-paper: #eff0ed;
+  --mk-paper-2: #e6e8e3;
+  --mk-paper-3: #dcdfd8;
+  --mk-ink: #16181a;
+  --mk-ink-2: #3b3f42;
+  --mk-ink-3: #5d6266;
+  --mk-rule: #cdd0ca;
+  --mk-rule-strong: #a9ada5;
 
-  background: var(--pw-bg);
-  color: var(--pw-text);
+  /* ── Accent ─────────────────────────────────────────────────────────────
+     Exactly one. The brand's forest green survives the redesign because a
+     redesign preserves the brand; everything around it changed instead. Amber
+     was retired: two accents is two accents, and the eyebrows it coloured are
+     mostly gone. */
+  --mk-accent: #2f6f4e;
+  --mk-accent-ink: #f7f8f6;
+
+  /* ── Shape ──────────────────────────────────────────────────────────────
+     One radius for the entire surface, and it is zero. Not "small". Zero.
+     Mixed radii are the fastest way to make a page look assembled rather than
+     designed, and softened corners are what every generated SaaS page does. */
+  --mk-radius: 0px;
+
+  background: var(--mk-paper);
+  color: var(--mk-ink);
   font-family: var(--mk-body);
+  font-synthesis-weight: none;
   overflow-x: clip;
   position: relative;
 }
 
-/* Paper grain over everything, barely there. */
+/* Paper grain, barely there. Fixed and pointer-events-none so it never costs a
+   repaint on a scrolling container. */
 .mk::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 60;
-  opacity: 0.05;
+  opacity: 0.045;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
-:root[data-theme="dark"] .mk::before {
-  opacity: 0.07;
+
+/* ── Dark ─────────────────────────────────────────────────────────────────
+   Declared twice on purpose. The marketing surface can be put into dark by an
+   explicit toggle (data-theme, written by theme-init) or by the operating
+   system (prefers-color-scheme). Defining the values under only one of those
+   ships a half-swapped palette to whichever visitor arrives the other way. */
+:root[data-theme="dark"] .mk,
+:root:not([data-theme="light"]) .mk-dark-auto {
+  --mk-paper: #121413;
+  --mk-paper-2: #191c1a;
+  --mk-paper-3: #212523;
+  --mk-ink: #eceee9;
+  --mk-ink-2: #b5b9b3;
+  --mk-ink-3: #8b908a;
+  --mk-rule: #2c302d;
+  --mk-rule-strong: #464b47;
+  --mk-accent: #57a97c;
+  --mk-accent-ink: #0d0f0e;
 }
-/* Warmer, lighter amber on the dark surface (the light-mode value is too dark
-   for the dark background to clear AA). */
-:root[data-theme="dark"] .mk {
-  --mk-amber: #c9873c;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .mk {
+    --mk-paper: #121413;
+    --mk-paper-2: #191c1a;
+    --mk-paper-3: #212523;
+    --mk-ink: #eceee9;
+    --mk-ink-2: #b5b9b3;
+    --mk-ink-3: #8b908a;
+    --mk-rule: #2c302d;
+    --mk-rule-strong: #464b47;
+    --mk-accent: #57a97c;
+    --mk-accent-ink: #0d0f0e;
+  }
+}
+:root[data-theme="dark"] .mk::before {
+  opacity: 0.06;
+}
+
+/* ── Bridge to the app tokens ─────────────────────────────────────────────
+   The marketing surface reuses components that read the product's --pw-*
+   tokens (the real pet card, the real status badge). Rather than fork those
+   components, the marketing palette is mapped onto the tokens they already
+   read, so a genuine product preview renders in the marketing palette without
+   a single component change.
+
+   globals.css is deliberately untouched: the app depends on it. */
+.mk {
+  --pw-bg: var(--mk-paper);
+  --pw-surface: var(--mk-paper);
+  --pw-surface-2: var(--mk-paper-2);
+  --pw-surface-3: var(--mk-paper-3);
+  --pw-border: var(--mk-rule);
+  --pw-border-strong: var(--mk-rule-strong);
+  --pw-text: var(--mk-ink);
+  --pw-text-secondary: var(--mk-ink-2);
+  --pw-text-muted: var(--mk-ink-3);
+  --pw-text-subtle: var(--mk-ink-3);
+  --pw-accent: var(--mk-accent);
+  --pw-accent-hover: var(--mk-accent);
+  --pw-accent-soft: var(--mk-paper-2);
+  --pw-accent-soft-2: var(--mk-paper-3);
+  --pw-accent-fg-on-soft: var(--mk-accent);
+
+  /* No radius, no shadow, anywhere on this surface. */
+  --pw-r-xs: 0px;
+  --pw-r-sm: 0px;
+  --pw-r-md: 0px;
+  --pw-r-lg: 0px;
+  --pw-r-xl: 0px;
+  --pw-r-pill: 0px;
+  --pw-shadow-sm: none;
+  --pw-shadow-md: none;
+  --pw-shadow-lg: none;
+  --pw-shadow-popover: none;
 }
 
 /* ------------------------------------------------------------- primitives */
@@ -66,60 +164,60 @@
   background: var(--pw-border);
 }
 
+/* Rationed, not removed. The old page put one of these above every section,
+   which is the rhythm that made each section read as interchangeable. */
 .mk-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   font: 600 11px/1 var(--mk-mono);
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--mk-amber);
-}
-.mk-eyebrow::before {
-  content: "";
-  width: 22px;
-  height: 1px;
-  background: currentColor;
-  opacity: 0.6;
+  color: var(--mk-accent);
 }
 
+/* Display type is Archivo pushed to its widest width and its heaviest weight.
+   The width axis is what makes this read as signage rather than as a UI label,
+   and it is the reason one family can do both jobs here. */
 .mk-display {
   font-family: var(--mk-display);
-  font-weight: 480;
-  font-variation-settings: "opsz" 110, "SOFT" 40, "WONK" 0;
-  font-size: clamp(46px, 7.4vw, 92px);
-  line-height: 0.99;
-  letter-spacing: -0.022em;
+  font-weight: 700;
+  font-variation-settings: "wdth" 112;
+  font-size: clamp(40px, 6.2vw, 84px);
+  line-height: 1.02;
+  letter-spacing: -0.028em;
   text-wrap: balance;
 }
+/* Emphasis stays inside the family: same face, colour carries the accent.
+   Dropping a serif word into a sans headline to make it feel designed is the
+   move this redesign exists to remove. */
 .mk-display em,
 .mk-h2 em {
-  font-style: italic;
-  font-variation-settings: "opsz" 110, "SOFT" 60, "WONK" 1;
-  color: var(--pw-accent);
+  font-style: normal;
+  color: var(--mk-accent);
 }
 
 .mk-h2 {
   font-family: var(--mk-display);
-  font-weight: 500;
-  font-variation-settings: "opsz" 70, "SOFT" 30, "WONK" 0;
-  font-size: clamp(30px, 4.6vw, 54px);
-  line-height: 1.04;
-  letter-spacing: -0.015em;
+  font-weight: 700;
+  font-variation-settings: "wdth" 108;
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 1.06;
+  letter-spacing: -0.022em;
   text-wrap: balance;
 }
 
 .mk-h3 {
   font-family: var(--mk-display);
-  font-weight: 540;
-  font-size: clamp(20px, 2.4vw, 26px);
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-weight: 650;
+  font-variation-settings: "wdth" 104;
+  font-size: clamp(19px, 2.2vw, 25px);
+  line-height: 1.18;
+  letter-spacing: -0.014em;
 }
 
 .mk-lead {
-  font: 400 clamp(16px, 1.6vw, 18.5px) / 1.65 var(--mk-body);
-  color: var(--pw-text-secondary);
+  font: 400 clamp(16px, 1.5vw, 18px) / 1.6 var(--mk-body);
+  color: var(--mk-ink-2);
   text-wrap: pretty;
 }
 
@@ -144,46 +242,43 @@
   white-space: nowrap;
   height: 46px;
   padding: 0 22px;
-  border-radius: 999px;
-  border: 0;
-  background: var(--pw-accent);
-  color: #f6f4ee;
+  border: 1px solid var(--mk-accent);
+  background: var(--mk-accent);
+  color: var(--mk-accent-ink);
   font: 600 14.5px var(--mk-body);
-  letter-spacing: 0.01em;
+  letter-spacing: 0.005em;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.18s ease, transform 0.18s ease;
+  /* No transform on hover and no sliding arrow. A button that lifts off the
+     page on hover, with an arrow that scoots sideways, is the default flourish
+     on every generated landing page. The state change here is a change of
+     colour, applied instantly. */
 }
 .mk-btn:hover {
-  background: var(--pw-accent-hover);
-  transform: translateY(-1px);
+  background: var(--mk-ink);
+  color: var(--mk-paper);
 }
 .mk-btn:active {
-  transform: translateY(0);
-}
-.mk-btn .mk-btn-arrow {
-  transition: transform 0.18s ease;
-}
-.mk-btn:hover .mk-btn-arrow {
-  transform: translateX(3px);
+  background: var(--mk-ink-2);
 }
 .mk-btn--ghost {
   background: transparent;
-  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-  color: inherit;
+  border: 1px solid var(--mk-rule-strong);
+  color: var(--mk-ink);
 }
 .mk-btn--ghost:hover {
-  background: color-mix(in srgb, currentColor 8%, transparent);
+  background: var(--mk-ink);
+  border-color: var(--mk-ink);
+  color: var(--mk-paper);
 }
 
 /* Cards */
+/* Structure comes from a hairline, never from a shadow. Elevation is a lie on
+   a flat page and blurred drop shadows are the tell. */
 .mk-card {
-  background: var(--pw-surface);
-  border: 1px solid var(--pw-border);
-  border-radius: 16px;
-  box-shadow:
-    0 1px 2px rgba(20, 24, 27, 0.04),
-    0 12px 32px -18px rgba(20, 24, 27, 0.14);
+  background: var(--mk-paper);
+  border: 1px solid var(--mk-rule);
+  border-radius: 0;
 }
 
 /* Reveal on scroll where supported, page-load stagger otherwise. */
@@ -205,14 +300,15 @@
 
 /* ---------------------------------------------------------------- header */
 
+/* Solid, not frosted. A blurred translucent bar is the single most copied
+   surface treatment on the web and it costs a compositor layer on every scroll
+   frame to say nothing. */
 .mk-header {
   position: sticky;
   top: 0;
   z-index: 50;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  background: color-mix(in srgb, var(--pw-bg) 78%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--pw-border) 70%, transparent);
+  background: var(--mk-paper);
+  border-bottom: 1px solid var(--mk-rule);
 }
 .mk-header-inner {
   height: 64px;
@@ -236,22 +332,10 @@
   position: relative;
   padding-block: clamp(56px, 8vw, 110px) clamp(40px, 6vw, 84px);
 }
-.mk-hero::after {
-  /* soft radial warmth behind the visual */
-  content: "";
-  position: absolute;
-  right: -12%;
-  top: 4%;
-  width: 620px;
-  height: 620px;
-  border-radius: 50%;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in srgb, var(--pw-accent-soft) 80%, transparent),
-    transparent 70%
-  );
-  z-index: 0;
-  pointer-events: none;
+/* The soft radial glow that used to sit behind the hero is gone. A blurred
+   coloured orb behind the headline is decoration standing in for design. */
+.mk-hero-noop {
+  display: none;
 }
 .mk-hero-grid {
   position: relative;
@@ -265,53 +349,48 @@
   .mk-hero-grid {
     grid-template-columns: 1fr;
   }
-  .mk-hero::after {
-    display: none;
-  }
 }
 
-/* ---------------------------------------------- hero over the paper field */
+/* ---------------------------------------------------- hero, split layout */
 
-/* Taller than the old hero, because the field needs room to read as scattered
-   rather than cropped. min-height, not height, so long copy still fits. */
-.mk-hero--field {
-  /* The 780px cap left a wide, tall screen showing the hero plus a band of
-     dead space and the top of the next scene. Let it grow with the viewport. */
-  min-height: min(92svh, 1040px);
+.mk-hero--split {
+  padding-block: clamp(48px, 6vw, 88px) clamp(56px, 7vw, 104px);
+  border-bottom: 1px solid var(--mk-rule);
+}
+.mk-hero-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(32px, 5vw, 80px);
   align-items: center;
-  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .mk-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
 }
 .mk-hero-copy {
-  position: relative;
-  z-index: 1;
-  width: 100%;
+  min-width: 0;
 }
-/* The display face caps at 92px, which holds a 1440px screen and looks
-   undersized on a 2560px one: the headline is the only thing carrying the left
-   half of the canvas, so it scales further here than it does elsewhere. */
-@media (min-width: 1600px) {
-  .mk-hero--field .mk-display {
-    font-size: clamp(92px, 5.4vw, 132px);
-  }
-  .mk-hero--field .mk-lead {
-    font-size: 21px;
-  }
-  .mk-hero-copy {
-    max-width: 820px;
-  }
+/* Two lines at desktop, which is the cap. The previous scale ran the headline
+   to four lines and pushed the form toward the fold. */
+/* Two lines at desktop. The measure and the size are set together: a 15ch
+   measure at 54px ran to three lines, which pushes the form toward the fold and
+   is a font-size error rather than a copy-length one. */
+.mk-hero-title {
+  margin: 20px 0 0;
+  font-size: clamp(30px, 3.2vw, 42px);
+  max-width: 24ch;
 }
-
-@media (min-width: 921px) {
-  .mk-hero-copy {
-    /* Left-aligned inside the centred container, not centred itself: the field
-       lives on the right, and centred type over a right-weighted image reads as
-       an accident. Constrain the column with max-width alone. Adding padding on
-       top of a max-width box subtracts from the text, which crushes the
-       headline into a narrow ribbon. */
-    max-width: 640px;
-    margin-inline: 0;
-  }
+.mk-hero-lead {
+  margin: 20px 0 0;
+  max-width: 42ch;
+}
+.mk-hero-cta {
+  margin-top: 28px;
+}
+.mk-hero-visual {
+  min-width: 0;
 }
 .mk-hero-sentinel {
   position: absolute;
@@ -321,231 +400,11 @@
   height: 1px;
 }
 
-/* --------------------------------------------------- hero live simulation */
-
-.mk-sim {
-  position: relative;
-  min-height: 470px;
-}
-@media (max-width: 920px) {
-  .mk-sim {
-    min-height: 560px;
-    max-width: 480px;
-    margin-inline: auto;
-  }
-}
-
-/* The scanned document, back layer. */
-.mk-sim-doc {
-  position: absolute;
-  inset: 18px auto auto 0;
-  width: min(62%, 300px);
-  transform: rotate(-3.5deg);
-  background: var(--pw-surface);
-  border: 1px solid var(--pw-border-strong);
-  border-radius: 10px;
-  padding: 18px 16px;
-  box-shadow: 0 18px 44px -24px rgba(20, 24, 27, 0.28);
-  overflow: hidden;
-}
-.mk-sim-doc-line {
-  height: 7px;
-  border-radius: 4px;
-  background: var(--pw-surface-3);
-  margin-bottom: 8px;
-}
-.mk-sim-doc-line.hl {
-  background: color-mix(in srgb, var(--mk-amber) 26%, var(--pw-surface-3));
-}
-
-/* Scanline sweeping the document */
-.mk-sim-doc::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -20%;
-  height: 34%;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    color-mix(in srgb, var(--pw-accent) 14%, transparent),
-    transparent
-  );
-  animation: mk-scan 7s cubic-bezier(0.4, 0, 0.4, 1) infinite;
-}
-@keyframes mk-scan {
-  0% { top: -34%; opacity: 0; }
-  6% { opacity: 1; }
-  26% { top: 100%; opacity: 1; }
-  30%, 100% { top: 100%; opacity: 0; }
-}
-
-/* Extracted record card, front layer. */
-.mk-sim-record {
-  position: absolute;
-  right: 0;
-  top: 96px;
-  width: min(78%, 360px);
-  background: var(--pw-surface);
-  border: 1px solid var(--pw-border);
-  border-radius: 16px;
-  box-shadow:
-    0 1px 2px rgba(20, 24, 27, 0.05),
-    0 28px 60px -30px rgba(20, 24, 27, 0.3);
-  padding: 16px 16px 12px;
-}
-.mk-sim-record-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--pw-border);
-}
-.mk-sim-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--pw-accent-soft-2);
-  color: var(--pw-accent-fg-on-soft);
-  display: grid;
-  place-items: center;
-  font: 700 13px var(--mk-body);
-}
-
-.mk-sim-chip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 11px 4px;
-  border-bottom: 1px solid var(--pw-border);
-  opacity: 0;
-  transform: translateY(10px);
-  animation: mk-chip 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
-  animation-delay: 1.2s;
-}
-.mk-sim-chip:nth-of-type(2) { animation-delay: 1.7s; }
-.mk-sim-chip:nth-of-type(3) { animation-delay: 2.2s; border-bottom: 0; }
-@keyframes mk-chip {
-  to { opacity: 1; transform: none; }
-}
-
-.mk-cite {
-  flex-shrink: 0;
-  font: 600 10px/1 var(--mk-mono);
-  letter-spacing: 0.04em;
-  color: var(--pw-accent-fg-on-soft);
-  background: var(--pw-accent-soft);
-  border-radius: 999px;
-  padding: 5px 8px;
-  white-space: nowrap;
-}
-
-.mk-status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-/* Reviewed banner inside record */
-.mk-sim-reviewed {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font: 600 11.5px var(--mk-body);
-  color: var(--pw-status-up-fg);
-  background: var(--pw-status-up-bg);
-  border-radius: 10px;
-  padding: 9px 12px;
-  opacity: 0;
-  animation: mk-fade-in 0.7s ease forwards;
-  animation-delay: 2.9s;
-}
-@keyframes mk-fade-in {
-  to { opacity: 1; }
-}
-
-/* Push notification toast */
-.mk-sim-toast {
-  position: absolute;
-  left: 4%;
-  bottom: 8px;
-  width: min(88%, 380px);
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  background: color-mix(in srgb, var(--pw-surface) 88%, transparent);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--pw-border);
-  border-radius: 16px;
-  padding: 13px 15px;
-  box-shadow: 0 24px 48px -24px rgba(20, 24, 27, 0.35);
-  opacity: 0;
-  transform: translateY(16px) scale(0.98);
-  animation: mk-toast 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
-  animation-delay: 3.6s;
-}
-@keyframes mk-toast {
-  to { opacity: 1; transform: none; }
-}
-.mk-sim-toast-icon {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  background: var(--pw-accent);
-  color: #f6f4ee;
-  display: grid;
-  place-items: center;
-}
-
-/* Small screens: the absolute collage can't fit, so stack it. The document
-   peeks out from behind the record card; the toast follows in flow. */
-@media (max-width: 640px) {
-  .mk-sim {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .mk-sim-doc {
-    position: static;
-    width: 82%;
-    margin: 0 auto -46px;
-    transform: rotate(-2.5deg);
-  }
-  .mk-sim-record {
-    position: relative;
-    inset: auto;
-    width: 100%;
-    z-index: 1;
-  }
-  .mk-sim-toast {
-    position: static;
-    width: 100%;
-    margin-top: 14px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mk *,
-  .mk *::before,
-  .mk *::after {
-    animation-duration: 0.001s !important;
-    animation-iteration-count: 1 !important;
-    animation-delay: 0s !important;
-    transition: none !important;
-  }
-  .mk-reveal,
-  .mk-sim-chip,
-  .mk-sim-reviewed,
-  .mk-sim-toast {
-    opacity: 1;
-    transform: none;
-  }
-}
+/* The hero's div-built product simulation used to live here. It has been
+   deleted, not restyled: a product preview assembled from styled divs is a
+   drawing of the product, not the product. The marketing surface now embeds
+   the real components instead (see components/marketing/product-preview.tsx).
+   */
 
 /* ---------------------------------------------------------------- ticker */
 
@@ -590,8 +449,7 @@
   content: "";
   width: 4px;
   height: 4px;
-  border-radius: 50%;
-  background: var(--mk-amber);
+  background: var(--mk-accent);
   opacity: 0.7;
 }
 
@@ -608,7 +466,6 @@
   flex-wrap: wrap;
   border: 1px solid var(--pw-border);
   background: var(--pw-surface);
-  border-radius: 999px;
   padding: 5px;
   width: max-content;
   max-width: 100%;
@@ -618,7 +475,6 @@
   align-items: center;
   gap: 8px;
   padding: 9px 18px;
-  border-radius: 999px;
   font: 600 13.5px var(--mk-body);
   color: var(--pw-text-muted);
   cursor: pointer;
@@ -639,7 +495,7 @@
 #mk-tab-2:checked ~ .mk-tab-labels label[for="mk-tab-2"],
 #mk-tab-3:checked ~ .mk-tab-labels label[for="mk-tab-3"] {
   background: var(--pw-accent);
-  color: #f6f4ee;
+  color: var(--mk-accent-ink);
 }
 #mk-tab-1:focus-visible ~ .mk-tab-labels label[for="mk-tab-1"],
 #mk-tab-2:focus-visible ~ .mk-tab-labels label[for="mk-tab-2"],
@@ -683,7 +539,6 @@
     color-mix(in srgb, var(--pw-accent-soft) 55%, var(--pw-surface-2))
   );
   border: 1px solid var(--pw-border);
-  border-radius: 20px;
   padding: clamp(18px, 3vw, 34px);
 }
 
@@ -747,32 +602,25 @@
 .mk-claim-index {
   font: 600 11px var(--mk-mono);
   letter-spacing: 0.12em;
-  color: var(--mk-amber);
+  color: var(--mk-accent);
 }
 
 /* ---------------------------------------------------------------- breeder */
 
+/* Flat ink, no glow, no diagonal wash. */
 .mk-band {
-  background:
-    radial-gradient(
-      1100px 420px at 85% -10%,
-      color-mix(in srgb, #2f6f4e 45%, transparent),
-      transparent 65%
-    ),
-    linear-gradient(165deg, var(--mk-ink-band), var(--mk-ink-band-2));
-  color: #efece3;
+  background: var(--mk-ink);
+  color: var(--mk-paper);
 }
 .mk-band .mk-eyebrow {
-  color: #d9b98a;
+  color: var(--mk-accent);
 }
 .mk-band .mk-lead {
-  color: color-mix(in srgb, #efece3 78%, transparent);
+  color: color-mix(in srgb, var(--mk-paper) 78%, transparent);
 }
 .mk-band-card {
-  background: color-mix(in srgb, #ffffff 6%, transparent);
-  border: 1px solid color-mix(in srgb, #ffffff 14%, transparent);
-  border-radius: 16px;
-  backdrop-filter: blur(4px);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--mk-paper) 22%, transparent);
 }
 
 /* ------------------------------------------------------------------- FAQ */
@@ -825,19 +673,18 @@
   flex-shrink: 0;
   width: 26px;
   height: 26px;
-  border-radius: 50%;
   border: 1px solid var(--pw-border-strong);
   display: grid;
   place-items: center;
   color: var(--pw-text-muted);
-  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1), background 0.2s;
+  transition: background 0.2s;
   align-self: center;
 }
 .mk-faq-item[open] .mk-faq-x {
   transform: rotate(45deg);
   background: var(--pw-accent);
   border-color: var(--pw-accent);
-  color: #f6f4ee;
+  color: var(--mk-accent-ink);
 }
 .mk-faq-a {
   padding: 0 44px 24px 29px;
@@ -855,18 +702,8 @@
   padding-block: clamp(88px, 12vw, 160px);
   overflow: hidden;
 }
-.mk-final::before {
-  content: "";
-  position: absolute;
-  inset: auto -10% -55% -10%;
-  height: 420px;
-  border-radius: 50% 50% 0 0;
-  background: radial-gradient(
-    closest-side,
-    color-mix(in srgb, var(--pw-accent-soft) 90%, transparent),
-    transparent
-  );
-  pointer-events: none;
+.mk-final-noop {
+  display: none;
 }
 
 /* --------------------------------------------------------------- waitlist */
@@ -881,18 +718,16 @@
   flex: 1;
   min-width: 0;
   height: 46px;
-  border-radius: 999px;
   border: 1px solid var(--pw-border-strong);
   background: var(--pw-surface);
   color: var(--pw-text);
   padding: 0 18px;
   font: 400 14.5px var(--mk-body);
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 .mk-wl input[type="email"]:focus {
   border-color: var(--pw-border-focus);
-  box-shadow: 0 0 0 3px var(--pw-accent-soft);
 }
 .mk-wl--center {
   margin-inline: auto;
@@ -922,9 +757,8 @@
   top: -60px;
   z-index: 200;
   padding: 10px 16px;
-  border-radius: var(--pw-r-md);
   background: var(--pw-accent);
-  color: #f6f4ee;
+  color: var(--mk-accent-ink);
   font: 600 14px var(--mk-body);
   text-decoration: none;
   transition: top 0.15s ease;
@@ -947,7 +781,7 @@
   font: 600 11px/1 var(--mk-mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--mk-amber);
+  color: var(--mk-accent);
 }
 .mk-legal h1 {
   font-family: var(--mk-display);
@@ -1017,19 +851,19 @@
 
 /* ------------------------------------------------- dark-mode AA contrast */
 /* The dark-theme --pw-accent (#4A9472) is too light for the near-white button
-   text (#f6f4ee) at these sizes (about 3.3:1, under the WCAG AA 4.5:1 floor).
+   text (var(--mk-accent-ink)) at these sizes (about 3.3:1, under the WCAG AA 4.5:1 floor).
    Pin the darker brand green for accent-filled controls in dark mode, keeping
    the exact hue. Applies to the header/waitlist buttons and the active tab. */
 :root[data-theme="dark"] .mk-btn {
-  background: #2f6f4e;
+  background: var(--mk-accent);
 }
 :root[data-theme="dark"] .mk-btn:hover {
-  background: #276044;
+  background: var(--mk-accent);
 }
 :root[data-theme="dark"] #mk-tab-1:checked ~ .mk-tab-labels label[for="mk-tab-1"],
 :root[data-theme="dark"] #mk-tab-2:checked ~ .mk-tab-labels label[for="mk-tab-2"],
 :root[data-theme="dark"] #mk-tab-3:checked ~ .mk-tab-labels label[for="mk-tab-3"] {
-  background: #2f6f4e;
+  background: var(--mk-accent);
 }
 
 /* ------------------------------------------------- mobile menu (header) */
@@ -1053,7 +887,6 @@
   /* 44px: meets the touch-target minimum the rest of the audit is chasing. */
   width: 44px;
   height: 44px;
-  border-radius: 8px;
   color: var(--pw-text);
   cursor: pointer;
   list-style: none;
@@ -1082,10 +915,8 @@
   flex-direction: column;
   min-width: 208px;
   padding: 6px;
-  border-radius: 10px;
   border: 1px solid var(--pw-border-strong, rgba(127, 127, 127, 0.3));
-  background: var(--pw-surface, #fff);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  background: var(--mk-paper);
 }
 .mk-mobile-menu-link,
 .mk-mobile-menu-panel button {
@@ -1095,7 +926,6 @@
   min-height: 44px;
   padding: 0 12px;
   border: 0;
-  border-radius: 7px;
   background: transparent;
   color: var(--pw-text);
   font: 400 15px var(--font-inter);
@@ -1158,847 +988,24 @@
   left: var(--mk-x);
   top: var(--mk-y);
   width: var(--mk-w);
+  aspect-ratio: 1 / 1.32;
   rotate: var(--mk-rot);
-  padding: 11px 13px 13px;
-  background: var(--pw-surface);
-  border: 1px solid var(--pw-border);
-  border-radius: var(--pw-r-sm);
-  box-shadow: var(--pw-shadow-md);
-  opacity: 0.92;
+  background: var(--mk-paper-2);
+  border: 1px solid var(--mk-rule);
+  opacity: 0.9;
 }
 /* Depth read as contrast as well as motion: the furthest sheets sit back into
    the page instead of competing with the headline. */
 .mk-paper--fax {
-  opacity: 0.78;
-}
-.mk-paper--handwritten {
-  background: var(--pw-surface-2);
+  opacity: 0.7;
 }
 
-.mk-paper-head {
-  font: 600 7.5px/1 var(--mk-mono);
-  letter-spacing: 0.1em;
-  color: var(--pw-text-muted);
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--pw-border);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.mk-paper-lines {
-  display: grid;
-  gap: 6px;
-  padding-top: 9px;
-}
-.mk-paper-lines span {
-  display: block;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--pw-surface-3);
-}
-.mk-paper-stamp {
-  margin-top: 9px;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1.5px dashed color-mix(in srgb, var(--mk-amber) 55%, transparent);
-}
-
-/* ─── Scene A: the shoebox ────────────────────────────────────────────────
-   Static baseline first. Without scroll-driven animation, or with reduced
-   motion, this section is a centred record card and nothing else: the three
-   decorative beats are removed from the layout entirely rather than stacked up
-   as confusing debris. The record is the point; the rest is how you get there. */
-.mk-shoebox-fx {
-  display: none;
-}
-/* No position here. The generic .mk-scene-stage rule already sets relative in
-   the static baseline and sticky inside the support gate, and a two-class
-   selector like this one would outrank the gated sticky no matter where it
-   sits in the file. That silently un-pins the scene. */
-.mk-shoebox .mk-scene-stage {
-  padding-block: clamp(48px, 8vw, 96px);
-}
-
-/* In the hero the sheets are texture behind a headline and want to recede. In
-   this scene they are the thing you are looking at, so they get their contrast
-   back: full opacity, a stronger edge, and a deeper shadow to separate the pile
-   from the page. */
-.mk-shoebox .mk-paper {
-  opacity: 1;
-  border-color: var(--pw-border-strong);
-  box-shadow: var(--pw-shadow-lg);
-}
-.mk-shoebox .mk-paper-head {
-  color: var(--pw-text-secondary);
-}
-.mk-shoebox .mk-paper-lines span {
-  background: color-mix(in srgb, var(--pw-text) 12%, transparent);
-}
-
-.mk-shoebox-record-card {
-  width: min(560px, 92vw);
-  padding: 22px 22px 18px;
-  position: relative;
-  z-index: 2;
-}
-.mk-shoebox-record-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--pw-border);
-}
-.mk-shoebox-record-name {
-  font: 600 16px var(--mk-body);
-  color: var(--pw-text);
-}
-.mk-shoebox-record-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.mk-shoebox-record-rows li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 2px;
-  border-bottom: 1px solid var(--pw-border);
-}
-.mk-shoebox-record-label {
-  flex: 1;
-  min-width: 0;
-  font: 550 13.5px var(--mk-body);
-  color: var(--pw-text);
-}
-.mk-shoebox-record-date {
-  font: 500 11.5px var(--mk-mono);
-  color: var(--pw-text-muted);
-  white-space: nowrap;
-}
-.mk-shoebox-reviewed {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 14px 0 0;
-  font: 500 12.5px var(--mk-body);
-  color: var(--pw-text-secondary);
-}
-
-.mk-shoebox-captions {
+.mk-paper-rule {
   position: absolute;
-  left: clamp(18px, 5vw, 64px);
-  bottom: clamp(24px, 5vw, 56px);
-  z-index: 3;
-}
-.mk-shoebox-caption {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  white-space: nowrap;
-  font: 500 12px var(--mk-mono);
-  letter-spacing: 0.06em;
-  color: var(--pw-text-muted);
-}
-
-/* The pile lands left of centre so the facts have somewhere to land. A fact
-   lifting off a page and coming to rest beside it is the whole idea; chips
-   stacked on top of the pile would read as a menu. */
-.mk-shoebox {
-  --mk-pile-x: 34;
-}
-.mk-shoebox-read {
-  position: absolute;
-  inset: 0;
-}
-.mk-shoebox-scan {
-  position: absolute;
-  left: calc(var(--mk-pile-x) * 1%);
-  top: 50%;
-  width: min(320px, 70vw);
-  height: 2px;
-  transform: translate(-50%, -50%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--mk-amber),
-    transparent
-  );
-}
-.mk-shoebox-chips {
-  position: absolute;
-  left: 58%;
-  top: 50%;
-  transform: translateY(-50%);
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  justify-items: start;
-  gap: 10px;
-  z-index: 2;
-}
-.mk-shoebox-chip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: var(--pw-surface);
-  border: 1px solid var(--pw-border);
-  border-radius: var(--pw-r-pill);
-  box-shadow: var(--pw-shadow-sm);
-  font: 550 12.5px var(--mk-body);
-  color: var(--pw-text);
-  white-space: nowrap;
-}
-
-/* ─── Scene B: the life ───────────────────────────────────────────────────
-   Static baseline: four articles in document order, each a readable age with
-   its own copy and its own card. That is a sensible vertical timeline on its
-   own, which is exactly what a screen reader and a no-motion visitor get. */
-.mk-life-beat {
-  width: min(1140px, calc(100% - 48px));
-  margin-inline: auto;
-  display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-  gap: clamp(28px, 5vw, 68px);
-  align-items: center;
-  padding-block: clamp(40px, 6vw, 72px);
-}
-@media (max-width: 880px) {
-  .mk-life-beat {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
-}
-
-.mk-life-age {
-  display: inline-block;
-  font: 600 11px/1 var(--mk-mono);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--mk-amber);
-}
-.mk-life-lede {
-  margin: 18px 0 0;
-  color: var(--pw-text);
-  text-wrap: balance;
-}
-.mk-life-body {
-  margin: 16px 0 0;
-  max-width: 46ch;
-}
-
-.mk-life-card-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--pw-border);
-}
-.mk-life-card-title {
-  font: 550 13px var(--mk-body);
-  color: var(--pw-text);
-}
-.mk-life-card-meta {
-  margin-left: auto;
-  color: var(--pw-text-muted);
-}
-.mk-life-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 2px;
-  border-bottom: 1px solid var(--pw-border);
-}
-.mk-life-row-label {
-  font: 550 13px var(--mk-body);
-  color: var(--pw-text);
-}
-.mk-life-card-foot {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-top: 13px;
-  font: 450 12px var(--mk-body);
-  color: var(--pw-text-secondary);
-}
-
-/* The one warm surface on the page, and it belongs to the hardest moment. */
-.mk-life-night-card {
-  background: linear-gradient(
-    165deg,
-    var(--mk-ink-band),
-    var(--mk-ink-band-2)
-  );
-  border-color: color-mix(in srgb, #8fc7a6 22%, transparent);
-}
-.mk-life-night-card .mk-life-card-title,
-.mk-life-night-card .mk-life-row-label {
-  color: #f3f0e7;
-}
-.mk-life-night-card .mk-small,
-.mk-life-night-card .mk-life-card-foot {
-  color: color-mix(in srgb, #efece3 74%, transparent);
-}
-.mk-life-night-card .mk-life-row {
-  border-bottom-color: color-mix(in srgb, #efece3 14%, transparent);
-}
-
-/* Deliberately never shown. An earlier version drew a spine down the left of
-   this scene, and next to the progress rail it read as two competing vertical
-   lines. The rail already says "you are moving through something"; the scene
-   does not need to say it twice. Kept as a no-op so the markup hook stays
-   available if the rail is ever removed. */
-.mk-life-spine {
-  display: none;
-}
-
-/* ─── Legal contents ──────────────────────────────────────────────────────
-   No motion on these pages at all. Just a way in. */
-.mk-legal-toc {
-  margin: 32px 0 40px;
-  padding: 18px 20px;
-  background: var(--pw-surface-2);
-  border: 1px solid var(--pw-border);
-  border-radius: var(--pw-r-lg);
-}
-.mk-legal-toc-head {
-  margin: 0 0 12px;
-  font: 600 10.5px/1 var(--mk-mono);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--pw-text-subtle);
-}
-.mk-legal-toc ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 8px;
-  counter-reset: toc;
-}
-.mk-legal-toc li {
-  counter-increment: toc;
-  display: flex;
-  gap: 10px;
-  align-items: baseline;
-}
-.mk-legal-toc li::before {
-  content: counter(toc, decimal-leading-zero);
-  font: 500 10.5px var(--mk-mono);
-  color: var(--pw-text-subtle);
-  flex-shrink: 0;
-}
-.mk-legal-toc a {
-  font: 400 14px/1.5 var(--mk-body);
-  color: var(--pw-text-secondary);
-  text-decoration: none;
-}
-.mk-legal-toc a:hover,
-.mk-legal-toc a:focus-visible {
-  color: var(--pw-text);
-  text-decoration: underline;
-}
-/* Jumping to a heading must not tuck it under the sticky header. */
-.mk-legal h2[id] {
-  scroll-margin-top: 84px;
-}
-
-/* ─── Plan fit finder ─────────────────────────────────────────────────────
-   Three cards, always all three on screen at desktop. Hiding two tiers behind
-   a drag interaction on the page people came to compare prices on would be
-   making them work to see the thing they came for.
-
-   Every visual state keys off [data-fit], which is set by the recommendation.
-   That gives the optional GSAP layer exactly one thing to react to. */
-.pf {
-  padding-block: clamp(64px, 9vw, 120px);
-}
-.pf-headline {
-  margin: 18px 0 0;
-  max-width: 30ch;
-  color: var(--pw-text);
-  /* Smaller than a section title, because it is a sentence making an argument
-     rather than a label. At full mk-h2 size it eats an entire screen before the
-     visitor reaches a single price. */
-  font-size: clamp(24px, 3vw, 36px);
-  line-height: 1.14;
-}
-
-.pf-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
-  gap: clamp(18px, 3vw, 36px);
-  align-items: end;
-  margin-top: clamp(28px, 4vw, 44px);
-  padding: 22px 24px;
-  background: var(--pw-surface-2);
-  border: 1px solid var(--pw-border);
-  border-radius: var(--pw-r-lg);
-}
-.pf-control {
-  display: grid;
-  gap: 10px;
-}
-.pf-control-label {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  font: 550 13px var(--mk-body);
-  color: var(--pw-text);
-}
-.pf-control-value {
-  font: 600 15px var(--mk-mono);
-  color: var(--pw-accent);
-}
-.pf-control input[type="range"] {
-  width: 100%;
-  accent-color: var(--pw-accent);
-  /* 44px of pointer target without 44px of visual weight. Precise dragging on
-     a small screen is miserable otherwise. */
-  height: 24px;
-}
-
-.pf-toggle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  font: 550 13px var(--mk-body);
-  color: var(--pw-text);
-  cursor: pointer;
-}
-.pf-toggle input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--pw-accent);
-}
-
-.pf-result {
-  margin: 20px 0 0;
-  font: 400 15px/1.6 var(--mk-body);
-  color: var(--pw-text-secondary);
-}
-.pf-result strong {
-  color: var(--pw-text);
-}
-
-.pf-interval {
-  display: inline-flex;
-  margin-top: 22px;
-  padding: 4px;
-  border-radius: var(--pw-r-pill);
-  background: var(--pw-surface-2);
-  border: 1px solid var(--pw-border);
-}
-.pf-interval button {
-  border: 0;
-  background: transparent;
-  border-radius: var(--pw-r-pill);
-  padding: 9px 18px;
-  min-height: 40px;
-  font: 550 13px var(--mk-body);
-  color: var(--pw-text-secondary);
-  cursor: pointer;
-}
-.pf-interval button[data-active="true"] {
-  background: var(--pw-surface);
-  color: var(--pw-text);
-  box-shadow: var(--pw-shadow-sm);
-}
-.pf-save {
-  color: var(--pw-accent);
-}
-
-.pf-viewport {
-  margin-top: clamp(26px, 4vw, 40px);
-}
-.pf-track {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  align-items: start;
-}
-@media (max-width: 900px) {
-  /* Below this the three cards cannot coexist, so the track becomes a swipeable
-     row. GSAP Draggable upgrades this to inertia and snap when it loads; with
-     no JS it is still a perfectly usable scroll-snap carousel. */
-  .pf-viewport {
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    margin-inline: -24px;
-    padding-inline: 24px;
-    scrollbar-width: none;
-  }
-  .pf-viewport::-webkit-scrollbar {
-    display: none;
-  }
-  .pf-track {
-    grid-template-columns: repeat(3, minmax(78vw, 1fr));
-  }
-  .pf-card {
-    scroll-snap-align: center;
-  }
-}
-
-.pf-card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 24px 22px;
-  transition:
-    transform 0.35s cubic-bezier(0.2, 0.6, 0.2, 1),
-    opacity 0.35s ease,
-    border-color 0.35s ease;
-}
-.pf-card[data-fit="true"] {
-  border-color: var(--pw-accent);
-  box-shadow: var(--pw-shadow-lg);
-  transform: translateY(-8px) scale(1.02);
-}
-.pf-card[data-fit="false"] {
-  /* De-emphasis by scale and border only, never opacity. Fading a card to 62%
-     drags its body text below the 4.5:1 contrast floor, and on a pricing page
-     the two cards you did NOT recommend are exactly the ones a visitor wants
-     to read in order to disagree with you. */
-  transform: scale(0.985);
-  border-color: var(--pw-border);
-}
-
-.pf-card-name {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font: 600 17px var(--mk-body);
-  color: var(--pw-text);
-}
-.pf-badge {
-  font: 600 10px/1 var(--mk-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 5px 8px;
-  border-radius: var(--pw-r-pill);
-  background: var(--pw-accent-soft);
-  color: var(--pw-accent-fg-on-soft);
-}
-.pf-tagline {
-  margin: 0;
-  font: 400 13.5px/1.55 var(--mk-body);
-  color: var(--pw-text-muted);
-}
-.pf-price {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-.pf-amount {
-  font: 600 34px var(--mk-mono);
-  letter-spacing: -0.03em;
-  color: var(--pw-text);
-}
-.pf-per {
-  font: 500 14px var(--mk-mono);
-  color: var(--pw-text-muted);
-}
-.pf-price-note {
-  margin-top: 4px;
-  font: 400 12px var(--mk-body);
-  color: var(--pw-text-muted);
-}
-
-.pf-meter {
-  padding: 12px 14px;
-  border-radius: var(--pw-r-md);
-  background: var(--pw-surface-2);
-  border: 1px solid var(--pw-border);
-}
-.pf-meter[data-over="true"] {
-  border-color: var(--pw-status-due-dot);
-  background: var(--pw-status-due-bg);
-}
-.pf-meter-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font: 500 11.5px var(--mk-body);
-  color: var(--pw-text-secondary);
-}
-.pf-meter[data-over="true"] .pf-meter-head {
-  color: var(--pw-status-due-fg);
-}
-.pf-meter-count {
-  font-family: var(--mk-mono);
-}
-.pf-meter-track {
-  margin-top: 8px;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--pw-surface-3);
-  overflow: hidden;
-}
-.pf-meter-fill {
-  height: 100%;
-  border-radius: 3px;
-  background: var(--pw-accent);
-  transition: width 0.25s ease;
-}
-.pf-meter[data-over="true"] .pf-meter-fill {
-  background: var(--pw-status-due-dot);
-}
-.pf-meter-over {
-  margin: 8px 0 0;
-  font: 500 11.5px var(--mk-body);
-  color: var(--pw-status-due-fg);
-}
-
-.pf-cta {
-  width: 100%;
-}
-.pf-features {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 9px;
-}
-.pf-feature {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  font: 400 13.5px/1.5 var(--mk-body);
-  color: var(--pw-text-secondary);
-}
-.pf-feature .pf-check {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--pw-accent);
-}
-.pf-feature--off {
-  color: var(--pw-text-muted);
-}
-.pf-feature--off .pf-check {
-  color: var(--pw-text-muted);
-}
-
-.pf-softcap,
-.pf-disclosure {
-  margin: 0;
-  font: 400 11.5px/1.5 var(--mk-body);
-  color: var(--pw-text-muted);
-}
-.pf-waitlist {
-  display: flex;
-  justify-content: center;
-  margin-top: clamp(28px, 4vw, 44px);
-}
-
-/* Once GSAP has loaded it owns transform and opacity on the cards. Leaving the
-   CSS transitions on would mean two systems animating the same properties. */
-.pf--gsap .pf-card {
-  transition: border-color 0.35s ease;
-}
-.pf--gsap .pf-card[data-fit="true"] {
-  transform: none;
-}
-
-/* Draggable replaces the native scroll rather than layering on top of it. */
-.pf--drag .pf-viewport {
-  overflow: hidden;
-  scroll-snap-type: none;
-}
-.pf--drag .pf-track {
-  width: max-content;
-  cursor: grab;
-}
-.pf--drag .pf-track:active {
-  cursor: grabbing;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pf-card,
-  .pf-meter-fill {
-    transition: none;
-  }
-}
-
-/* ─── Claim rows ──────────────────────────────────────────────────────────
-   Asymmetric on purpose. The old three-up grid gave every claim the same
-   weight and the same shape, which is precisely what made the page read as
-   interchangeable blocks. Alternating rows force the eye to move and give each
-   claim its own moment. */
-.mk-claim-row {
-  width: min(1140px, calc(100% - 48px));
-  margin-inline: auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(28px, 5vw, 76px);
-  align-items: center;
-  padding-block: clamp(40px, 6vw, 76px);
-}
-.mk-claim-row--flip .mk-claim-row-copy {
-  order: 2;
-}
-.mk-claim-row--flip .mk-claim-row-proof {
-  order: 1;
-}
-/* A row with no proof column (claim 02, whose proof is the scene below it)
-   keeps the copy in one column rather than stretching it across the full
-   width, so the measure stays readable. */
-.mk-claim-row:not(:has(.mk-claim-row-proof)) .mk-claim-row-copy {
-  grid-column: 1 / -1;
-  max-width: 62ch;
-  margin-inline: auto;
-  text-align: center;
-}
-@media (max-width: 880px) {
-  .mk-claim-row {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  .mk-claim-row--flip .mk-claim-row-copy,
-  .mk-claim-row--flip .mk-claim-row-proof {
-    order: initial;
-  }
-}
-
-.mk-claim-row-title {
-  margin: 14px 0 0;
-  color: var(--pw-text);
-  text-wrap: balance;
-}
-.mk-claim-row-body {
-  margin: 16px 0 0;
-  max-width: 52ch;
-}
-.mk-claim-row:not(:has(.mk-claim-row-proof)) .mk-claim-row-body {
-  margin-inline: auto;
-}
-
-/* ─── Stats ───────────────────────────────────────────────────────────────
-   Relocated out of the hero. Same numbers, same words. */
-.mk-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  border-top: 1px solid var(--pw-border);
-  margin-top: clamp(32px, 5vw, 64px);
-}
-.mk-stat {
-  padding: 22px 24px 4px;
-  border-left: 1px solid var(--pw-border);
-}
-.mk-stat:first-child {
-  border-left: 0;
-}
-@media (max-width: 640px) {
-  .mk-stat {
-    border-left: 0;
-  }
-}
-.mk-stat-value {
-  font: 600 clamp(22px, 2.6vw, 30px) var(--mk-mono);
-  letter-spacing: -0.02em;
-  color: var(--pw-accent);
-}
-.mk-stat-label {
-  margin-top: 6px;
-  max-width: 30ch;
-}
-
-/* ─── Scene C: the citation ───────────────────────────────────────────────
-   Static baseline: source page and fact side by side, both fully visible, with
-   the connector drawn. A visitor with no motion sees the finished proof, which
-   is the entire point of the scene anyway. */
-.mk-cit-grid {
-  width: min(1140px, calc(100% - 48px));
-  margin-inline: auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 120px minmax(0, 1fr);
-  align-items: center;
-  gap: 0;
-}
-@media (max-width: 880px) {
-  .mk-cit-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  .mk-cit-link {
-    display: none;
-  }
-}
-
-.mk-cit-source {
-  margin: 0;
-  justify-self: end;
-  width: min(300px, 100%);
-}
-.mk-cit-page {
-  padding: 16px 16px 18px;
-}
-.mk-cit-page-head {
-  font: 600 8.5px/1 var(--mk-mono);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--pw-text-muted);
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--pw-border);
-}
-.mk-cit-page-lines {
-  display: grid;
-  gap: 9px;
-  padding-top: 12px;
-}
-.mk-cit-line {
-  display: block;
-  height: 5px;
-  border-radius: 2px;
-  background: var(--pw-surface-3);
-}
-.mk-cit-line--hl {
-  background: color-mix(in srgb, var(--mk-amber) 42%, var(--pw-surface-3));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mk-amber) 16%, transparent);
-}
-.mk-cit-page-label {
-  margin: 10px 0 0;
-  text-align: center;
-  font: 500 10.5px/1 var(--mk-mono);
-  letter-spacing: 0.08em;
-  color: var(--pw-text-muted);
-}
-
-.mk-cit-link {
-  width: 120px;
-  height: 40px;
-}
-.mk-cit-link-path {
-  stroke: var(--pw-border-strong);
-  stroke-width: 1.5;
-  stroke-dasharray: 300;
-  stroke-dashoffset: 0;
-}
-
-.mk-cit-fact-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  width: min(360px, 100%);
-}
-.mk-cit-fact-label {
-  flex: 1;
-  min-width: 0;
-  font: 600 14px var(--mk-body);
-  color: var(--pw-text);
-}
-.mk-cit-fact-date {
-  font: 500 11.5px var(--mk-mono);
-  color: var(--pw-text-muted);
-  white-space: nowrap;
-}
-.mk-cit-fact-note {
-  margin: 14px 0 0;
-  max-width: 34ch;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+  background: var(--mk-rule);
 }
 
 /* ─── Progress rail ───────────────────────────────────────────────────────
@@ -2029,13 +1036,11 @@
   width: 2px;
   height: 200px;
   background: var(--pw-border);
-  border-radius: 2px;
 }
 .mk-rail-fill {
   width: 2px;
   height: 100%;
   background: var(--pw-accent);
-  border-radius: 2px;
   transform-origin: top;
   /* Baseline is empty; the scroll timeline fills it. Under reduced motion the
      override below shows it filled and dimmed, so it reads as a position
@@ -2057,7 +1062,6 @@
   position: relative;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
   text-decoration: none;
 }
 .mk-rail-tick::before {
@@ -2067,9 +1071,8 @@
   top: 3px;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
   background: var(--pw-border-strong);
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease;
 }
 .mk-rail-tick:hover::before,
 .mk-rail-tick:focus-visible::before {
@@ -2084,10 +1087,8 @@
   top: 50%;
   transform: translateY(-50%);
   padding: 5px 9px;
-  border-radius: var(--pw-r-sm);
   background: var(--pw-surface);
   border: 1px solid var(--pw-border);
-  box-shadow: var(--pw-shadow-md);
   font: 500 10.5px/1 var(--mk-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2386,4 +1387,173 @@
       }
     }
   }
+}
+
+/* ─── Product previews ────────────────────────────────────────────────────
+   Frames around the real app components. The frame is a hairline and a caption,
+   nothing else: the product should look like the product, not like a device
+   mockup floating on a gradient. */
+.mk-preview {
+  margin: 0;
+}
+.mk-preview-stage {
+  border: 1px solid var(--mk-rule);
+  background: var(--mk-paper);
+  padding: 18px;
+}
+.mk-preview-caption {
+  margin-top: 10px;
+  font: 400 12px/1.5 var(--mk-body);
+  color: var(--mk-ink-3);
+}
+
+.mk-preview-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mk-preview-rows li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--mk-rule);
+}
+.mk-preview-rows li:last-child {
+  border-bottom: 0;
+}
+.mk-preview-row-label {
+  flex: 1;
+  min-width: 0;
+  font: 550 13.5px var(--mk-body);
+  color: var(--mk-ink);
+}
+.mk-preview-row-meta {
+  font: 500 12px var(--mk-mono);
+  color: var(--mk-ink-3);
+  white-space: nowrap;
+}
+
+.mk-preview-ingest {
+  display: grid;
+  gap: 10px;
+}
+.mk-preview-ingest-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+}
+.mk-preview-ingest-status {
+  font: 500 11px var(--mk-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mk-accent);
+}
+
+/* ─── Pricing: the plans that were not recommended ────────────────────────
+   Rows, not a third and fourth column. The sliders already did the comparison;
+   these exist so the visitor can disagree with the answer, and a row is enough
+   for that. */
+.pf-others {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--mk-rule);
+  background: var(--mk-paper-2);
+}
+@media (max-width: 900px) {
+  .pf-others {
+    border-left: 0;
+    border-top: 1px solid var(--mk-rule);
+  }
+}
+.pf-other {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--mk-rule);
+}
+.pf-other:last-child {
+  border-bottom: 0;
+}
+.pf-other-name {
+  font: 650 15px var(--mk-display);
+  font-variation-settings: "wdth" 104;
+  color: var(--mk-ink);
+}
+.pf-other-price {
+  font: 500 14px var(--mk-mono);
+  color: var(--mk-ink);
+  text-align: right;
+}
+.pf-other-note {
+  grid-column: 1 / -1;
+  font: 400 12.5px/1.5 var(--mk-body);
+  color: var(--mk-ink-3);
+}
+
+/* The meter, without a track. */
+.pf-meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--mk-rule);
+  border-bottom: 1px solid var(--mk-rule);
+  font: 400 13px/1.5 var(--mk-body);
+  color: var(--mk-ink-2);
+}
+.pf-meter-count {
+  font: 600 17px var(--mk-mono);
+  color: var(--mk-ink);
+}
+.pf-meter[data-over="true"] .pf-meter-count {
+  color: var(--mk-accent);
+}
+
+/* Feature list: plain text, no glyph column. */
+.pf-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.pf-feature {
+  font: 400 13.5px/1.5 var(--mk-body);
+  color: var(--mk-ink-2);
+}
+.pf-excluded {
+  margin: 0;
+  font: 400 12.5px/1.55 var(--mk-body);
+  color: var(--mk-ink-3);
+}
+.pf-excluded-head {
+  display: block;
+  font: 600 10.5px/1 var(--mk-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mk-ink-3);
+  margin-bottom: 5px;
+}
+
+/* ─── Life scene: ages as figures, not eyebrows ───────────────────────────
+   These were small uppercase mono labels sitting above every headline, which is
+   exactly the templated rhythm this redesign is removing. They are real content
+   though, so they get promoted to display figures instead of deleted. */
+.mk-life-age {
+  display: block;
+  font-family: var(--mk-display);
+  font-weight: 700;
+  font-variation-settings: "wdth" 110;
+  font-size: clamp(26px, 3vw, 38px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: none;
+  color: var(--mk-accent);
 }

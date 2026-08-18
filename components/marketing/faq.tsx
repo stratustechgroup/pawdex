@@ -20,7 +20,7 @@ export const FAQS = [
   },
   {
     q: "We're a two-person household with three pets. Does that work?",
-    a: "That is the default shape, not an edge case. A household holds any number of pets and people, with roles: your partner gets full access, the pet sitter can get read-only. Every record, reminder and document is shared across the household automatically.",
+    a: "That is the default shape. A household holds any number of pets and people, with roles: your partner gets full access, the pet sitter can get read-only. Every record, reminder and document is shared across the household automatically.",
   },
   {
     q: "What happens when I rehome or adopt out a pet?",

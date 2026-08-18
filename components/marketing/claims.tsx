@@ -94,7 +94,7 @@ const CLAIMS = [
   {
     index: "02",
     icon: "link",
-    title: "Proof, not vibes.",
+    title: "Every fact shows its source.",
     body: "AI that reads medical records has to show its work. Every extracted fact carries a citation to the exact page and paragraph it came from, kept forever, so you can always check the source yourself.",
     proof: (
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: "auto", paddingTop: 16 }}>
@@ -167,7 +167,7 @@ export function Claims() {
         <div className="mk-claim-row-copy">
           <span className="mk-claim-index">01</span>
           <h3 className="mk-h3 mk-claim-row-title">
-            The record follows the animal, not the app account.
+            The record belongs to the animal.
           </h3>
           <p className="mk-lead mk-claim-row-body">
             Everywhere else, a pet&apos;s history dies with an owner&apos;s
@@ -185,7 +185,7 @@ export function Claims() {
       <div className="mk-claim-row mk-claim-row--flip mk-crossfade">
         <div className="mk-claim-row-copy">
           <span className="mk-claim-index">02</span>
-          <h3 className="mk-h3 mk-claim-row-title">Proof, not vibes.</h3>
+          <h3 className="mk-h3 mk-claim-row-title">Every fact shows its source.</h3>
           <p className="mk-lead mk-claim-row-body">
             AI that reads medical records has to show its work. Every extracted
             fact carries a citation to the exact page and paragraph it came

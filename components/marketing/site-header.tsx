@@ -1,3 +1,4 @@
+import { MkIcon } from "@/components/marketing/mk-icon";
 import Link from "next/link";
 
 import { Wordmark } from "@/components/brand/wordmark";
@@ -51,7 +52,7 @@ export function SiteHeader() {
         <Link href="/#waitlist" className="mk-btn mk-header-cta">
           <span className="mk-cta-full">Get early access</span>
           <span className="mk-cta-short">Early access</span>
-          <Icon name="arrowRight" size={14} className="mk-btn-arrow" />
+          <MkIcon name="arrowRight" size={14} />
         </Link>
 
         {/*
