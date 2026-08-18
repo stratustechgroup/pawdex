@@ -1,5 +1,4 @@
 import { Icon } from "@/components/brand/icon";
-import { WaitlistForm } from "@/components/marketing/waitlist-form";
 
 export const FAQS = [
   {
@@ -37,41 +36,50 @@ export const FAQS = [
 ];
 
 export function Faq() {
+  // Header above, questions below, two columns of them at desktop.
+  //
+  // This used to be a left column carrying a headline, a lead and a third copy
+  // of the waitlist form, beside a right column of questions. The left column
+  // ran out of content halfway down and left a hole, the form was the same ask
+  // the hero and the closing section already make, and the shape was the same
+  // left-text/right-content split as every other section on the page. By this
+  // point the page needs a different rhythm more than it needs another split.
   return (
-    <section id="faq" className="mk-section" style={{ background: "var(--pw-surface)" }}>
+    <section
+      id="faq"
+      className="mk-section mk-faq"
+      style={{ background: "var(--mk-paper-2)" }}
+    >
       <div className="mk-container">
-        <div className="mk-faq-grid">
-          <div className="mk-faq-sticky">
-            <h2 className="mk-h2" style={{ margin: "18px 0 0" }}>
-              Fair questions, straight answers.
-            </h2>
-            <p className="mk-lead" style={{ margin: "16px 0 0", maxWidth: "36ch" }}>
-              The two we hear most: is my data safe, and does the AI make
-              things up. Both answered below, plainly.
-            </p>
-            <div style={{ marginTop: 28 }}>
-              <WaitlistForm source="faq" />
-            </div>
-          </div>
+        <div className="mk-faq-head">
+          <h2 className="mk-h2" style={{ margin: 0 }}>
+            Fair questions, straight answers.
+          </h2>
+          <p className="mk-lead" style={{ margin: "14px 0 0" }}>
+            The two we hear most: is my data safe, and does the AI make things
+            up. Both answered below, plainly.
+          </p>
+        </div>
 
-          <div>
-            {FAQS.map((f, i) => (
-              <details key={f.q} className="mk-faq-item" name="mk-faq">
-                <summary>
-                  <span className="mk-faq-num">{String(i + 1).padStart(2, "0")}</span>
-                  <span className="mk-faq-q">{f.q}</span>
-                  <span className="mk-faq-x">
-                    <Icon name="plus" size={13} />
-                  </span>
-                </summary>
-                <div className="mk-faq-a">
-                  <p className="mk-lead" style={{ margin: 0, fontSize: 15.5 }}>
-                    {f.a}
-                  </p>
-                </div>
-              </details>
-            ))}
-          </div>
+        <div className="mk-faq-list">
+          {FAQS.map((f, i) => (
+            <details key={f.q} className="mk-faq-item" name="mk-faq">
+              <summary>
+                <span className="mk-faq-num">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="mk-faq-q">{f.q}</span>
+                <span className="mk-faq-x">
+                  <Icon name="plus" size={13} />
+                </span>
+              </summary>
+              <div className="mk-faq-a">
+                <p className="mk-lead" style={{ margin: 0, fontSize: 15 }}>
+                  {f.a}
+                </p>
+              </div>
+            </details>
+          ))}
         </div>
       </div>
     </section>

@@ -151,7 +151,7 @@ export function Claims() {
   return (
     <section
       id="why-pawdex"
-      className="mk-section"
+      className="mk-section mk-claims-tail"
       style={{ background: "var(--pw-surface)" }}
     >
       <div className="mk-container mk-crossfade">

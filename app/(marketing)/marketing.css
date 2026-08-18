@@ -2037,3 +2037,141 @@
   justify-content: center;
   margin-top: 26px;
 }
+
+/* ─── Polish pass ─────────────────────────────────────────────────────────
+   Written after reading the page one section at a time. Each rule below fixes
+   something specific that was visibly wrong, not a preference. */
+
+/* The recommended plan filled the left sixth of a full-width box and left the
+   rest empty. It is now two columns: the decision on the left, what you get on
+   the right. */
+.pf-card {
+  display: grid;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+  grid-template-areas:
+    "head    feat"
+    "price   feat"
+    "cta     feat";
+  align-content: start;
+  column-gap: clamp(24px, 4vw, 56px);
+  row-gap: 14px;
+  padding: 30px 28px;
+}
+.pf-card-name { grid-area: head; }
+.pf-card > div:has(.pf-price) { grid-area: price; }
+.pf-cta { grid-area: cta; justify-self: start; }
+.pf-features { grid-area: feat; align-content: start; }
+.pf-tagline,
+.pf-excluded,
+.pf-softcap,
+.pf-disclosure {
+  grid-column: 1 / -1;
+}
+@media (max-width: 760px) {
+  .pf-card {
+    grid-template-columns: 1fr;
+    grid-template-areas: "head" "price" "cta" "feat";
+  }
+}
+
+/* Sections were sized for a page three times this long. */
+.pf {
+  padding-block: clamp(44px, 5vw, 68px);
+}
+.mk-how {
+  padding-block: clamp(44px, 5vw, 68px) clamp(36px, 4vw, 56px);
+}
+.mk-final {
+  padding-block: clamp(48px, 5vw, 76px);
+}
+.mk-claim-row:last-of-type {
+  padding-bottom: clamp(20px, 2vw, 28px);
+}
+
+/* The FAQ used the same left-column/right-column shape as every other section,
+   and its left column ran out of content halfway down. Header above, list
+   below, full width. That is a different layout family, which the page badly
+   needed by this point. */
+.mk-faq-head {
+  max-width: 46ch;
+  margin-bottom: clamp(28px, 3vw, 40px);
+}
+.mk-faq-list {
+  border-top: 1px solid var(--mk-rule);
+}
+@media (min-width: 900px) {
+  /* Two columns of questions, so eight of them do not become a long scroll of
+     their own. */
+  .mk-faq-list {
+    columns: 2;
+    column-gap: clamp(28px, 4vw, 56px);
+  }
+  .mk-faq-item {
+    break-inside: avoid;
+  }
+}
+
+/* The stats become a full-bleed band with hairline dividers: the one piece of
+   full-width punctuation on a page that was otherwise all two-column rows. */
+.mk-stats {
+  width: 100%;
+  max-width: none;
+  margin-top: clamp(28px, 3vw, 44px);
+  border-top: 1px solid var(--mk-rule);
+  border-bottom: 1px solid var(--mk-rule);
+  background: var(--mk-paper-2);
+}
+.mk-stat {
+  padding: 26px clamp(18px, 3vw, 40px);
+}
+.mk-stat-value {
+  font-family: var(--mk-mono);
+  font-size: clamp(24px, 2.6vw, 32px);
+  color: var(--mk-ink);
+}
+.mk-stat-label {
+  color: var(--mk-ink-3);
+}
+
+/* The stats band butts straight into the pricing section: two full-width
+   elements in a row need no gutter between them, and the gap read as a hole. */
+.mk-stats {
+  margin-bottom: 0;
+}
+.pf {
+  padding-block: clamp(36px, 4vw, 56px) clamp(44px, 5vw, 68px);
+}
+.pf-headline {
+  margin: 0;
+  max-width: 20ch;
+}
+.pf-sub {
+  margin: 16px 0 0;
+  max-width: 54ch;
+}
+.pf-controls {
+  margin-top: clamp(24px, 3vw, 36px);
+}
+
+/* Claims ends on the stats band, so its own bottom padding is dead space. */
+.mk-claims-tail {
+  padding-bottom: 0;
+}
+
+/* The FAQ headline wrapped to three lines in a 46ch measure. */
+.mk-faq-head {
+  max-width: 62ch;
+}
+.mk-faq-head .mk-h2 {
+  max-width: 22ch;
+}
+
+/* Claim rows centred their two columns against each other, so a short proof
+   column floated in the middle of a tall text column and left a hole under it.
+   Top-aligned, they read as a row rather than as two things drifting. */
+.mk-claim-row {
+  align-items: start;
+}
+.mk-claim-row-proof {
+  padding-top: 6px;
+}

@@ -4,7 +4,6 @@ import { MkIcon } from "@/components/marketing/mk-icon";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
-import { WaitlistForm } from "@/components/marketing/waitlist-form";
 import {
   PLANS,
   PURCHASABLE_PLANS,
@@ -103,10 +102,13 @@ export function PlanFit({
             the rhythm that made this page read as templated, and the budget for
             them across the whole page is two. The headline says what this is. */}
         <h2 className="mk-h2 pf-headline">
-          The record is unlimited on every plan. Reading documents at scale is
-          the only thing that costs us anything, so it&apos;s the{" "}
-          <em>only thing we meter</em>.
+          You pay for reading, <em>never for the record</em>.
         </h2>
+        <p className="mk-lead pf-sub">
+          Pets, reminders, sharing and export are unlimited on every plan.
+          Reading documents is the only thing that costs us anything, so it is
+          the only thing we meter.
+        </p>
 
         {/* Real form controls. Native range inputs give arrow keys, Home/End,
             focus and screen reader semantics for free, and every later
@@ -235,11 +237,10 @@ export function PlanFit({
           </div>
         </div>
 
-        {cta === "waitlist" ? (
-          <div className="pf-waitlist">
-            <WaitlistForm source="pricing" center />
-          </div>
-        ) : null}
+        {/* No form here. The same waitlist form already sits in the hero and
+            closes the page; a third copy between them is the same ask three
+            times, which reads as nagging rather than as an offer. The plan
+            card's own button carries this section. */}
       </div>
 
       {enhance ? <PlanFitGsap /> : null}

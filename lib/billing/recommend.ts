@@ -90,7 +90,7 @@ export function recommendPlan(input: FitInput): FitResult {
 
   return {
     planId: "free",
-    reason: "Free covers this, and it stays free.",
+    reason: "Everything here is inside the free limits.",
     outgrewFree: false,
   };
 }
