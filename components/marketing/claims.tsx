@@ -77,7 +77,9 @@ const CLAIMS = [
   {
     index: "02.1",
     title: "The record belongs to the animal.",
-    body: "Everywhere else, a pet's history dies with an owner's login. Pawdex treats the animal as the permanent thing: adopt a dog out with a signup link and their entire cited history transfers to the new family in one tap.",
+    // The going-home mechanics live in the Moments section now; this entry
+    // keeps the guarantee register, not the scenario one.
+    body: "Everywhere else, a pet's history dies with an owner's login. Pawdex treats the animal as the permanent thing: whoever holds the leash next inherits the whole cited history, at every change of hands, forever.",
     proof: <TransferDiagram />,
   },
   {

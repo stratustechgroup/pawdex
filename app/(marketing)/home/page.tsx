@@ -5,6 +5,7 @@ import { Faq, FAQS } from "@/components/marketing/faq";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { Hero } from "@/components/marketing/hero";
 import { HowItWorks } from "@/components/marketing/how-it-works";
+import { Moments } from "@/components/marketing/moments";
 import { PlanFit } from "@/components/marketing/plan-fit";
 import {
   JsonLd,
@@ -36,6 +37,10 @@ export default function MarketingHome() {
 
       <main id="main">
         <Hero />
+        {/* Empathy before mechanism: the four situations where paperwork gets
+            demanded come right after the fold, then how the record is built,
+            then why to trust it. */}
+        <Moments />
         <HowItWorks />
         <Claims />
 

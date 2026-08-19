@@ -2719,3 +2719,233 @@
 .mk [id] {
   scroll-margin-top: 88px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOMENTS
+   ═══════════════════════════════════════════════════════════════════════════
+   Four situations in the second person, each paired with the artifact the
+   product produces in it. See components/marketing/moments.tsx for why.
+
+   Same CSS-only radio-tab mechanism as .mk-tabs above, with its own IDs. The
+   radios stay opacity: 0 / position: absolute, never display: none, because
+   display: none removes them from the tab order and kills the arrow-key group
+   navigation radios provide for free. Everything is token-driven, so dark
+   mode needs no per-ID overrides here. */
+
+.mk-mo-title {
+  margin: 0;
+  max-width: 20ch;
+}
+.mk-mo-lead {
+  margin: 14px 0 0;
+  max-width: 54ch;
+}
+
+.mk-mo-tabs {
+  position: relative;
+  margin-top: clamp(24px, 3vw, 36px);
+}
+.mk-mo-tabs input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mk-mo-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border: 1px solid var(--pw-border);
+  background: var(--pw-surface);
+  padding: 5px;
+  width: max-content;
+  max-width: 100%;
+}
+.mk-mo-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  font: 600 13.5px var(--mk-body);
+  color: var(--pw-text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+.mk-mo-label:hover {
+  color: var(--pw-text);
+}
+
+#mk-mo-1:checked ~ .mk-mo-labels label[for="mk-mo-1"],
+#mk-mo-2:checked ~ .mk-mo-labels label[for="mk-mo-2"],
+#mk-mo-3:checked ~ .mk-mo-labels label[for="mk-mo-3"],
+#mk-mo-4:checked ~ .mk-mo-labels label[for="mk-mo-4"] {
+  background: var(--pw-accent);
+  color: var(--pw-accent-ink);
+}
+
+/* The focus ring lands on the LABEL. The global :focus-visible rule paints
+   the hidden radio instead, which is a ring on an invisible element, so it is
+   suppressed for these four inputs specifically and re-issued on the visible
+   control. */
+.mk-mo-tabs input[type="radio"]:focus-visible {
+  outline: none !important;
+}
+#mk-mo-1:focus-visible ~ .mk-mo-labels label[for="mk-mo-1"],
+#mk-mo-2:focus-visible ~ .mk-mo-labels label[for="mk-mo-2"],
+#mk-mo-3:focus-visible ~ .mk-mo-labels label[for="mk-mo-3"],
+#mk-mo-4:focus-visible ~ .mk-mo-labels label[for="mk-mo-4"] {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: 2px;
+}
+
+.mk-mo-panel {
+  display: none;
+  margin-top: clamp(26px, 3.4vw, 40px);
+}
+#mk-mo-1:checked ~ .mk-mo-panels .mk-mo-panel:nth-child(1),
+#mk-mo-2:checked ~ .mk-mo-panels .mk-mo-panel:nth-child(2),
+#mk-mo-3:checked ~ .mk-mo-panels .mk-mo-panel:nth-child(3),
+#mk-mo-4:checked ~ .mk-mo-panels .mk-mo-panel:nth-child(4) {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: clamp(26px, 4.5vw, 60px);
+  align-items: start;
+  animation: mk-panel 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@media (max-width: 880px) {
+  #mk-mo-1:checked ~ .mk-mo-panels .mk-mo-panel:nth-child(1),
+  #mk-mo-2:checked ~ .mk-mo-panels .mk-mo-panel:nth-child(2),
+  #mk-mo-3:checked ~ .mk-mo-panels .mk-mo-panel:nth-child(3),
+  #mk-mo-4:checked ~ .mk-mo-panels .mk-mo-panel:nth-child(4) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mk-mo-panel {
+    animation: none !important;
+  }
+}
+
+.mk-mo-panel-title {
+  margin: 0;
+  color: var(--mk-ink);
+  text-wrap: balance;
+}
+.mk-mo-panel-body {
+  margin: 12px 0 0;
+  max-width: 46ch;
+}
+.mk-mo-panel-point {
+  margin: 14px 0 0;
+  max-width: 44ch;
+  padding-top: 12px;
+  border-top: 1px solid var(--mk-rule);
+  color: var(--mk-ink-2);
+}
+
+/* ── The artifact documents ──────────────────────────────────────────────── */
+.mk-mo-artifact {
+  margin: 0;
+  min-width: 0;
+}
+.mk-mo-doc {
+  padding: 0;
+  overflow: hidden;
+}
+.mk-mo-doc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--mk-rule);
+  background: var(--mk-paper-3);
+}
+.mk-mo-doc-kind {
+  font: 600 11px/1 var(--mk-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mk-ink-2);
+  white-space: nowrap;
+}
+.mk-mo-doc-meta {
+  font: 400 12px/1.4 var(--mk-body);
+  color: var(--mk-ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mk-mo-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px;
+}
+.mk-mo-rows li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--mk-rule);
+}
+.mk-mo-rows li:last-child {
+  border-bottom: 0;
+}
+.mk-mo-row-label {
+  font: 500 13px/1.4 var(--mk-body);
+  color: var(--mk-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mk-mo-row-value {
+  font: 500 12px/1.4 var(--mk-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-ink-2);
+  white-space: nowrap;
+}
+/* Phone: three columns of nowrap content cannot share 358px. The value drops
+   under the label and the chip keeps the right edge. */
+@media (max-width: 480px) {
+  .mk-mo-rows li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .mk-mo-row-value {
+    grid-column: 1;
+    grid-row: 2;
+    white-space: normal;
+  }
+  .mk-mo-rows li > :last-child {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+}
+
+.mk-mo-doc-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-top: 1px solid var(--mk-rule);
+  font: 400 12px/1.5 var(--mk-body);
+  color: var(--mk-ink-2);
+  flex-wrap: wrap;
+}
+.mk-mo-doc-foot svg {
+  color: var(--mk-accent);
+  flex-shrink: 0;
+}
+.mk-mo-mono {
+  font: 500 11.5px/1.4 var(--mk-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-ink);
+}
+
+/* The allergy chip reads in the overdue hue: it is the one line on the card
+   an emergency vet must not miss. Label plus colour, per the status rules. */
+.mk-cite--alert {
+  border-color: var(--pw-status-overdue-fg);
+  color: var(--pw-status-overdue-fg);
+}

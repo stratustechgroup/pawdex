@@ -42,10 +42,15 @@ export function Hero() {
             <br />
             <em>goes with them.</em>
           </h1>
+          {/* The lead opens on the visitor's own behaviour, the crumpled
+              certificate photographed in a parking lot, because that is the
+              habit this product replaces. The FAQ has called that photo "a
+              normal Tuesday" since before this page existed; the hero now
+              speaks the same language. */}
           <p className="mk-lead mk-hero-lead">
-            Forward any vet document and it becomes one dated, cited record.
-            Rehome or adopt them out, and the whole record transfers to the
-            next family intact.
+            Snap the crumpled certificate in the clinic parking lot. It becomes
+            one dated, cited record that follows your pet through every vet,
+            kennel and family, for life.
           </p>
           <div className="mk-hero-cta">
             <WaitlistForm source="hero" />
