@@ -40,7 +40,7 @@ const listStyle = {
   gap: "10px",
 };
 const itemStyle = {
-  font: "400 15px/1.55 var(--font-inter), system-ui, sans-serif",
+  font: "400 15px/1.55 var(--pw-sans)",
   color: "var(--pw-text-secondary)",
   paddingLeft: "18px",
   position: "relative" as const,
@@ -304,13 +304,13 @@ export default function ArchitecturePage() {
           </DiagramFrame>
           <p
             style={{
-              font: "400 15.5px/1.6 var(--font-inter), system-ui, sans-serif",
+              font: "400 15.5px/1.6 var(--pw-sans)",
               color: "var(--pw-text-secondary)",
               margin: "26px 0 16px",
               maxWidth: "64ch",
             }}
           >
-            The move is not a copy. <code style={{ font: "400 13px var(--font-jetbrains-mono), monospace", background: "var(--pw-surface-3)", border: "1px solid var(--pw-border)", borderRadius: "var(--pw-r-xs)", padding: "1px 5px", color: "var(--pw-text)" }}>transfer_animal()</code>{" "}
+            The move is not a copy. <code style={{ font: "400 13px var(--pw-mono)", background: "var(--pw-surface-3)", border: "1px solid var(--pw-border)", borderRadius: "var(--pw-r-xs)", padding: "1px 5px", color: "var(--pw-text)" }}>transfer_animal()</code>{" "}
             re-parents the clinical record to the new household in one transaction. And the interesting part is what it
             refuses to bring: the origin household&rsquo;s business, consent, and comms history stay put, because moving
             them would leak the prior owner&rsquo;s activity to the new one.

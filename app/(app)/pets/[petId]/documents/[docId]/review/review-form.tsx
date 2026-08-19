@@ -2489,7 +2489,7 @@ function ExpiryHint({
       {computed.legally_sensitive && (
         <span
           style={{
-            font: "500 10px var(--font-jetbrains-mono)",
+            font: "500 10px var(--pw-mono)",
             letterSpacing: "0.04em",
             textTransform: "uppercase",
             color: "var(--pw-status-overdue-fg)",

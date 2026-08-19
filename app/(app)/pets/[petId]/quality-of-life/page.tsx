@@ -253,7 +253,7 @@ export default async function QolPage({
                         display: "flex",
                         gap: 4,
                         flexWrap: "wrap",
-                        font: "400 11px var(--font-jetbrains-mono)",
+                        font: "400 11px var(--pw-mono)",
                         color: "var(--pw-text-muted)",
                       }}
                     >

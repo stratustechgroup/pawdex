@@ -4,7 +4,7 @@
 .arch {
   --arch-maxw: 940px;
   --arch-gap: 96px;
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--pw-sans);
   color: var(--pw-text);
   background: var(--pw-bg);
 }
@@ -28,7 +28,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font: 500 11.5px var(--font-jetbrains-mono), ui-monospace, monospace;
+  font: 500 11.5px var(--pw-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--pw-text-muted);
@@ -39,7 +39,7 @@
 }
 
 .arch-claim {
-  font: 400 clamp(21px, 3.4vw, 30px) / 1.32 var(--font-source-serif), Georgia, serif;
+  font: 400 clamp(21px, 3.4vw, 30px) / 1.32 var(--pw-sans);
   letter-spacing: -0.01em;
   color: var(--pw-text);
   margin: 0 0 8px;
@@ -50,7 +50,7 @@
   color: var(--pw-accent);
 }
 .arch-sub {
-  font: 400 15.5px/1.6 var(--font-inter), system-ui, sans-serif;
+  font: 400 15.5px/1.6 var(--pw-sans);
   color: var(--pw-text-secondary);
   margin: 0 0 28px;
   max-width: 64ch;
@@ -58,20 +58,20 @@
 
 /* Hero */
 .arch-hero-eyebrow {
-  font: 500 12px var(--font-jetbrains-mono), ui-monospace, monospace;
+  font: 500 12px var(--pw-mono);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--pw-accent);
   margin: 0 0 18px;
 }
 .arch-hero-title {
-  font: 500 clamp(30px, 6vw, 52px) / 1.08 var(--font-source-serif), Georgia, serif;
+  font: 500 clamp(30px, 6vw, 52px) / 1.08 var(--pw-sans);
   letter-spacing: -0.02em;
   margin: 0 0 20px;
   max-width: 18ch;
 }
 .arch-hero-lead {
-  font: 400 clamp(16px, 2.4vw, 19px) / 1.6 var(--font-inter), system-ui, sans-serif;
+  font: 400 clamp(16px, 2.4vw, 19px) / 1.6 var(--pw-sans);
   color: var(--pw-text-secondary);
   max-width: 60ch;
   margin: 0 0 40px;
@@ -93,7 +93,7 @@
   min-width: 0;
 }
 .arch-stat-num {
-  font: 600 clamp(22px, 3vw, 28px) var(--font-inter), system-ui, sans-serif;
+  font: 600 clamp(22px, 3vw, 28px) var(--pw-sans);
   letter-spacing: -0.02em;
   color: var(--pw-text);
   display: block;
@@ -104,7 +104,7 @@
   color: var(--pw-accent);
 }
 .arch-stat-label {
-  font: 400 12.5px/1.4 var(--font-inter), system-ui, sans-serif;
+  font: 400 12.5px/1.4 var(--pw-sans);
   color: var(--pw-text-muted);
   margin-top: 6px;
   display: block;
@@ -128,7 +128,7 @@
   height: auto;
 }
 .arch-caption {
-  font: 400 12.5px/1.5 var(--font-inter), system-ui, sans-serif;
+  font: 400 12.5px/1.5 var(--pw-sans);
   color: var(--pw-text-muted);
   margin: 10px 2px 0;
 }
@@ -145,7 +145,7 @@
   cursor: pointer;
   list-style: none;
   padding: 13px 16px;
-  font: 500 13px var(--font-inter), system-ui, sans-serif;
+  font: 500 13px var(--pw-sans);
   color: var(--pw-text-secondary);
   display: flex;
   align-items: center;
@@ -173,11 +173,11 @@
 }
 .arch-details-body {
   padding: 4px 16px 16px;
-  font: 400 13.5px/1.65 var(--font-inter), system-ui, sans-serif;
+  font: 400 13.5px/1.65 var(--pw-sans);
   color: var(--pw-text-secondary);
 }
 .arch-details-body code {
-  font: 400 12.5px var(--font-jetbrains-mono), ui-monospace, monospace;
+  font: 400 12.5px var(--pw-mono);
   background: var(--pw-surface-3);
   border: 1px solid var(--pw-border);
   border-radius: 0;
@@ -200,17 +200,17 @@
 .arch-node-fill { fill: var(--pw-surface-2); }
 .arch-node-accent { fill: var(--pw-accent-soft); }
 .arch-node-stroke { stroke: var(--pw-border-strong); }
-.arch-node-label { fill: var(--pw-text); font: 600 13px var(--font-inter), system-ui, sans-serif; }
-.arch-node-sub { fill: var(--pw-text-muted); font: 400 11px var(--font-inter), system-ui, sans-serif; }
+.arch-node-label { fill: var(--pw-text); font: 600 13px var(--pw-sans); }
+.arch-node-sub { fill: var(--pw-text-muted); font: 400 11px var(--pw-sans); }
 .arch-edge { stroke: var(--pw-border-strong); fill: none; }
 .arch-edge-primary { stroke: var(--pw-accent); fill: none; }
 .arch-edge-optional { stroke: var(--pw-text-subtle); fill: none; stroke-dasharray: 4 4; }
 .arch-arrowhead { fill: var(--pw-border-strong); }
 .arch-arrowhead-primary { fill: var(--pw-accent); }
 .arch-tick { fill: var(--pw-accent); }
-.arch-mono { font: 500 10.5px var(--font-jetbrains-mono), ui-monospace, monospace; fill: var(--pw-text-muted); letter-spacing: 0.02em; }
+.arch-mono { font: 500 10.5px var(--pw-mono); fill: var(--pw-text-muted); letter-spacing: 0.02em; }
 .arch-boundary { fill: none; stroke: var(--pw-border); stroke-dasharray: 3 4; }
-.arch-boundary-label { fill: var(--pw-text-subtle); font: 500 10px var(--font-jetbrains-mono), ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+.arch-boundary-label { fill: var(--pw-text-subtle); font: 500 10px var(--pw-mono); letter-spacing: 0.06em; text-transform: uppercase; }
 .arch-danger-fill { fill: var(--pw-status-overdue-bg); }
 .arch-danger-stroke { stroke: var(--pw-status-overdue-dot); }
 .arch-danger-text { fill: var(--pw-status-overdue-fg); }
@@ -226,7 +226,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font: 400 12px var(--font-inter), system-ui, sans-serif;
+  font: 400 12px var(--pw-sans);
   color: var(--pw-text-muted);
 }
 .arch-legend-swatch {
@@ -257,11 +257,11 @@
   margin-bottom: 10px;
 }
 .arch-domain-name {
-  font: 600 13.5px var(--font-inter), system-ui, sans-serif;
+  font: 600 13.5px var(--pw-sans);
   color: var(--pw-text);
 }
 .arch-domain-count {
-  font: 500 11px var(--font-jetbrains-mono), ui-monospace, monospace;
+  font: 500 11px var(--pw-mono);
   color: var(--pw-accent);
 }
 .arch-domain-tables {
@@ -270,7 +270,7 @@
   gap: 5px;
 }
 .arch-tbl {
-  font: 400 11.5px var(--font-jetbrains-mono), ui-monospace, monospace;
+  font: 400 11.5px var(--pw-mono);
   color: var(--pw-text-secondary);
   background: var(--pw-surface-2);
   border: 1px solid var(--pw-border);
@@ -304,17 +304,17 @@
   background: var(--pw-accent);
 }
 .arch-trade-rank {
-  font: 600 11px var(--font-jetbrains-mono), ui-monospace, monospace;
+  font: 600 11px var(--pw-mono);
   color: var(--pw-accent);
   letter-spacing: 0.04em;
 }
 .arch-trade-title {
-  font: 600 15.5px var(--font-inter), system-ui, sans-serif;
+  font: 600 15.5px var(--pw-sans);
   color: var(--pw-text);
   margin: 4px 0 8px;
 }
 .arch-trade-body {
-  font: 400 14px/1.6 var(--font-inter), system-ui, sans-serif;
+  font: 400 14px/1.6 var(--pw-sans);
   color: var(--pw-text-secondary);
   margin: 0;
 }
@@ -323,7 +323,7 @@
   flex-wrap: wrap;
   gap: 6px 18px;
   margin-top: 12px;
-  font: 400 12.5px/1.5 var(--font-inter), system-ui, sans-serif;
+  font: 400 12.5px/1.5 var(--pw-sans);
 }
 .arch-trade-cost b {
   color: var(--pw-text);

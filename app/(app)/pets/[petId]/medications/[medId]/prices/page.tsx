@@ -297,7 +297,7 @@ export default async function PricesPage({
                         borderRadius: 4,
                         background: "var(--pw-accent-soft)",
                         color: "var(--pw-accent-fg-on-soft)",
-                        font: "500 9.5px var(--font-jetbrains-mono)",
+                        font: "500 9.5px var(--pw-mono)",
                         letterSpacing: "0.06em",
                         textTransform: "uppercase",
                       }}

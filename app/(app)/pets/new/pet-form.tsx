@@ -270,7 +270,7 @@ export function PetForm({
             <input
               {...form.register("microchip_number")}
               placeholder="985112004012345"
-              style={{ ...inputStyle, fontFamily: "var(--font-jetbrains-mono)" }}
+              style={{ ...inputStyle, fontFamily: "var(--pw-mono)" }}
             />
           </Field>
           <Field label="Registry">

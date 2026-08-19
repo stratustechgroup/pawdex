@@ -253,7 +253,7 @@ export default async function ClaimsPage({
                           style={{
                             marginLeft: 8,
                             color: "var(--pw-text-muted)",
-                            font: "500 11.5px var(--font-jetbrains-mono)",
+                            font: "500 11.5px var(--pw-mono)",
                           }}
                         >
                           #{c.claim_number}

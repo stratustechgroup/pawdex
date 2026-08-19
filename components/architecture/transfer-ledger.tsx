@@ -89,7 +89,7 @@ export function TransferLedger() {
         >
           <code
             style={{
-              font: "400 12.5px var(--font-jetbrains-mono), ui-monospace, monospace",
+              font: "400 12.5px var(--pw-mono), ui-monospace, monospace",
               color: "var(--pw-text)",
             }}
           >

@@ -266,7 +266,7 @@ export default async function PreVisitBriefingPage({
                     <div
                       key={w.id}
                       style={{
-                        font: "400 11.5px var(--font-jetbrains-mono)",
+                        font: "400 11.5px var(--pw-mono)",
                         color: "var(--pw-text-secondary)",
                       }}
                     >

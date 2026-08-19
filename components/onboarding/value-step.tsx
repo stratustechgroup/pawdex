@@ -323,7 +323,7 @@ function ForwardEmail({
                 borderRadius: 10,
                 background: "var(--pw-surface-2)",
                 border: "1px solid var(--pw-border)",
-                font: "500 14px var(--font-jetbrains-mono)",
+                font: "500 14px var(--pw-mono)",
                 color: "var(--pw-text)",
                 wordBreak: "break-all",
               }}

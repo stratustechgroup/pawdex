@@ -170,7 +170,7 @@ function Group({
                 {item.is_rabies && (
                   <span
                     style={{
-                      font: "500 9.5px var(--font-jetbrains-mono)",
+                      font: "500 9.5px var(--pw-mono)",
                       letterSpacing: "0.06em",
                       textTransform: "uppercase",
                       background: "var(--pw-accent-soft)",

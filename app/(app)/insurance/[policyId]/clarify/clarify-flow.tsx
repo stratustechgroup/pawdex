@@ -180,7 +180,7 @@ function SendForm({
           rows={12}
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          style={{ ...textareaStyle, fontFamily: "var(--font-jetbrains-mono)" }}
+          style={{ ...textareaStyle, fontFamily: "var(--pw-mono)" }}
         />
       </Field>
 

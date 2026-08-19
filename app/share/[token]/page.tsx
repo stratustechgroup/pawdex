@@ -319,7 +319,7 @@ export default async function SharedPacketPage({
                                 borderRadius: 4,
                                 background: "var(--pw-accent-soft)",
                                 color: "var(--pw-accent-fg-on-soft)",
-                                font: "500 9px var(--font-jetbrains-mono)",
+                                font: "500 9px var(--pw-mono)",
                                 letterSpacing: "0.06em",
                                 textTransform: "uppercase",
                               }}

@@ -46,7 +46,7 @@ export function InboundAddressCard({ address }: { address: string }) {
           padding: "10px 12px",
           background: "var(--pw-surface)",
           borderRadius: 6,
-          font: "500 13px var(--font-jetbrains-mono)",
+          font: "500 13px var(--pw-mono)",
           color: "var(--pw-text)",
           overflow: "hidden",
           textOverflow: "ellipsis",

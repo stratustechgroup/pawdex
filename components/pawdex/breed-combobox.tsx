@@ -222,7 +222,7 @@ export function BreedCombobox({
                 {isActive && (
                   <kbd
                     style={{
-                      font: "500 10px var(--font-jetbrains-mono)",
+                      font: "500 10px var(--pw-mono)",
                       color: "var(--pw-text-muted)",
                       letterSpacing: "0.04em",
                     }}

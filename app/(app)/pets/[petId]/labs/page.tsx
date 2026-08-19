@@ -337,7 +337,7 @@ export default async function LabsPage({
                       {v.flag && v.flag !== "normal" && (
                         <span
                           style={{
-                            font: "500 10px var(--font-jetbrains-mono)",
+                            font: "500 10px var(--pw-mono)",
                             color: "var(--pw-status-overdue-fg)",
                           }}
                         >

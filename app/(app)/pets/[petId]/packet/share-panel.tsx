@@ -185,7 +185,7 @@ export function SharePanel({
                 background: "var(--pw-surface)",
                 color: "var(--pw-text)",
                 borderRadius: 6,
-                font: "500 12px var(--font-jetbrains-mono)",
+                font: "500 12px var(--pw-mono)",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",

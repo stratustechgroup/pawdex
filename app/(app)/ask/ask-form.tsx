@@ -168,7 +168,7 @@ export function AskForm() {
                         background: "var(--pw-accent-soft)",
                         color: "var(--pw-accent-fg-on-soft)",
                         borderRadius: 4,
-                        font: "600 11px var(--font-jetbrains-mono)",
+                        font: "600 11px var(--pw-mono)",
                       }}
                     >
                       #{c.index}
