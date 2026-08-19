@@ -85,7 +85,7 @@ function Group({
           style={{
             width: 8,
             height: 8,
-            borderRadius: 999,
+            /* Square marker: one shape system. */
             background: dotColor(status),
           }}
         />
@@ -119,7 +119,13 @@ function Group({
               display: "flex",
               gap: 12,
               alignItems: "center",
-              borderLeft: `3px solid ${dotColor(item.status)}`,
+              // The 3px status bar down the left edge of every row is gone.
+              // Each row already states its status twice in words, in the
+              // group heading above it and in its own "17d overdue" column,
+              // and the bar was a third encoding carrying no label. On this
+              // page in particular it also striped four different colours
+              // down a single scroll, which is the effect the ban on coloured
+              // left stripes exists to prevent.
             }}
           >
             <span
@@ -249,11 +255,11 @@ function formatDays(days: number): string {
 function dotColor(status: ExpiringStatus): string {
   switch (status) {
     case "overdue":
-      return "#b54a4a";
+      return "var(--pw-status-overdue-fg)";
     case "due_soon":
-      return "#d27a1f";
+      return "var(--pw-status-due-fg)";
     case "warning":
-      return "#c9a227";
+      return "var(--pw-status-due-fg)";
     case "ok":
       return "var(--pw-accent)";
   }

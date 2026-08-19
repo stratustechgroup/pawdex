@@ -187,7 +187,7 @@ export function PetStep({
               height: 24,
               borderRadius: "50%",
               background: "var(--pw-accent)",
-              color: "var(--pw-accent-fg)",
+              color: "var(--pw-fill-ink)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",

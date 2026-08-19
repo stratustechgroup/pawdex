@@ -129,7 +129,7 @@ export function SharePanel({
             borderRadius: 6,
             border: "1px solid var(--pw-accent)",
             background: "var(--pw-accent)",
-            color: "var(--pw-accent-fg)",
+            color: "var(--pw-fill-ink)",
             font: "500 12.5px var(--font-inter)",
             cursor: pending ? "wait" : "pointer",
             opacity: pending ? 0.6 : 1,
@@ -273,7 +273,7 @@ export function SharePanel({
                       background: isActive
                         ? "var(--pw-accent)"
                         : isRevoked
-                          ? "#b54a4a"
+                          ? "var(--pw-status-overdue-fg)"
                           : "var(--pw-text-subtle)",
                       flexShrink: 0,
                     }}

@@ -31,7 +31,7 @@ export function primaryButtonStyle(disabled: boolean): CSSProperties {
     borderRadius: 6,
     border: "1px solid var(--pw-accent)",
     background: "var(--pw-accent)",
-    color: "#fff",
+    color: "var(--pw-fill-ink)",
     font: "500 13px var(--font-inter)",
     cursor: disabled ? "default" : "pointer",
     opacity: disabled ? 0.6 : 1,

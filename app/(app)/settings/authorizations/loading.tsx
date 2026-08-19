@@ -24,7 +24,7 @@ export default function AuthorizationsLoading() {
           {Array.from({ length: 5 }).map((_, i) => (
             <SkelCard
               key={i}
-              style={{ padding: 20, borderLeft: "3px solid var(--pw-border)" }}
+              style={{ padding: 20 }}
             >
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
                 <Skel w={36} h={36} r={8} style={{ flexShrink: 0 }} />

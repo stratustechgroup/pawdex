@@ -70,7 +70,7 @@ export default async function InsurancePage() {
               borderRadius: 6,
               border: "1px solid var(--pw-accent)",
               background: "var(--pw-accent)",
-              color: "var(--pw-accent-fg)",
+              color: "var(--pw-fill-ink)",
               font: "500 12px var(--font-inter)",
               textDecoration: "none",
             }}
@@ -475,10 +475,16 @@ const cardActionStyle: React.CSSProperties = {
   textDecoration: "none",
 };
 
+// Rendered inside a <dl>, so the term and the value have to be <dt>/<dd>.
+// These were two <span>s in a <div>, which is invalid list markup: a <div> may
+// wrap a dt/dd group but may not replace one. axe flagged it as a
+// definition-list violation on every insurance render, in both themes, and a
+// screen reader got a bare run of text with no term/value pairing for the
+// premium, deductible and renewal dates.
 function Cell({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <span
+      <dt
         style={{
           font: "500 10.5px var(--font-inter)",
           color: "var(--pw-text-muted)",
@@ -487,13 +493,17 @@ function Cell({ label, value }: { label: string; value: React.ReactNode }) {
         }}
       >
         {label}
-      </span>
-      <span
+      </dt>
+      <dd
         className="tnum"
-        style={{ font: "500 13.5px var(--font-inter)", color: "var(--pw-text)" }}
+        style={{
+          margin: 0,
+          font: "500 13.5px var(--font-inter)",
+          color: "var(--pw-text)",
+        }}
       >
         {value}
-      </span>
+      </dd>
     </div>
   );
 }

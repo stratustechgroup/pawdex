@@ -351,9 +351,9 @@ export function PetForm({
                 height: 34,
                 padding: "0 14px",
                 borderRadius: 6,
-                border: "1px solid #b54a4a",
+                border: "1px solid var(--pw-status-overdue-fg)",
                 background: "transparent",
-                color: "#b54a4a",
+                color: "var(--pw-status-overdue-fg)",
                 font: "500 12.5px var(--font-inter)",
                 cursor: formDisabled ? "not-allowed" : "pointer",
                 opacity: formDisabled ? 0.55 : 1,
@@ -395,7 +395,7 @@ export function PetForm({
               borderRadius: 6,
               border: "1px solid var(--pw-accent)",
               background: "var(--pw-accent)",
-              color: "var(--pw-accent-fg)",
+              color: "var(--pw-fill-ink)",
               font: "500 12.5px var(--font-inter)",
               cursor: formDisabled ? "wait" : "pointer",
               opacity: formDisabled ? 0.7 : 1,
@@ -544,7 +544,7 @@ function Field({
         <span
           style={{
             font: "400 11.5px var(--font-inter)",
-            color: "#b54a4a",
+            color: "var(--pw-status-overdue-fg)",
           }}
         >
           {error}

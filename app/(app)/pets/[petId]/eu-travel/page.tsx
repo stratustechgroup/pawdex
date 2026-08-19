@@ -200,7 +200,6 @@ export default async function EuTravelPage({
               className="pw-card"
               style={{
                 padding: 16,
-                borderLeft: `3px solid ${borderColorFor(r.status)}`,
                 display: "flex",
                 gap: 14,
                 alignItems: "flex-start",
@@ -310,7 +309,7 @@ function borderColorFor(status: RequirementStatus): string {
     case "warning":
       return "#f0c674";
     case "blocker":
-      return "#b54a4a";
+      return "var(--pw-status-overdue-fg)";
     case "todo":
       return "var(--pw-text-muted)";
     case "na":

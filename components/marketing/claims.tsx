@@ -129,10 +129,6 @@ export function Claims() {
     <section id="why-pawdex" className="mk-section mk-claims-tail">
       <div className="mk-ledger">
         <div className="mk-entry-rule" />
-        <div className="mk-margin">
-          <span className="mk-margin-n">&sect; 02</span>
-          <span className="mk-margin-label">Why Pawdex</span>
-        </div>
         <div className="mk-ledger-body">
           <h2 className="mk-h2 mk-claims-title">The parts nobody else does.</h2>
         </div>
@@ -140,11 +136,6 @@ export function Claims() {
 
       {CLAIMS.map((c) => (
         <div key={c.index} className="mk-ledger mk-claim-row mk-crossfade">
-          {/* The entry number lives in the margin, which is where a record
-              keeps it, rather than as the first line of the copy. */}
-          <div className="mk-margin">
-            <span className="mk-margin-n">{c.index}</span>
-          </div>
           <div className="mk-ledger-body mk-claim-inner">
             <div className="mk-claim-row-copy">
               <h3 className="mk-h3 mk-claim-row-title">{c.title}</h3>

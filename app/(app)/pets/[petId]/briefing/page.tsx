@@ -284,7 +284,7 @@ export default async function PreVisitBriefingPage({
                     font: "500 12px var(--font-inter)",
                     color:
                       Math.abs(weightDelta) > 0.5
-                        ? "#b54a4a"
+                        ? "var(--pw-status-overdue-fg)"
                         : "var(--pw-text-secondary)",
                   }}
                 >
@@ -397,7 +397,6 @@ export default async function PreVisitBriefingPage({
                   key={e.id}
                   style={{
                     paddingLeft: 12,
-                    borderLeft: "3px solid var(--pw-accent-soft)",
                     font: "400 12.5px var(--font-inter)",
                     color: "var(--pw-text)",
                   }}

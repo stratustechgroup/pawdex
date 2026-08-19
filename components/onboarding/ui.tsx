@@ -208,7 +208,7 @@ export function PrimaryButton({
         borderRadius: 12,
         border: "1px solid var(--pw-accent)",
         background: "var(--pw-accent)",
-        color: "var(--pw-accent-fg)",
+        color: "var(--pw-fill-ink)",
         font: "600 14.5px var(--font-inter)",
         cursor: off ? "wait" : "pointer",
         opacity: off ? 0.7 : 1,

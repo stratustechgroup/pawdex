@@ -5,91 +5,139 @@
 @custom-variant dark (&:is(.dark *));
 
 /* =====================================================================
-   Pawdex — design tokens
-   Warm cream / forest green, scale 14px base, Mercury-grade density.
-   Hex values from the Claude Design source (tokens.css).
+   Pawdex — design tokens: "Field Record"
+   See docs/design-system.md for what these mean and why.
+
+   Cool neutral ground, ink-blue accent, status colours reserved for status,
+   radius 0, no shadows, no gradients. Token NAMES are stable: 88 components
+   read them, which is what lets the whole front end restyle from this file.
    ===================================================================== */
 
 :root {
-  /* Surfaces */
-  --pw-bg: #FAF9F6;
-  --pw-surface: #FFFFFF;
-  --pw-surface-2: #F4F2EC;
-  --pw-surface-3: #ECE9E1;
+  /* ── Surfaces ──────────────────────────────────────────────────────────
+     Never pure white and never cream. Cream reads as a lifestyle brand; this
+     is a medical record. Surfaces sit lighter than the page and separate with
+     a hairline, never with elevation. */
+  --pw-bg: #EDEEF0;
+  --pw-surface: #F7F8F9;
+  --pw-surface-2: #E3E5E9;
+  --pw-surface-3: #D6D9DE;
 
-  /* Borders */
-  --pw-border: #E8E4DA;
-  --pw-border-strong: #D6D1C4;
-  --pw-border-focus: #2F6F4E;
+  /* Borders. The only structural device on the surface. */
+  --pw-border: #D2D6DC;
+  --pw-border-strong: #B0B6BF;
+  --pw-border-focus: #1C4E70;
 
   /* Text */
-  --pw-text: #14181B;
-  --pw-text-secondary: #404750;
-  --pw-text-muted: #6A7079;
-  --pw-text-subtle: #95999F;
+  --pw-text: #12161A;
+  --pw-text-secondary: #39424C;
+  --pw-text-muted: #5A6470;
+  --pw-text-subtle: #88929D;
 
-  /* Accent — forest green */
-  --pw-accent: #2F6F4E;
-  --pw-accent-hover: #265F40;
-  --pw-accent-pressed: #1F4E33;
-  --pw-accent-soft: #E2EDE5;
-  --pw-accent-soft-2: #D2E3D8;
-  --pw-accent-fg-on-soft: #1F4E33;
+  /* ── Accent: ink blue ─────────────────────────────────────────────────
+     Interactive, and nothing else. It was forest green #2F6F4E, which was
+     byte-identical to --pw-status-up-dot: the same colour meant "press this"
+     and "this animal is up to date" on a surface whose whole job is medical
+     status. Green is now reserved for status. Ink blue is the register of
+     forms and passports, which is what this product replaces. */
+  --pw-accent: #1C4E70;
+  --pw-accent-hover: #16405C;
+  --pw-accent-pressed: #102F44;
+  --pw-accent-soft: #E3E7EB;
+  --pw-accent-soft-2: #D5DBE2;
+  --pw-accent-fg-on-soft: #143A54;
+  --pw-accent-ink: #F5F7F8;
+  /* Ink for text sitting ON any filled control (accent or destructive).
+     Light in light theme, near-black in dark, because the fills invert with
+     the theme. Replaces 29 hardcoded color:"#fff" sites that all assumed the
+     fill behind them would always be dark. */
+  --pw-fill-ink: #F5F7F8;
 
-  /* Status */
-  --pw-status-up-bg: #E2EDE5;
-  --pw-status-up-fg: #1F4E33;
-  --pw-status-up-dot: #2F6F4E;
+  /* ── Status ───────────────────────────────────────────────────────────
+     Carried by dark, legible foreground plus a border, not by a pastel fill.
+     A tinted lozenge has almost no contrast against a light page, so the
+     colour does all the work and the shape does none. The *-bg tokens are
+     therefore near-neutral: they tint, they do not signal. Every status is
+     always accompanied by its label, so none of this depends on colour
+     vision. Fixed meanings: green current, amber due, red lapsed, grey
+     nothing on record. */
+  --pw-status-up-bg: #E4E9E5;
+  --pw-status-up-fg: #1B5636;
+  --pw-status-up-dot: #24713F;
 
-  --pw-status-due-bg: #F6E9D2;
-  --pw-status-due-fg: #74511A;
-  --pw-status-due-dot: #B5732A;
+  --pw-status-due-bg: #EBE8E1;
+  --pw-status-due-fg: #6E4A0E;
+  --pw-status-due-dot: #9A6A16;
 
-  --pw-status-overdue-bg: #F4D9D5;
-  --pw-status-overdue-fg: #862C28;
-  --pw-status-overdue-dot: #B23A3A;
+  --pw-status-overdue-bg: #ECE5E4;
+  --pw-status-overdue-fg: #8A2A24;
+  --pw-status-overdue-dot: #A8352D;
 
-  --pw-status-incomplete-bg: #E9E7E0;
-  --pw-status-incomplete-fg: #5A6168;
-  --pw-status-incomplete-dot: #95999F;
+  --pw-status-incomplete-bg: #E6E8EA;
+  --pw-status-incomplete-fg: #545E68;
+  --pw-status-incomplete-dot: #7C8691;
 
-  --pw-info-bg: #DDE6EB;
-  --pw-info-fg: #2C4E5A;
+  --pw-info-bg: #E2E7EB;
+  --pw-info-fg: #204A63;
 
-  /* Pending — waiting on third party, distinct from amber/gray */
-  --pw-pending-bg: #EAE5D6;
-  --pw-pending-fg: #5F5538;
-  --pw-pending-dot: #8A7945;
-  --pw-pending-border: #C9BE9D;
+  /* Pending — waiting on a third party, distinct from due and from unknown */
+  --pw-pending-bg: #E8E6E0;
+  --pw-pending-fg: #5B5231;
+  --pw-pending-dot: #857842;
+  --pw-pending-border: #C3BCA6;
 
-  /* Sponsored / partner — restrained outline + subtle bg */
-  --pw-sponsor-bg: #F4F0E8;
-  --pw-sponsor-fg: #6C6450;
-  --pw-sponsor-border: #D8CFB7;
+  /* Sponsored / partner — outline only, never a filled highlight */
+  --pw-sponsor-bg: #E9E7E2;
+  --pw-sponsor-fg: #635C4A;
+  --pw-sponsor-border: #C8C2B2;
 
   /* Money */
-  --pw-money-up-fg: #1F4E33;
-  --pw-money-down-fg: #862C28;
+  --pw-money-up-fg: #1B5636;
+  --pw-money-down-fg: #8A2A24;
 
-  /* Radii */
-  --pw-r-xs: 4px;
-  --pw-r-sm: 6px;
-  --pw-r-md: 10px;
-  --pw-r-lg: 14px;
-  --pw-r-xl: 20px;
-  --pw-r-pill: 999px;
+  /* ── Shape ────────────────────────────────────────────────────────────
+     One shape system, and it is square. The scale is kept so the 88
+     components referencing it keep compiling; every step is 0. */
+  --pw-r-xs: 0px;
+  --pw-r-sm: 0px;
+  --pw-r-md: 0px;
+  --pw-r-lg: 0px;
+  --pw-r-xl: 0px;
+  --pw-r-pill: 0px;
 
-  /* Shadows */
-  --pw-shadow-sm: 0 1px 2px rgba(20, 24, 27, 0.04), 0 0 0 1px rgba(20, 24, 27, 0.04);
-  --pw-shadow-md: 0 2px 8px rgba(20, 24, 27, 0.06), 0 0 0 1px rgba(20, 24, 27, 0.04);
-  --pw-shadow-lg: 0 12px 36px rgba(20, 24, 27, 0.10), 0 0 0 1px rgba(20, 24, 27, 0.04);
-  --pw-shadow-popover: 0 16px 48px rgba(20, 24, 27, 0.18), 0 0 0 1px rgba(20, 24, 27, 0.06);
+  /* Depth comes from a hairline and from spacing. Kept as tokens, valued
+     none, so no component has to be edited to lose its shadow. */
+  --pw-shadow-sm: none;
+  --pw-shadow-md: none;
+  --pw-shadow-lg: none;
+  --pw-shadow-popover: none;
 
-  /* Pet-photo tints */
-  --pw-photo-tint-1: linear-gradient(135deg, #C9A879 0%, #8C6B43 100%);
-  --pw-photo-tint-2: linear-gradient(135deg, #B89E78 0%, #6E5238 100%);
-  --pw-photo-tint-3: linear-gradient(135deg, #E0C9A1 0%, #A47B45 100%);
-  --pw-photo-tint-4: linear-gradient(135deg, #5A6068 0%, #2A3038 100%);
+  /* Pet-photo fallback tints. Were four 135deg linear-gradients; flat tones
+     now. Deliberately desaturated so a photoless pet never out-shouts a
+     status colour sitting next to it. */
+  --pw-photo-tint-1: #7E7059;
+  --pw-photo-tint-2: #5F6A63;
+  --pw-photo-tint-3: #6B7078;
+  --pw-photo-tint-4: #4A5158;
+
+  /* ── Type ─────────────────────────────────────────────────────────────
+     Two faces: IBM Plex Sans for interface and prose, IBM Plex Mono for every
+     number, date, dose and identifier. */
+  --pw-sans: var(--font-plex-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --pw-mono: var(--font-plex-mono), "SF Mono", ui-monospace, monospace;
+
+  /* Compatibility aliases. Roughly a hundred call sites across app CSS and
+     inline styles name the old font variables directly. Rather than touch all
+     of them in a design pass (a rename that large is its own change, and it
+     would bury the actual redesign in a diff nobody can read), the old names
+     now resolve to the new faces. The serif alias deliberately points at the
+     sans: the display serif is retired, not replaced.
+
+     Follow-up worth doing: sed the call sites to --pw-sans / --pw-mono and
+     delete these three lines. */
+  --font-inter: var(--font-plex-sans);
+  --font-source-serif: var(--font-plex-sans);
+  --font-jetbrains: var(--font-plex-mono);
 
   /* ----- shadcn variable mappings (so primitives inherit Pawdex look) ----- */
   --background: var(--pw-bg);
@@ -99,93 +147,112 @@
   --popover: var(--pw-surface);
   --popover-foreground: var(--pw-text);
   --primary: var(--pw-accent);
-  --primary-foreground: #FFFFFF;
+  --primary-foreground: #F5F7F8;
   --secondary: var(--pw-surface-2);
   --secondary-foreground: var(--pw-text);
   --muted: var(--pw-surface-2);
   --muted-foreground: var(--pw-text-muted);
   --accent: var(--pw-surface-2);
   --accent-foreground: var(--pw-text);
-  --destructive: #B23A3A;
+  --destructive: #A8352D;
   --border: var(--pw-border);
   --input: var(--pw-border-strong);
   --ring: var(--pw-accent);
-  --chart-1: #2F6F4E;
-  --chart-2: #B5732A;
-  --chart-3: #2C4E5A;
-  --chart-4: #862C28;
-  --chart-5: #6A7079;
-  --radius: 10px;
+  --chart-1: #1C4E70;
+  --chart-2: #9A6A16;
+  --chart-3: #24713F;
+  --chart-4: #A8352D;
+  --chart-5: #616B77;
+  --radius: 0px;
   --sidebar: var(--pw-surface-2);
   --sidebar-foreground: var(--pw-text);
   --sidebar-primary: var(--pw-accent);
-  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-primary-foreground: #F5F7F8;
   --sidebar-accent: var(--pw-surface-3);
   --sidebar-accent-foreground: var(--pw-text);
   --sidebar-border: var(--pw-border);
   --sidebar-ring: var(--pw-accent);
 }
 
+/* Dark. The full set is redeclared, not patched: a half-swapped palette is
+   how a theme ends up with one warm surface left over from the old system. */
 .dark,
 [data-theme="dark"] {
-  --pw-bg: #0E0F10;
-  --pw-surface: #16181A;
-  --pw-surface-2: #1C1F22;
-  --pw-surface-3: #23272B;
+  --pw-bg: #0F1214;
+  --pw-surface: #15191C;
+  --pw-surface-2: #1C2125;
+  --pw-surface-3: #252B30;
 
-  --pw-border: #25282D;
-  --pw-border-strong: #353A40;
-  --pw-border-focus: #4A9472;
+  --pw-border: #2A3035;
+  --pw-border-strong: #414951;
+  --pw-border-focus: #6BA8CE;
 
-  --pw-text: #ECEAE3;
-  --pw-text-secondary: #B8BBC0;
-  --pw-text-muted: #878B92;
-  --pw-text-subtle: #5C6068;
+  --pw-text: #E7EBEE;
+  --pw-text-secondary: #B2BAC2;
+  --pw-text-muted: #87919A;
+  --pw-text-subtle: #626C75;
 
-  --pw-accent: #4A9472;
-  --pw-accent-hover: #5BA481;
-  --pw-accent-pressed: #3F8364;
-  --pw-accent-soft: #1B2D24;
-  --pw-accent-soft-2: #233D31;
-  --pw-accent-fg-on-soft: #8FCBA9;
+  /* Same ink blue, lifted for contrast against a dark ground. */
+  --pw-accent: #6BA8CE;
+  --pw-accent-hover: #85B8D9;
+  --pw-accent-pressed: #5794BA;
+  --pw-accent-soft: #16242D;
+  --pw-accent-soft-2: #1E313D;
+  --pw-accent-fg-on-soft: #9CC6E0;
+  --pw-accent-ink: #0F1214;
+  --pw-fill-ink: #0F1214;
 
-  --pw-status-up-bg: #1B2D24;
-  --pw-status-up-fg: #8FCBA9;
-  --pw-status-up-dot: #4A9472;
+  --pw-status-up-bg: #14251B;
+  --pw-status-up-fg: #7FC59B;
+  --pw-status-up-dot: #3E9366;
 
-  --pw-status-due-bg: #322617;
-  --pw-status-due-fg: #D9B179;
-  --pw-status-due-dot: #B5732A;
+  --pw-status-due-bg: #2A2114;
+  --pw-status-due-fg: #D4AC72;
+  --pw-status-due-dot: #9A6A16;
 
-  --pw-status-overdue-bg: #3A1F1D;
-  --pw-status-overdue-fg: #E0998F;
-  --pw-status-overdue-dot: #C25149;
+  --pw-status-overdue-bg: #2E1A18;
+  --pw-status-overdue-fg: #E09189;
+  --pw-status-overdue-dot: #A8352D;
 
-  --pw-status-incomplete-bg: #232528;
-  --pw-status-incomplete-fg: #95999F;
-  --pw-status-incomplete-dot: #6A7079;
+  --pw-status-incomplete-bg: #1F2327;
+  --pw-status-incomplete-fg: #909AA3;
+  --pw-status-incomplete-dot: #626C75;
 
-  --pw-info-bg: #1F2C32;
-  --pw-info-fg: #9BB7C0;
+  --pw-info-bg: #16242D;
+  --pw-info-fg: #9CC6E0;
 
-  --pw-pending-bg: #2A2620;
-  --pw-pending-fg: #C9BE9D;
-  --pw-pending-dot: #8A7945;
-  --pw-pending-border: #4A4332;
+  --pw-pending-bg: #26231B;
+  --pw-pending-fg: #C4B896;
+  --pw-pending-dot: #857842;
+  --pw-pending-border: #454033;
 
-  --pw-sponsor-bg: #221F1A;
-  --pw-sponsor-fg: #9F9680;
-  --pw-sponsor-border: #3D372D;
+  --pw-sponsor-bg: #201E19;
+  --pw-sponsor-fg: #9A9280;
+  --pw-sponsor-border: #3B372E;
 
-  --pw-money-up-fg: #8FCBA9;
-  --pw-money-down-fg: #E0998F;
+  --pw-money-up-fg: #7FC59B;
+  --pw-money-down-fg: #E09189;
 
-  --pw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  --pw-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  --pw-shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  --pw-shadow-popover: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  /* No shadows in dark either. On a dark ground a blurred shadow is invisible
+     anyway and the ring it carried is doing the work; that is a border. */
+  --pw-shadow-sm: none;
+  --pw-shadow-md: none;
+  --pw-shadow-lg: none;
+  --pw-shadow-popover: none;
 
-  --destructive: #C25149;
+  --pw-photo-tint-1: #6A5F4B;
+  --pw-photo-tint-2: #4E5852;
+  --pw-photo-tint-3: #575C63;
+  --pw-photo-tint-4: #3C4248;
+
+  --primary-foreground: #0F1214;
+  --sidebar-primary-foreground: #0F1214;
+  --destructive: #D4655A;
+  --chart-1: #6BA8CE;
+  --chart-2: #D4AC72;
+  --chart-3: #7FC59B;
+  --chart-4: #E09189;
+  --chart-5: #87919A;
 }
 
 /* @theme: expose the Pawdex tokens to Tailwind as utilities (text-pw-accent, bg-pw-surface, etc.) */
@@ -241,14 +308,17 @@
   --color-pw-money-up: var(--pw-money-up-fg);
   --color-pw-money-down: var(--pw-money-down-fg);
 
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-source-serif);
-  --font-mono: var(--font-jetbrains);
+  --font-sans: var(--font-plex-sans);
+  --font-serif: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* These four drive every Tailwind rounded-* utility, which is how the
+     shadcn primitives were getting their corners without touching a Pawdex
+     token. Zeroing them here squares the whole primitive layer at once. */
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 }
 
 /* =====================================================================
@@ -279,15 +349,64 @@
   }
 }
 
+/* `.serif` is applied to display headings across the app (the "Good evening,
+   …" greeting and every page title). The serif itself is retired, so this
+   class now sets the display treatment in the sans: heavier, tighter, and
+   with no Georgia fallback, which would otherwise reintroduce a serif on any
+   font-load failure. The class name is left alone because it is used in ~40
+   places; renaming it is a follow-up, not part of the visual pass. */
 .serif {
-  font-family: var(--font-source-serif), Georgia, serif;
-  letter-spacing: -0.015em;
-  font-feature-settings: "ss01";
+  font-family: var(--pw-sans);
+  font-weight: 600;
+  letter-spacing: -0.022em;
 }
 
 .mono {
-  font-family: var(--font-jetbrains), "SF Mono", ui-monospace, monospace;
+  font-family: var(--pw-mono);
+  font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+}
+
+/* Every number on this surface is data, so every number is tabular. A column
+   of weights or dates that does not align is a column you cannot scan. */
+time,
+.pw-badge,
+[class*="-value"],
+[class*="-date"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* =====================================================================
+   Shape and depth, enforced
+   =====================================================================
+   The design has exactly one shape and it is square, and exactly one way of
+   separating things and it is a hairline. Both are enforced centrally rather
+   than by editing thirteen primitive files, because a rule here cannot be
+   forgotten by the next component someone copies in from shadcn.
+
+   `rounded-full` and the arbitrary-value corners do not read the radius
+   scale, so they are named explicitly. Tailwind's shadow utilities are not
+   token-driven either.
+
+   The one deliberate exception is `.pw-round-ok`, for anything that is
+   genuinely a circle by meaning rather than by decoration (a progress ring,
+   a radio control). Nothing uses it yet; it exists so the next person has an
+   escape hatch that is visible in review instead of a stray utility. */
+[class*="rounded-"]:not(.pw-round-ok),
+[class*="rounded"]:not(.pw-round-ok) {
+  border-radius: 0;
+}
+
+[class*="shadow-"] {
+  box-shadow: none;
+}
+
+/* Pet photos and avatars were circles. They are squares now: this product's
+   photo of an animal is an identity photo on a record, and a passport photo
+   is not a circle. It also means the one shape system has no exceptions. */
+.pw-avatar,
+.pw-pet-photo {
+  border-radius: 0;
 }
 
 .tnum {
@@ -312,7 +431,7 @@
 .pw-badge .pw-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 0;
 }
 .pw-badge.up {
   background: var(--pw-status-up-bg);
@@ -433,7 +552,7 @@
   padding: 0 5px;
   border: 1px solid var(--pw-border-strong);
   border-bottom-width: 2px;
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--pw-surface);
   font: 500 11px/1 var(--font-jetbrains, monospace);
   color: var(--pw-text-muted);
@@ -442,37 +561,33 @@
 /* Pet photo with warm ring */
 .pw-pet-photo {
   position: relative;
-  border-radius: 50%;
+  border-radius: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   background: var(--pw-photo-tint-1);
-  color: rgba(255, 255, 255, 0.92);
-  font-family: var(--font-source-serif), Georgia, serif;
-  font-weight: 500;
+  color: #F2F4F5;
+  font-family: var(--pw-sans);
+  font-weight: 600;
   letter-spacing: -0.02em;
   flex-shrink: 0;
 }
-.pw-pet-photo::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.18), transparent 55%),
-    radial-gradient(circle at 70% 80%, rgba(0, 0, 0, 0.12), transparent 60%);
-}
+/* The fallback tile used to paint two radial-gradient orbs over itself, a
+   white highlight at 30/25 and a dark one at 70/80, to fake a lit sphere. The
+   photo is square now and nothing on this surface is lit from anywhere, so
+   the sheen is gone and the tile is a flat tone. */
 .pw-pet-photo.ring {
-  box-shadow:
-    0 0 0 2px var(--pw-surface),
-    0 0 0 4px var(--pw-border-strong),
-    var(--pw-shadow-sm);
+  /* Was three stacked box-shadows faking a ring. It is a border. */
+  outline: 1px solid var(--pw-border-strong);
+  outline-offset: 2px;
 }
 
 /* Avatar circle (people) */
 .pw-avatar {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--pw-photo-tint-2);
   display: inline-flex;
   align-items: center;
@@ -490,7 +605,7 @@
   gap: 8px;
   padding: 6px 10px 6px 8px;
   border: 1px solid var(--pw-border-strong);
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--pw-surface);
   font: 500 11.5px var(--font-inter);
   color: var(--pw-text-secondary);
@@ -498,7 +613,7 @@
 .pw-lockup-soyb .pw-mark-circle {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--pw-accent);
   color: #FAF9F6;
   display: inline-flex;
@@ -510,7 +625,7 @@
 .pw-switch {
   width: 36px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--pw-surface-3);
   position: relative;
   transition: background 0.15s;
@@ -526,9 +641,9 @@
   left: 2px;
   width: 16px;
   height: 16px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--pw-surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--pw-border-strong);
   transition: left 0.15s;
 }
 .pw-switch[data-on="true"] {
@@ -545,7 +660,7 @@
   gap: 12px;
   padding: 14px;
   border: 1px solid var(--pw-border);
-  border-radius: 10px;
+  border-radius: 0;
   background: var(--pw-surface);
   cursor: pointer;
 }
@@ -624,7 +739,7 @@
   bottom: -1px;
   height: 2px;
   background: var(--pw-accent);
-  border-radius: 2px 2px 0 0;
+  border-radius: 0;
 }
 .pet-tab .tab-count {
   display: inline-flex;
@@ -633,7 +748,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--pw-surface-2);
   font: 500 11px var(--font-jetbrains);
   color: var(--pw-text-muted);
@@ -661,17 +776,16 @@
   outline-offset: 2px;
 }
 
-/* Filled accent control that carries white text. The dark-theme --pw-accent
-   (#4A9472) is too light for #fff at small sizes (about 3.6:1, below the WCAG
-   AA 4.5:1 floor), so in dark mode we pin the darker brand green while keeping
-   the exact hue. Use this instead of inline `background: var(--pw-accent);
-   color:#fff` on any small filled button so white text stays legible. */
+/* Filled accent control.
+
+   This used to hardcode white text and then, in dark mode, pin a darker green
+   behind it because the dark accent was too light for white at small sizes.
+   The new palette inverts by design instead: the accent is dark in light mode
+   and light in dark mode, so the text on top flips with it via
+   --pw-accent-ink. No theme needs a special-case background. */
 .pw-accent-fill {
   background: var(--pw-accent);
-  color: #fff;
-}
-:root[data-theme="dark"] .pw-accent-fill {
-  background: #2f6f4e;
+  color: var(--pw-accent-ink);
 }
 .pw-accent-fill:hover {
   background: var(--pw-accent-hover);
@@ -715,7 +829,7 @@
   gap: 6px;
   height: 30px;
   padding: 0 10px;
-  border-radius: 6px;
+  border-radius: 0;
   border: 1px solid var(--pw-border-strong);
   background: var(--pw-surface);
   color: var(--pw-text);
@@ -752,26 +866,17 @@
   position: relative;
   background: var(--pw-surface);
   border: 1px solid var(--pw-border);
-  border-radius: var(--pw-r-lg);
   display: flex;
   flex-direction: column;
-  transition: border-color 0.12s, box-shadow 0.12s;
+  transition: border-color 0.12s ease;
 }
-/* Status accent bar across the top of each tile, so the whole grid reads its
-   health at a glance. Color is set inline per tile via --pw-tile-accent. */
-.pw-tile::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  border-radius: var(--pw-r-lg) var(--pw-r-lg) 0 0;
-  background: var(--pw-tile-accent, var(--pw-border-strong));
-}
+/* The 3px status bar across the top of every tile is gone. It was the same
+   device as the action-card left stripe: a band of colour with no label
+   touching it, in a grid where each tile already carries a squared status tag
+   that says "Overdue" or "Due soon" in words. Two encodings of one fact, one
+   of which only works if you have learned the legend. */
 .pw-tile:hover {
-  border-color: var(--pw-border-strong);
-  box-shadow: var(--pw-shadow-sm);
+  border-color: var(--pw-text);
 }
 .pw-tile-head {
   display: flex;
@@ -839,18 +944,30 @@
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 12px 14px 12px 15px;
+  padding: 12px 14px;
   border: 1px solid var(--pw-border);
-  border-radius: var(--pw-r-md);
   background: var(--pw-surface);
   text-decoration: none;
   overflow: hidden;
-  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
+  /* Colour only. The old rule transitioned transform and lifted the card 1px
+     on hover, which is the stock landing-page flourish and, on a touch device,
+     a state that fires on tap and then sticks. */
+  transition: border-color 0.12s ease, background-color 0.12s ease;
 }
 .pw-action-card:hover {
-  border-color: var(--pw-border-strong);
-  box-shadow: var(--pw-shadow-sm);
-  transform: translateY(-1px);
+  border-color: var(--pw-text);
+  background: var(--pw-surface-2);
+}
+
+/* The severity marker. Square, bordered in the status colour, inked in it. */
+.pw-action-icon {
+  inline-size: 30px;
+  block-size: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--pw-border);
 }
 
 /* --- Activity timeline --- */
@@ -881,7 +998,7 @@ a.pw-timeline-row:hover {
 .pw-timeline-node {
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--pw-surface-2);
   border: 1px solid var(--pw-border);
   display: inline-flex;
@@ -1000,7 +1117,7 @@ a.pw-timeline-row:hover {
   align-items: center;
   gap: 11px;
   padding: 9px 10px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   color: var(--pw-text-secondary);
 }
@@ -1060,7 +1177,7 @@ a.pw-timeline-row:hover {
   align-items: center;
   gap: 10px;
   padding: 9px 10px;
-  border-radius: 8px;
+  border-radius: 0;
   border: 0;
   background: transparent;
   color: var(--pw-text-secondary);
@@ -1075,7 +1192,7 @@ a.pw-timeline-row:hover {
 .pw-quick-icon {
   width: 26px;
   height: 26px;
-  border-radius: 7px;
+  border-radius: 0;
   background: var(--pw-surface-2);
   display: inline-flex;
   align-items: center;
@@ -1250,5 +1367,104 @@ a.pw-timeline-row:hover {
   .pw-topnav {
     padding: 0 8px !important;
     gap: 4px !important;
+  }
+}
+
+/* =====================================================================
+   Phone: bottom tab bar
+   =====================================================================
+   See components/pawdex/bottom-nav.tsx for why this exists. Phone-only: at
+   md+ the horizontal top nav carries the same destinations and this is not
+   rendered at all.
+
+   The bar is pinned, so it takes the safe-area inset directly and the app
+   shell reserves matching space at the bottom of <main>. Without both halves
+   you get either a bar sitting on the home indicator or a last row of content
+   permanently hidden under the bar. */
+.pw-bottomnav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  background: var(--pw-surface);
+  border-top: 1px solid var(--pw-border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (min-width: 768px) {
+  .pw-bottomnav {
+    display: none;
+  }
+}
+
+.pw-bottomnav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  /* 52px plus the label keeps every target past the 44px floor without the
+     bar eating a third of a short phone screen. */
+  min-block-size: 52px;
+  padding: 7px 2px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--pw-text-muted);
+  font: 500 10.5px/1 var(--pw-sans);
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.pw-bottomnav-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-inline-size: 100%;
+}
+/* Active is carried by ink plus a rule along the top edge of the slot, not by
+   a filled pill. The rule reads as a tab marker, which is what it is. */
+.pw-bottomnav-item[data-active="true"] {
+  color: var(--pw-text);
+  box-shadow: inset 0 2px 0 0 var(--pw-accent);
+}
+.pw-bottomnav-item:focus-visible {
+  outline: 2px solid var(--pw-accent);
+  outline-offset: -3px;
+}
+
+/* Content must clear the fixed bar. */
+@media (max-width: 767px) {
+  .pw-app-main {
+    padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Pet photo inside a tile: square, hairline, no status ring. */
+.pw-tile-photo {
+  display: inline-flex;
+  flex-shrink: 0;
+  border: 1px solid var(--pw-border-strong);
+}
+
+/* Phone top bar, after the de-crowding.
+
+   The bottom tab bar owns the destinations and the More slot owns the menu,
+   so the row is down to: mark, household switcher, search, theme,
+   notifications, account. The switcher is the only elastic child and it now
+   actually truncates, which is what was failing before: the name ran under
+   the search control instead of ellipsing. */
+@media (max-width: 767px) {
+  .pw-topnav .pw-switcher-root,
+  .pw-topnav .pw-switcher-root button {
+    min-inline-size: 0;
+    overflow: hidden;
+  }
+  .pw-topnav .pw-switcher-root span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

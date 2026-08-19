@@ -107,7 +107,7 @@ export function InviteForm() {
           borderRadius: 6,
           background: "var(--pw-accent)",
           border: "1px solid var(--pw-accent)",
-          color: "#fff",
+          color: "var(--pw-fill-ink)",
           font: "500 13px var(--font-inter)",
           cursor: isPending ? "default" : "pointer",
           opacity: isPending || !email.trim() ? 0.6 : 1,

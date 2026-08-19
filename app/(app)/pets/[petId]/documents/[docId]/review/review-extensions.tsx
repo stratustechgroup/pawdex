@@ -358,7 +358,6 @@ export function ReviewExtensions({
           className="pw-card"
           style={{
             padding: 16,
-            borderLeft: "3px solid var(--pw-accent)",
             display: "flex",
             flexDirection: "column",
             gap: 10,
@@ -634,7 +633,7 @@ export function ReviewExtensions({
                       style={{
                         ...td,
                         color:
-                          l.flag === "H" || l.flag === "L" ? "#b54a4a" : "var(--pw-text-muted)",
+                          l.flag === "H" || l.flag === "L" ? "var(--pw-status-overdue-fg)" : "var(--pw-text-muted)",
                         fontWeight: l.flag === "H" || l.flag === "L" ? 600 : 400,
                       }}
                     >

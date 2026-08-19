@@ -79,29 +79,25 @@ export function ActionStrip({ items }: { items: ActionItem[] }) {
         {shown.map((item) => {
           const s = SEVERITY_STYLE[item.severity];
           return (
-            <Link key={item.id} href={item.href} className="pw-action-card">
+            <Link
+              key={item.id}
+              href={item.href}
+              className="pw-action-card"
+              data-severity={item.severity}
+            >
+              {/* The 3px coloured bar down the left edge is gone. A stripe
+                  encodes severity in a place with no label attached to it, so
+                  it reads as decoration until you already know the code. The
+                  status now lives in the icon tile, which is bordered and
+                  inked in the severity colour, and in the severity word
+                  spelled out on the second line. Same information, attached to
+                  something that says what it means. */}
               <span
-                aria-hidden
+                className="pw-action-icon"
                 style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 3,
-                  background: s.dot,
-                }}
-              />
-              <span
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
                   background: s.bg,
                   color: s.fg,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  borderColor: s.dot,
                 }}
               >
                 <Icon name={item.icon} size={15} />
@@ -122,13 +118,19 @@ export function ActionStrip({ items }: { items: ActionItem[] }) {
                 <span
                   style={{
                     display: "block",
-                    font: "400 11.5px var(--font-inter)",
+                    font: "400 11.5px var(--pw-sans)",
                     color: "var(--pw-text-muted)",
                     marginTop: 2,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {item.petName ? `${item.petName} · ` : ""}
-                  {s.label}
+                  {/* The severity word carries the colour now that the stripe
+                      does not, so the meaning and the hue sit on the same
+                      glyphs and it survives greyscale. */}
+                  <span style={{ color: s.fg, fontWeight: 500 }}>{s.label}</span>
                 </span>
               </span>
               <span

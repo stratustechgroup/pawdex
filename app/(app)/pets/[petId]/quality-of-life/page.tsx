@@ -159,7 +159,7 @@ export default async function QolPage({
                 borderRadius: 6,
                 border: "1px solid var(--pw-accent)",
                 background: "var(--pw-accent)",
-                color: "var(--pw-accent-fg)",
+                color: "var(--pw-fill-ink)",
                 font: "500 12.5px var(--font-inter)",
                 cursor: "pointer",
               }}
@@ -334,6 +334,6 @@ export default async function QolPage({
 
 function scoreColor(score: number): string {
   if (score >= 50) return "var(--pw-accent)";
-  if (score >= 35) return "#c9a227";
-  return "#b54a4a";
+  if (score >= 35) return "var(--pw-status-due-fg)";
+  return "var(--pw-status-overdue-fg)";
 }

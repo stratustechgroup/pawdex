@@ -1,52 +1,52 @@
 /* ------------------------------------------------------------------------
    Pawdex marketing. Scoped under .mk so nothing leaks into the app.
 
-   Aesthetic: warm editorial paper. Fraunces display over the product's cream
-   and forest green, JetBrains Mono for data, one amber accent. Product truth
-   rendered as live-feeling artifacts (documents, record chips, notifications)
-   rather than abstract illustration.
+   This surface no longer carries a design of its own.
+
+   It used to: a warm paper palette, its own display face, its own accent, its
+   own dark theme, all defined here and then mapped onto the product's --pw-*
+   tokens so that embedded real components would render in marketing colours.
+   Two systems, one of which existed to disguise the other.
+
+   That is backwards for this product. Pawdex sells a permanent medical record,
+   and the strongest thing the marketing page can do is BE the thing, not a
+   dressed-up photograph of it. So the marketing tokens are now derived from
+   the app's, which means the page a visitor sees before signing up and the
+   record they see after are the same material, and a palette change happens in
+   exactly one file.
+
+   What stays here: layout, section rhythm, and the display type scale. Those
+   are legitimately different jobs on a landing page than in a dense product
+   surface. What left: every colour, the second typeface, and the duplicate
+   dark theme.
    ------------------------------------------------------------------------ */
 
 .mk {
   /* ── Type ───────────────────────────────────────────────────────────────
-     One family, carried by its width axis. Archivo Expanded does display work,
-     Archivo normal does body work, JetBrains Mono carries data: dates, doses,
-     page citations, prices. Numbers are always mono on this surface, because
-     the product is a record and records are read as data.
+     The product's two faces, no third. Archivo is gone with the rest of the
+     parallel system: one superfamily across marketing and app is the whole
+     point of the merge above. Display work is done by weight and size in
+     Plex Sans rather than by a separate display family. */
+  --mk-display: var(--pw-sans);
+  --mk-body: var(--pw-sans);
+  --mk-mono: var(--pw-mono);
 
-     Fraunces and Inter were both removed. An editorial serif over Inter is the
-     most recognisable machine-generated pairing on the web, and neither face
-     said anything about a permanent medical record. */
-  --mk-display: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
-  --mk-body: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
-  --mk-mono: var(--font-jetbrains), "SF Mono", monospace;
+  /* ── Surface, ink, accent ───────────────────────────────────────────────
+     Straight through to the product tokens. Both themes come along for free,
+     including the explicit-toggle and system-preference cases, because
+     globals.css already declares both and this inherits whichever won. */
+  --mk-paper: var(--pw-bg);
+  --mk-paper-2: var(--pw-surface);
+  --mk-paper-3: var(--pw-surface-2);
+  --mk-ink: var(--pw-text);
+  --mk-ink-2: var(--pw-text-secondary);
+  --mk-ink-3: var(--pw-text-muted);
+  --mk-rule: var(--pw-border);
+  --mk-rule-strong: var(--pw-border-strong);
+  --mk-accent: var(--pw-accent);
+  --mk-accent-ink: var(--pw-accent-ink);
 
-  /* ── Surface ────────────────────────────────────────────────────────────
-     A cooler paper than the old cream. The previous #FAF9F6 sat squarely in
-     the warm-craft family that every generated "premium" page reaches for. This
-     is still paper, still not pure white, but the warmth is dialled back so the
-     green reads as the only warm thing on the page. */
-  --mk-paper: #eff0ed;
-  --mk-paper-2: #e6e8e3;
-  --mk-paper-3: #dcdfd8;
-  --mk-ink: #16181a;
-  --mk-ink-2: #3b3f42;
-  --mk-ink-3: #5d6266;
-  --mk-rule: #cdd0ca;
-  --mk-rule-strong: #a9ada5;
-
-  /* ── Accent ─────────────────────────────────────────────────────────────
-     Exactly one. The brand's forest green survives the redesign because a
-     redesign preserves the brand; everything around it changed instead. Amber
-     was retired: two accents is two accents, and the eyebrows it coloured are
-     mostly gone. */
-  --mk-accent: #2f6f4e;
-  --mk-accent-ink: #f7f8f6;
-
-  /* ── Shape ──────────────────────────────────────────────────────────────
-     One radius for the entire surface, and it is zero. Not "small". Zero.
-     Mixed radii are the fastest way to make a page look assembled rather than
-     designed, and softened corners are what every generated SaaS page does. */
+  /* One shape system, shared with the product. */
   --mk-radius: 0px;
 
   background: var(--mk-paper);
@@ -57,91 +57,25 @@
   position: relative;
 }
 
-/* Paper grain, barely there. Fixed and pointer-events-none so it never costs a
-   repaint on a scrolling container. */
-.mk::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 60;
-  opacity: 0.045;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
-}
+/* The paper grain is gone.
 
-/* ── Dark ─────────────────────────────────────────────────────────────────
-   Declared twice on purpose. The marketing surface can be put into dark by an
-   explicit toggle (data-theme, written by theme-init) or by the operating
-   system (prefers-color-scheme). Defining the values under only one of those
-   ships a half-swapped palette to whichever visitor arrives the other way. */
-:root[data-theme="dark"] .mk,
-:root:not([data-theme="light"]) .mk-dark-auto {
-  --mk-paper: #121413;
-  --mk-paper-2: #191c1a;
-  --mk-paper-3: #212523;
-  --mk-ink: #eceee9;
-  --mk-ink-2: #b5b9b3;
-  --mk-ink-3: #8b908a;
-  --mk-rule: #2c302d;
-  --mk-rule-strong: #464b47;
-  --mk-accent: #57a97c;
-  --mk-accent-ink: #0d0f0e;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .mk {
-    --mk-paper: #121413;
-    --mk-paper-2: #191c1a;
-    --mk-paper-3: #212523;
-    --mk-ink: #eceee9;
-    --mk-ink-2: #b5b9b3;
-    --mk-ink-3: #8b908a;
-    --mk-rule: #2c302d;
-    --mk-rule-strong: #464b47;
-    --mk-accent: #57a97c;
-    --mk-accent-ink: #0d0f0e;
-  }
-}
-:root[data-theme="dark"] .mk::before {
-  opacity: 0.06;
-}
+   It was a fixed, 4.5%-opacity turbulence texture over the whole surface,
+   there to make the page feel like paper. The register changed: this is a
+   medical record rendered on a screen, not a facsimile of one, and a noise
+   overlay is the same instinct as a torn-edge PNG. It also cost a
+   full-viewport composited layer on every scroll for something most visitors
+   never consciously saw. */
 
-/* ── Bridge to the app tokens ─────────────────────────────────────────────
-   The marketing surface reuses components that read the product's --pw-*
-   tokens (the real pet card, the real status badge). Rather than fork those
-   components, the marketing palette is mapped onto the tokens they already
-   read, so a genuine product preview renders in the marketing palette without
-   a single component change.
+/* The bridge that used to live here is gone, and it had to be: it mapped
+   --pw-* onto --mk-*, and --mk-* now resolves to --pw-*. Left in place the two
+   would have referenced each other in a cycle and every colour on the page
+   would have fallen back to unset.
 
-   globals.css is deliberately untouched: the app depends on it. */
-.mk {
-  --pw-bg: var(--mk-paper);
-  --pw-surface: var(--mk-paper);
-  --pw-surface-2: var(--mk-paper-2);
-  --pw-surface-3: var(--mk-paper-3);
-  --pw-border: var(--mk-rule);
-  --pw-border-strong: var(--mk-rule-strong);
-  --pw-text: var(--mk-ink);
-  --pw-text-secondary: var(--mk-ink-2);
-  --pw-text-muted: var(--mk-ink-3);
-  --pw-text-subtle: var(--mk-ink-3);
-  --pw-accent: var(--mk-accent);
-  --pw-accent-hover: var(--mk-accent);
-  --pw-accent-soft: var(--mk-paper-2);
-  --pw-accent-soft-2: var(--mk-paper-3);
-  --pw-accent-fg-on-soft: var(--mk-accent);
-
-  /* No radius, no shadow, anywhere on this surface. */
-  --pw-r-xs: 0px;
-  --pw-r-sm: 0px;
-  --pw-r-md: 0px;
-  --pw-r-lg: 0px;
-  --pw-r-xl: 0px;
-  --pw-r-pill: 0px;
-  --pw-shadow-sm: none;
-  --pw-shadow-md: none;
-  --pw-shadow-lg: none;
-  --pw-shadow-popover: none;
-}
+   Its whole job was to make embedded real product components (the pet card,
+   the status badge) render in marketing colours. There are no marketing
+   colours any more, so there is nothing to translate. The radius and shadow
+   overrides are gone for the same reason: the product's own tokens are
+   already 0 and none. */
 
 /* ------------------------------------------------------------- primitives */
 
@@ -181,7 +115,6 @@
 .mk-display {
   font-family: var(--mk-display);
   font-weight: 700;
-  font-variation-settings: "wdth" 112;
   font-size: clamp(40px, 6.2vw, 84px);
   line-height: 1.02;
   letter-spacing: -0.028em;
@@ -199,7 +132,6 @@
 .mk-h2 {
   font-family: var(--mk-display);
   font-weight: 700;
-  font-variation-settings: "wdth" 108;
   font-size: clamp(28px, 4vw, 46px);
   line-height: 1.06;
   letter-spacing: -0.022em;
@@ -209,7 +141,6 @@
 .mk-h3 {
   font-family: var(--mk-display);
   font-weight: 650;
-  font-variation-settings: "wdth" 104;
   font-size: clamp(19px, 2.2vw, 25px);
   line-height: 1.18;
   letter-spacing: -0.014em;
@@ -1812,7 +1743,6 @@
 }
 .pf-other-name {
   font: 650 15px var(--mk-display);
-  font-variation-settings: "wdth" 104;
   color: var(--mk-ink);
 }
 .pf-other-price {
@@ -1881,7 +1811,6 @@
   display: block;
   font-family: var(--mk-display);
   font-weight: 700;
-  font-variation-settings: "wdth" 110;
   font-size: clamp(26px, 3vw, 38px);
   line-height: 1;
   letter-spacing: -0.03em;
@@ -1930,7 +1859,6 @@
 .mk-how-step-title {
   margin: 0;
   font: 650 15px var(--mk-display);
-  font-variation-settings: "wdth" 104;
   color: var(--mk-ink);
 }
 .mk-how-step-body {
@@ -2298,19 +2226,24 @@
    The rail collapses to a running head above the content below 900px, because
    a 132px margin on a 390px screen is not a margin, it is a waste. */
 
+/* One column.
+
+   This was a two-column grid with a 132px margin rail carrying a section mark
+   and label (§ 01 HOW IT WORKS) down the left of every entry. That device is
+   gone along with the rest of the previous design: it spent an eighth of the
+   page width on numbering that no visitor needed, and on a phone it collapsed
+   into a running head that was just another line of chrome above each
+   section.
+
+   The grid stays as a single track rather than being deleted, because the
+   sections underneath still position against it and a full rewrite of their
+   internals is not what changes how this page reads. */
 .mk-ledger {
   width: min(1240px, calc(100% - 48px));
   margin-inline: auto;
   display: grid;
-  grid-template-columns: [rail] 132px [body] minmax(0, 1fr);
-  column-gap: clamp(28px, 4vw, 56px);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-}
-@media (max-width: 900px) {
-  .mk-ledger {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 18px;
-  }
 }
 @media (max-width: 640px) {
   .mk-ledger {
@@ -2323,7 +2256,7 @@
    only: nothing moves, scales or fades, which is the difference between a page
    that holds its structure and a page that performs. */
 .mk-margin {
-  grid-column: rail;
+  grid-column: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2360,7 +2293,7 @@
 }
 
 .mk-ledger-body {
-  grid-column: body;
+  grid-column: 1;
   min-width: 0;
 }
 

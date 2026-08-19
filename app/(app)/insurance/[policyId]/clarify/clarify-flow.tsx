@@ -306,7 +306,7 @@ function primaryButton(disabled: boolean): React.CSSProperties {
     borderRadius: 6,
     border: "1px solid var(--pw-accent)",
     background: "var(--pw-accent)",
-    color: "var(--pw-accent-fg)",
+    color: "var(--pw-fill-ink)",
     font: "500 12.5px var(--font-inter)",
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.55 : 1,

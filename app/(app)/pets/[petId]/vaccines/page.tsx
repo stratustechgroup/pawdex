@@ -364,7 +364,6 @@ export default async function VaccinesPage({
                           alignItems: "center",
                           gap: 8,
                           paddingLeft: 8,
-                          borderLeft: `3px solid ${rowAccent(status.kind)}`,
                           marginLeft: -16,
                           marginRight: -16,
                           paddingRight: 16,

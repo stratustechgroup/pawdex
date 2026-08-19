@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
 
 import "./marketing.css";
 import { MarketingThemeInit } from "@/components/marketing/theme-init";
@@ -9,20 +8,16 @@ import {
   webSiteSchema,
 } from "@/components/marketing/structured-data";
 
-// One family for the whole marketing surface, carried by its width axis:
-// Archivo Expanded for display, normal width for body. Archivo is a grotesque
-// drawn for signage and print at small sizes, which is the right register for a
-// product whose entire promise is a permanent, legible record.
+// No font is loaded here any more.
 //
-// It replaces Fraunces (display) and Inter (body). Both were deliberate
-// removals: an editorial serif plus Inter is the single most recognisable
-// machine-generated type pairing on the web, and neither said anything about
-// what this product is.
-const archivo = Archivo({
-  subsets: ["latin"],
-  variable: "--font-archivo",
-  axes: ["wdth"],
-});
+// The marketing surface used to load Archivo on top of the root layout's
+// families, giving this route group a typeface the product did not have. That
+// was the parallel-design-system problem in its most literal form: a visitor
+// read the pitch in one voice and the product in another, and the page paid
+// for a third font download to do it.
+//
+// Marketing now inherits IBM Plex Sans and IBM Plex Mono from the root layout,
+// which is also where the product gets them. See docs/design-system.md.
 
 const TITLE = "Pawdex: every vet record, one timeline, for life";
 const DESCRIPTION =
@@ -59,7 +54,7 @@ export default function MarketingLayout({
       {/* Sitewide structured data: present on every marketing route. */}
       <JsonLd data={organizationSchema()} />
       <JsonLd data={webSiteSchema()} />
-      <div className={`mk ${archivo.variable}`}>{children}</div>
+      <div className="mk">{children}</div>
     </>
   );
 }

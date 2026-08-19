@@ -166,7 +166,7 @@ export function PetPhotoUploader({
             inset: 0,
             borderRadius: "50%",
             background: "rgba(0, 0, 0, 0.45)",
-            color: "#fff",
+            color: "var(--pw-fill-ink)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",

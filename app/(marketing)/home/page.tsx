@@ -45,10 +45,6 @@ export default function MarketingHome() {
         <section id="pricing">
           <div className="mk-ledger">
             <div className="mk-entry-rule" />
-            <div className="mk-margin">
-              <span className="mk-margin-n">&sect; 03</span>
-              <span className="mk-margin-label">What it costs</span>
-            </div>
             <div className="mk-ledger-body">
               <PlanFit disclosure="" cta="waitlist" />
             </div>
@@ -62,10 +58,6 @@ export default function MarketingHome() {
         <section id="waitlist" className="mk-final mk-final--ledger">
           <div className="mk-ledger">
             <div className="mk-entry-rule" />
-            <div className="mk-margin">
-              <span className="mk-margin-n">&sect; 05</span>
-              <span className="mk-margin-label">Early access</span>
-            </div>
             <div className="mk-ledger-body">
               <h2 className="mk-display mk-final-title">
                 One timeline. <em>For life.</em>

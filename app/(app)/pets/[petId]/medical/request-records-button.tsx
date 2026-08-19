@@ -121,7 +121,7 @@ export function RequestRecordsButton({
           title={state.message}
           style={{
             font: "400 10.5px var(--font-inter)",
-            color: "var(--pw-error-fg, #b54a4a)",
+            color: "var(--pw-error-fg, var(--pw-status-overdue-fg))",
             maxWidth: 160,
             overflow: "hidden",
             textOverflow: "ellipsis",

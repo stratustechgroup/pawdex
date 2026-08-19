@@ -230,7 +230,7 @@ export default async function PricesPage({
                 borderRadius: 6,
                 border: "1px solid var(--pw-accent)",
                 background: "var(--pw-accent)",
-                color: "var(--pw-accent-fg)",
+                color: "var(--pw-fill-ink)",
                 font: "500 12.5px var(--font-inter)",
                 cursor: "pointer",
               }}
@@ -279,7 +279,6 @@ export default async function PricesPage({
                 display: "flex",
                 alignItems: "center",
                 gap: 12,
-                borderLeft: `3px solid ${i === 0 ? "var(--pw-accent)" : "var(--pw-border)"}`,
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>

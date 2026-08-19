@@ -296,7 +296,7 @@ const btnPrimary: React.CSSProperties = {
   padding: "0 18px",
   borderRadius: 6,
   background: "var(--pw-accent)",
-  color: "#fff",
+  color: "var(--pw-fill-ink)",
   border: "1px solid var(--pw-accent)",
   font: "500 13px var(--font-inter)",
   textDecoration: "none",

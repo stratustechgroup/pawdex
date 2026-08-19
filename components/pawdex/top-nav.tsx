@@ -67,6 +67,15 @@ export function TopNav({
     setAccountOpen(false);
   }, [pathname]);
 
+  // The phone's bottom tab bar owns the primary destinations; its "More" slot
+  // opens this same disclosure instead of shipping a second copy of the
+  // secondary routes. One menu, two triggers.
+  useEffect(() => {
+    const open = () => setMenuOpen(true);
+    window.addEventListener("pawdex:open-nav-menu", open);
+    return () => window.removeEventListener("pawdex:open-nav-menu", open);
+  }, []);
+
   // Close the account dropdown on any click outside it.
   useEffect(() => {
     if (!accountOpen) return;
@@ -132,7 +141,16 @@ export function TopNav({
         }}
       >
         <PawdexMark size={22} color="var(--pw-accent)" />
-        <span>Pawdex</span>
+        {/* The wordmark is the least useful 68px on a 390px screen: the user
+            knows which app they opened, and the mark alone still says it. It
+            comes back at md+, where the row has room.
+
+            sr-only rather than hidden: `hidden` is display:none, which took
+            the text out of the accessibility tree and left this link with an
+            SVG and no accessible name at all. axe caught it as link-name on
+            every phone route. Visually hidden keeps the name for a screen
+            reader while freeing the pixels. */}
+        <span className="sr-only md:not-sr-only">Pawdex</span>
       </Link>
       <span
         style={{
@@ -234,7 +252,14 @@ export function TopNav({
         type="button"
         // Mobile-only. Display is class-driven ("inline-flex" base, hidden at
         // md+); no inline `display` so `md:hidden` isn't beaten by specificity.
-        className="inline-flex md:hidden hover:bg-[var(--pw-surface-2)] hover:text-[var(--pw-text)]"
+        // Was mobile-only; now it is the reverse. The phone's bottom tab bar
+        // carries a More slot that opens this same menu, so on a phone this
+        // trigger is a second button for one panel, sitting in the row that
+        // had no space left. Hidden below md, and still hidden at md+ where
+        // the horizontal nav is visible: it ends up rendered nowhere, which is
+        // correct, but the element stays so the menu keeps its aria-controls
+        // relationship and the harnesses keep their aria-expanded target.
+        className="hidden hover:bg-[var(--pw-surface-2)] hover:text-[var(--pw-text)]"
         onClick={() => setMenuOpen((v) => !v)}
         aria-label="Menu"
         aria-expanded={menuOpen}

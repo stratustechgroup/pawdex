@@ -55,13 +55,13 @@ export function QolTrendChart({
           />
           <ReferenceLine
             y={35}
-            stroke="#c9a227"
+            stroke="var(--pw-status-due-fg)"
             strokeDasharray="4 3"
             label={{
               value: "Discuss with vet ≤ 35",
               position: "insideTopRight",
               fontSize: 10,
-              fill: "#c9a227",
+              fill: "var(--pw-status-due-fg)",
             }}
           />
           <Line

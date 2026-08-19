@@ -52,10 +52,6 @@ export function Faq() {
     >
       <div className="mk-ledger">
         <div className="mk-entry-rule" />
-        <div className="mk-margin">
-          <span className="mk-margin-n">&sect; 04</span>
-          <span className="mk-margin-label">Questions</span>
-        </div>
         <div className="mk-ledger-body">
         <div className="mk-faq-head">
           <h2 className="mk-h2 mk-faq-title">

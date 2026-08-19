@@ -270,7 +270,7 @@ export default async function DocumentsPage({
                 padding: "0 14px",
                 borderRadius: 6,
                 background: "var(--pw-accent)",
-                color: "#fff",
+                color: "var(--pw-fill-ink)",
                 font: "500 13px var(--font-inter)",
                 textDecoration: "none",
               }}
@@ -562,7 +562,7 @@ function DocThumb() {
           padding: "1px 4px",
           borderRadius: 2,
           background: "#B23A3A",
-          color: "#fff",
+          color: "var(--pw-fill-ink)",
           font: "700 7px var(--font-jetbrains)",
           letterSpacing: 0.5,
         }}

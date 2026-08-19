@@ -226,7 +226,7 @@ export default async function EstimatePage({
                 borderRadius: 6,
                 border: "1px solid var(--pw-accent)",
                 background: "var(--pw-accent)",
-                color: "var(--pw-accent-fg)",
+                color: "var(--pw-fill-ink)",
                 font: "500 12.5px var(--font-inter)",
                 cursor: "pointer",
               }}

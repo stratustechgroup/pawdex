@@ -129,9 +129,6 @@ function AuthorizationCard({
         display: "flex",
         flexDirection: "column",
         gap: 16,
-        borderLeft: `3px solid ${
-          isGranted ? "var(--pw-accent)" : "var(--pw-border)"
-        }`,
       }}
     >
       <header
@@ -310,7 +307,7 @@ function AuthorizationCard({
               style={{
                 ...buttonBaseStyle,
                 background: "var(--pw-accent)",
-                color: "var(--pw-accent-fg)",
+                color: "var(--pw-fill-ink)",
                 border: "1px solid var(--pw-accent)",
                 opacity: canWrite ? 1 : 0.5,
                 cursor: canWrite ? "pointer" : "not-allowed",

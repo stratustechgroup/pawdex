@@ -45,7 +45,7 @@ export function RefineButton({
           <span
             style={{
               font: "400 11.5px var(--font-inter)",
-              color: "#b54a4a",
+              color: "var(--pw-status-overdue-fg)",
             }}
           >
             {state.message}
@@ -63,7 +63,7 @@ export function RefineButton({
             borderRadius: 6,
             border: "1px solid var(--pw-accent)",
             background: "var(--pw-accent)",
-            color: "var(--pw-accent-fg)",
+            color: "var(--pw-fill-ink)",
             font: "500 12.5px var(--font-inter)",
             cursor: pending ? "wait" : "pointer",
             opacity: pending ? 0.6 : 1,
@@ -99,7 +99,6 @@ export function RefineButton({
                 display: "flex",
                 gap: 12,
                 alignItems: "flex-start",
-                borderLeft: `3px solid ${borderColorFor(verdict?.verdict)}`,
               }}
             >
               <span
@@ -216,8 +215,8 @@ function VerdictPill({ verdict }: { verdict: string }) {
 }
 
 function borderColorFor(v: string | undefined): string {
-  if (v === "match") return "#b54a4a";
-  if (v === "ambiguous") return "#c9a227";
+  if (v === "match") return "var(--pw-status-overdue-fg)";
+  if (v === "ambiguous") return "var(--pw-status-due-fg)";
   if (v === "false_positive") return "var(--pw-accent)";
   return "var(--pw-border)";
 }

@@ -1,4 +1,5 @@
 import { requireSession } from "@/lib/auth/household";
+import { BottomNav } from "@/components/pawdex/bottom-nav";
 import { CommandPalette } from "@/components/pawdex/cockpit/command-palette";
 import { listPetsForNav } from "@/lib/db/cockpit";
 import { TopNavClient } from "./top-nav-client";
@@ -24,7 +25,10 @@ export default async function AppLayout({
       style={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
+        // dvh, not vh: on iOS Safari 100vh is the height with the URL bar
+        // hidden, so a vh-sized shell is taller than the visible viewport for
+        // as long as the bar is showing and the page jumps as it collapses.
+        minHeight: "100dvh",
         background: "var(--pw-bg)",
       }}
     >
@@ -37,9 +41,11 @@ export default async function AppLayout({
         displayName={session.displayName}
         email={session.email}
       />
-      <main id="main" style={{ flex: 1 }}>
+      <main id="main" className="pw-app-main" style={{ flex: 1 }}>
         {children}
       </main>
+      {/* Phone only; hidden at md+ in CSS. */}
+      <BottomNav />
       <CommandPalette
         pets={navPets}
         isBreeder={session.householdKind === "breeder"}

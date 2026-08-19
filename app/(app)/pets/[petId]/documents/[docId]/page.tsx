@@ -165,7 +165,7 @@ export default async function DocumentViewerPage({
                 padding: "0 12px",
                 borderRadius: 6,
                 background: "var(--pw-accent)",
-                color: "#fff",
+                color: "var(--pw-fill-ink)",
                 font: "500 12.5px var(--font-inter)",
                 textDecoration: "none",
               }}

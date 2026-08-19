@@ -362,7 +362,7 @@ export default async function CompliancePacketPage({
                         <Td
                           className="tnum"
                           style={{
-                            color: expired ? "#b54a4a" : "var(--pw-text)",
+                            color: expired ? "var(--pw-status-overdue-fg)" : "var(--pw-text)",
                             fontWeight: expired ? 600 : 400,
                           }}
                         >

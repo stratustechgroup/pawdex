@@ -205,7 +205,7 @@ export function ClaimTimeline({
                         : "var(--pw-text)"
                       : "var(--pw-surface)",
                   border: done || active ? "none" : "1.5px solid var(--pw-border-strong)",
-                  color: "#fff",
+                  color: "var(--pw-fill-ink)",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",

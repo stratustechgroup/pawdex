@@ -100,7 +100,7 @@ export default async function DocumentsPage({
             padding: "0 12px",
             borderRadius: 6,
             background: "var(--pw-accent)",
-            color: "#fff",
+            color: "var(--pw-fill-ink)",
             font: "500 12.5px var(--font-inter)",
             textDecoration: "none",
           }}
@@ -140,7 +140,7 @@ export default async function DocumentsPage({
               padding: "0 14px",
               borderRadius: 6,
               background: "var(--pw-accent)",
-              color: "#fff",
+              color: "var(--pw-fill-ink)",
               font: "500 13px var(--font-inter)",
               textDecoration: "none",
             }}

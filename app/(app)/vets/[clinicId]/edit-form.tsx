@@ -237,6 +237,6 @@ const btnGhost: React.CSSProperties = {
 const btnPrimary: React.CSSProperties = {
   ...btnSecondary,
   background: "var(--pw-accent)",
-  color: "#fff",
+  color: "var(--pw-fill-ink)",
   borderColor: "var(--pw-accent)",
 };

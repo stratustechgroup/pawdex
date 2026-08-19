@@ -37,12 +37,6 @@ export function HowItWorks() {
     <section id="how-it-works" className="mk-section mk-how">
       <div className="mk-ledger">
         <div className="mk-entry-rule" />
-        {/* The rail carries what an eyebrow used to. It is the same
-            information, moved into the margin where a record keeps it. */}
-        <div className="mk-margin">
-          <span className="mk-margin-n">&sect; 01</span>
-          <span className="mk-margin-label">How it works</span>
-        </div>
         <div className="mk-ledger-body mk-how-grid">
         <div>
           <h2 className="mk-h2 mk-how-title">

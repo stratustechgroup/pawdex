@@ -166,7 +166,7 @@ export function TransferPanel({
                 borderRadius: 6,
                 background: "var(--pw-accent)",
                 border: "1px solid var(--pw-accent)",
-                color: "#fff",
+                color: "var(--pw-fill-ink)",
                 font: "500 13px var(--font-inter)",
                 cursor: "pointer",
               }}
@@ -232,7 +232,7 @@ export function TransferPanel({
               borderRadius: 6,
               background: "var(--pw-accent)",
               border: "1px solid var(--pw-accent)",
-              color: "#fff",
+              color: "var(--pw-fill-ink)",
               font: "500 13px var(--font-inter)",
               cursor: isPending ? "default" : "pointer",
               opacity: isPending ? 0.6 : 1,

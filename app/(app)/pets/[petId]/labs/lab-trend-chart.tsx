@@ -89,7 +89,7 @@ export function LabTrendChart({
               };
               const flag = payload.flag;
               const color =
-                flag === "H" || flag === "L" ? "#b54a4a" : "var(--pw-accent)";
+                flag === "H" || flag === "L" ? "var(--pw-status-overdue-fg)" : "var(--pw-accent)";
               return (
                 <circle
                   key={`${payload.date}-${cx}-${cy}`}

@@ -56,15 +56,12 @@ export function PetTile({
       style={{ ["--pw-tile-accent" as string]: ring }}
     >
       <PrefetchLink href={`/pets/${pet.id}`} className="pw-tile-head">
-        <span
-          style={{
-            borderRadius: "50%",
-            padding: 2,
-            boxShadow: `0 0 0 2px var(--pw-surface), 0 0 0 3.5px ${ring}`,
-            display: "inline-flex",
-            flexShrink: 0,
-          }}
-        >
+        {/* Was a circular span carrying a two-stop box-shadow ring in the
+            status colour. Three problems in one element: a circle inside a
+            square-cornered system, a fake ring built from shadows, and a
+            third encoding of a status the tile already states in words in its
+            badge. It is a square photo with a hairline now. */}
+        <span className="pw-tile-photo">
           <PetPhoto name={pet.name} src={photoUrl} size={46} ring={false} />
         </span>
         <span style={{ flex: 1, minWidth: 0 }}>
@@ -238,7 +235,7 @@ export function PetTile({
               alignItems: "center",
               gap: 3,
               padding: "2px 7px",
-              borderRadius: 999,
+              border: "1px solid var(--pw-info-fg)",
               background: "var(--pw-info-bg)",
               color: "var(--pw-info-fg)",
               font: "500 10.5px var(--font-inter)",

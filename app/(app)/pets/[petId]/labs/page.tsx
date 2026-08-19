@@ -183,7 +183,7 @@ export default async function LabsPage({
                 borderRadius: 6,
                 border: "1px solid var(--pw-accent)",
                 background: "var(--pw-accent)",
-                color: "var(--pw-accent-fg)",
+                color: "var(--pw-fill-ink)",
                 font: "500 12px var(--font-inter)",
                 cursor: "pointer",
               }}
@@ -327,7 +327,7 @@ export default async function LabsPage({
                           fontWeight: 600,
                           color:
                             v.flag === "H" || v.flag === "L"
-                              ? "#b54a4a"
+                              ? "var(--pw-status-overdue-fg)"
                               : "var(--pw-text)",
                         }}
                       >
@@ -338,7 +338,7 @@ export default async function LabsPage({
                         <span
                           style={{
                             font: "500 10px var(--font-jetbrains-mono)",
-                            color: "#b54a4a",
+                            color: "var(--pw-status-overdue-fg)",
                           }}
                         >
                           [{v.flag}]

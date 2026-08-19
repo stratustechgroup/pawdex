@@ -1885,8 +1885,11 @@ export function ReviewForm({
           bottom: 0,
           background: "var(--pw-surface)",
           borderTop: "1px solid var(--pw-border)",
-          padding: "12px 24px",
-          boxShadow: "var(--pw-shadow-md)",
+          // The approve/reject controls sat on the home indicator on a
+          // notched phone. Outstanding item in docs/mobile-audit.md: the
+          // inset is added to the bottom padding rather than the block
+          // padding so the footer keeps its 12px of breathing room above it.
+          padding: "12px 24px calc(12px + env(safe-area-inset-bottom, 0px))",
           zIndex: 10,
         }}
       >
@@ -1949,7 +1952,7 @@ export function ReviewForm({
               borderRadius: 6,
               background: "var(--pw-accent)",
               border: "1px solid var(--pw-accent)",
-              color: "#fff",
+              color: "var(--pw-fill-ink)",
               font: "500 13px var(--font-inter)",
               cursor: isPending ? "default" : "pointer",
               opacity: isPending || totalSelected === 0 ? 0.6 : 1,
@@ -2489,7 +2492,7 @@ function ExpiryHint({
             font: "500 10px var(--font-jetbrains-mono)",
             letterSpacing: "0.04em",
             textTransform: "uppercase",
-            color: "#b54a4a",
+            color: "var(--pw-status-overdue-fg)",
           }}
           title="Rabies expiration is governed by state law. Verify before relying on the default."
         >

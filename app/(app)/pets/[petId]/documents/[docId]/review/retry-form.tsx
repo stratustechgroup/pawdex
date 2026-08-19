@@ -27,7 +27,7 @@ export function RetryExtractionForm({
           padding: "0 14px",
           borderRadius: 6,
           background: "var(--pw-accent)",
-          color: "#fff",
+          color: "var(--pw-fill-ink)",
           border: "1px solid var(--pw-accent)",
           font: "500 13px var(--font-inter)",
           cursor: "pointer",

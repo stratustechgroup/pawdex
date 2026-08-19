@@ -234,7 +234,7 @@ export default async function ClaimDetailPage({
               borderRadius: 6,
               border: "1px solid var(--pw-accent)",
               background: "var(--pw-accent)",
-              color: "var(--pw-accent-fg)",
+              color: "var(--pw-fill-ink)",
               font: "500 12.5px var(--font-inter)",
               cursor: "pointer",
             }}
@@ -251,7 +251,6 @@ export default async function ClaimDetailPage({
             className="pw-card"
             style={{
               padding: 16,
-              borderLeft: "3px solid #b54a4a",
               display: "flex",
               flexDirection: "column",
               gap: 8,

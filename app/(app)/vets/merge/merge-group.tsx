@@ -122,7 +122,7 @@ export function MergeGroup({
             borderRadius: 6,
             background: "var(--pw-accent)",
             border: "1px solid var(--pw-accent)",
-            color: "#fff",
+            color: "var(--pw-fill-ink)",
             font: "500 12.5px var(--font-inter)",
             cursor: isPending ? "default" : "pointer",
             opacity: isPending ? 0.6 : 1,
@@ -192,7 +192,7 @@ export function MergeGroup({
                           padding: "1px 6px",
                           borderRadius: 4,
                           background: "var(--pw-accent)",
-                          color: "#fff",
+                          color: "var(--pw-fill-ink)",
                           textTransform: "uppercase",
                         }}
                       >
