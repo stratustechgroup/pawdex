@@ -68,7 +68,6 @@ export function NewHouseholdForm({
             background: "var(--pw-surface)",
             color: "var(--pw-text)",
             font: "400 13px var(--font-inter)",
-            outline: "none",
           }}
         />
       </label>

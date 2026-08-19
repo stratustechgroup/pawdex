@@ -2163,8 +2163,19 @@
   color: var(--mk-ink-3);
   margin-bottom: 12px;
 }
+/* The chart is a recharts ResponsiveContainer in a fixed-height box. At phone
+   widths it drew past the bottom of that box, and the insight row that follows
+   it painted straight over the overflowing curve: the "down 1.0 kg" card sat
+   on top of the line it was describing.
+
+   overflow: clip contains it, and min-height keeps the plot from being
+   squeezed into an unreadable band once the axis labels are accounted for.
+   clip rather than hidden because hidden would make this a scroll container
+   and swallow a swipe on a touch device. */
 .mk-surface-chart {
   height: 190px;
+  min-height: 190px;
+  overflow: clip;
 }
 .mk-surface-caption {
   margin: 14px auto 0;
@@ -2186,8 +2197,11 @@
   }
 }
 @media (max-width: 620px) {
+  /* min-height has to come down with height, or the phone rule is overridden
+     by the desktop minimum and the box never shrinks. */
   .mk-surface-chart {
-    height: 150px;
+    height: 160px;
+    min-height: 160px;
   }
 }
 

@@ -146,7 +146,6 @@ export const inputStyle: CSSProperties = {
   background: "var(--pw-surface)",
   color: "var(--pw-text)",
   font: "400 15px var(--font-inter)",
-  outline: "none",
 };
 
 export function TextField({

@@ -141,7 +141,6 @@ export default async function QolPage({
                 background: "var(--pw-surface)",
                 color: "var(--pw-text)",
                 font: "400 13px var(--font-inter)",
-                outline: "none",
                 resize: "vertical",
               }}
             />

@@ -471,7 +471,6 @@ const inputStyle: React.CSSProperties = {
   background: "var(--pw-surface)",
   color: "var(--pw-text)",
   font: "400 13px var(--font-inter)",
-  outline: "none",
 };
 
 const selectStyle: React.CSSProperties = { ...inputStyle };
@@ -484,6 +483,5 @@ const textareaStyle: React.CSSProperties = {
   background: "var(--pw-surface)",
   color: "var(--pw-text)",
   font: "400 13px var(--font-inter)",
-  outline: "none",
   resize: "vertical",
 };

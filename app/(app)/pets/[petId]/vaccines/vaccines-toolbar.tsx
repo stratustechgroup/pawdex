@@ -90,7 +90,6 @@ export function VaccinesToolbar({
             background: "var(--pw-surface)",
             color: "var(--pw-text)",
             font: "400 12.5px var(--font-inter)",
-            outline: "none",
           }}
         />
       </label>

@@ -361,5 +361,4 @@ const inputStyle: React.CSSProperties = {
   background: "var(--pw-surface)",
   color: "var(--pw-text)",
   font: "400 13px var(--font-inter)",
-  outline: "none",
 };

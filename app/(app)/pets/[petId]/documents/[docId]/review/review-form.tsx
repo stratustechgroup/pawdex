@@ -1869,7 +1869,6 @@ export function ReviewForm({
                 color: "var(--pw-text)",
                 font: "400 13px var(--font-inter)",
                 resize: "vertical",
-                outline: "none",
               }}
             />
           </div>
@@ -2378,7 +2377,6 @@ const inputStyle: React.CSSProperties = {
   font: "400 13px var(--font-inter)",
   letterSpacing: 0,
   textTransform: "none",
-  outline: "none",
 };
 
 /**

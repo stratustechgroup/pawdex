@@ -31,7 +31,6 @@ export function AskForm() {
             background: "var(--pw-surface)",
             color: "var(--pw-text)",
             font: "400 14px var(--font-inter)",
-            outline: "none",
             resize: "vertical",
             minHeight: 80,
           }}

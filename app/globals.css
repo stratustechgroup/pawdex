@@ -397,7 +397,19 @@ time,
   border-radius: 0;
 }
 
-[class*="shadow-"] {
+/* :not(:focus-visible) is load-bearing, not defensive.
+
+   Tailwind paints focus rings (`focus-visible:ring-*`) THROUGH box-shadow, and
+   this rule is unlayered so it outranks every layered utility. Without the
+   exclusion, any element carrying both a shadow utility and a focus ring loses
+   the ring: `components/ui/tabs.tsx` has exactly that pair
+   (`data-active:shadow-sm` alongside `focus-visible:ring-[3px]`), so tab
+   triggers would have gone silently unfocusable-looking for keyboard users.
+
+   axe does not catch this. A missing focus indicator is invisible to
+   automated colour-contrast and ARIA checks because the element is perfectly
+   accessible right up until someone tries to see where they are. */
+[class*="shadow-"]:not(:focus-visible) {
   box-shadow: none;
 }
 
@@ -1467,4 +1479,29 @@ a.pw-timeline-row:hover {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
+
+/* =====================================================================
+   Focus, guaranteed
+   =====================================================================
+   35 controls across this codebase set `outline: "none"` as an inline style
+   with no replacement, including both inputs on /login, which is the front
+   door. A keyboard user tabbing into the sign-in field got no indication of
+   where they were.
+
+   Inline styles outrank stylesheets, so this rule carries !important. That is
+   the correct use of it: the declaration being overridden is not a design
+   choice, it is the removal of an accessibility affordance, and no component
+   is entitled to opt out of showing focus.
+
+   The inline suppressions have also been deleted, so this is the belt and the
+   braces. It stays because the next control someone pastes in from a
+   component library will suppress the outline too.
+
+   :where() keeps specificity at zero for the selector itself; !important is
+   what does the work, so a component can still change the ring's colour or
+   offset by also using !important, deliberately and visibly. */
+:where(a, button, input, select, textarea, summary, [role="button"], [role="tab"], [tabindex]):focus-visible {
+  outline: 2px solid var(--pw-accent) !important;
+  outline-offset: 2px !important;
 }

@@ -17,7 +17,6 @@ export const fieldStyle: CSSProperties = {
   background: "var(--pw-surface)",
   color: "var(--pw-text)",
   font: "400 14px var(--font-inter)",
-  outline: "none",
 };
 
 export function primaryButtonStyle(disabled: boolean): CSSProperties {

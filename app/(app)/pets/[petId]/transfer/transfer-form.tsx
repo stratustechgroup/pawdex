@@ -32,7 +32,6 @@ const fieldBox: React.CSSProperties = {
   background: "var(--pw-surface)",
   color: "var(--pw-text)",
   font: "400 13.5px var(--font-inter)",
-  outline: "none",
 };
 
 export function TransferPanel({
