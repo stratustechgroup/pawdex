@@ -482,13 +482,15 @@
   }
 }
 
-/* Vignette frame used across sections for product mocks */
+/* Vignette frame used across sections for product mocks.
+
+   This was a 160deg linear-gradient into a colour-mix of the accent. On a
+   surface that has no shadows, no radius and one accent, a gradient panel was
+   the one place depth was being faked, and it read as a stray tinted rectangle
+   rather than as part of the page. It is now a flat tone bounded by the same
+   hairline everything else uses. */
 .mk-vignette {
-  background: linear-gradient(
-    160deg,
-    var(--pw-surface-2),
-    color-mix(in srgb, var(--pw-accent-soft) 55%, var(--pw-surface-2))
-  );
+  background: var(--pw-surface-2);
   border: 1px solid var(--pw-border);
   padding: clamp(18px, 3vw, 34px);
 }
@@ -2250,4 +2252,508 @@
   .mk-surface-chart {
     height: 150px;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE LEDGER GRID
+   ═══════════════════════════════════════════════════════════════════════════
+
+   What changed, and why.
+
+   The previous surface was correct in its parts and monotonous in its whole.
+   Every section was the same move: a centred 1140px container, a heading, then
+   content, then a hairline, then the next one. The type was right, the palette
+   was right, the radius was right, and the page still read as a stack of
+   interchangeable blocks, because nothing about the layout said what kind of
+   document it was.
+
+   Pawdex is a permanent medical record. So the page is now built like one.
+
+   A record has a margin. Printed case files, lab reports and research journals
+   all put the running metadata in a narrow left rail (the entry number, the
+   section label) and the substance in a wide measure beside it. That is the
+   whole idea here: one asymmetric two-column grid, used by every section, with
+   a numbered rail that runs the length of the page.
+
+   Three things follow from it, and they are the reason it is worth doing:
+
+     1. The page stops being centred. A centred column with a centred heading
+        above it is the default composition of every generated marketing page;
+        an off-centre measure with a numbered margin is not.
+     2. Section numbering becomes structural instead of decorative. The rail
+        already carries `§ 01`, so the eyebrow above each heading is redundant
+        and most of them are gone.
+     3. The hairline gets a job. It is no longer a divider between blocks, it
+        is the rule a ledger entry sits on, and the number sits on it.
+
+   The rail collapses to a running head above the content below 900px, because
+   a 132px margin on a 390px screen is not a margin, it is a waste. */
+
+.mk-ledger {
+  width: min(1240px, calc(100% - 48px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: [rail] 132px [body] minmax(0, 1fr);
+  column-gap: clamp(28px, 4vw, 56px);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .mk-ledger {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 18px;
+  }
+}
+@media (max-width: 640px) {
+  .mk-ledger {
+    width: calc(100% - 40px);
+  }
+}
+
+/* The rail. Mono, tabular, uppercase, and sticky on tall sections so the entry
+   number stays with the entry while you read it. Sticky is a position change
+   only: nothing moves, scales or fades, which is the difference between a page
+   that holds its structure and a page that performs. */
+.mk-margin {
+  grid-column: rail;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 6px;
+  position: sticky;
+  top: 92px;
+}
+@media (max-width: 900px) {
+  .mk-margin {
+    position: static;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+    padding-top: 0;
+  }
+}
+
+.mk-margin-n {
+  font: 500 11.5px/1 var(--mk-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
+  color: var(--mk-accent);
+  /* The section mark and its number are one token. Allowed to wrap, a 132px
+     margin breaks "§ 02" after the pilcrow and stacks two glyphs. */
+  white-space: nowrap;
+}
+
+.mk-margin-label {
+  font: 400 11.5px/1.5 var(--mk-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mk-ink-3);
+  max-width: 15ch;
+}
+
+.mk-ledger-body {
+  grid-column: body;
+  min-width: 0;
+}
+
+/* A ledger entry sits ON a rule, not between two of them. The rule is full
+   width of the grid and the section number hangs on it. */
+.mk-entry-rule {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--mk-rule);
+  margin-bottom: clamp(26px, 3.4vw, 44px);
+}
+
+/* Measure. Body copy is capped at a readable line length rather than running
+   the full width of the body column, which on a 1240px grid was reaching
+   ~110 characters. */
+.mk-measure {
+  max-width: 62ch;
+}
+
+/* ── Type, sharpened ──────────────────────────────────────────────────────
+   The scale was already good. What it lacked was the top end: the hero
+   headline and the section headings sat close enough in size that the page had
+   no clear loudest thing. The display size goes up, the tracking tightens with
+   it, and every number on the surface is tabular so columns of dates and doses
+   line up the way they do on a printed chart. */
+
+.mk-display {
+  font-size: clamp(42px, 7.4vw, 104px);
+  letter-spacing: -0.034em;
+  line-height: 0.98;
+}
+
+.mk-h2 {
+  font-size: clamp(30px, 4.4vw, 52px);
+}
+
+/* Records are read as data, so the numerals are set as data everywhere, not
+   only inside the mono tags. */
+.mk,
+.mk .mk-mono-tag,
+.mk .mk-margin-n,
+.mk .mk-stat-value,
+.mk time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Long body copy gets the better wrapping algorithm; headings get balance.
+   Both are one line of CSS and both remove the single-word last line that
+   makes otherwise finished type look unproofed. */
+.mk-lead,
+.mk-how-step-body,
+.mk-claim-row-body {
+  text-wrap: pretty;
+}
+
+/* ── The citation chip ────────────────────────────────────────────────────
+   This class is used in four places on the home page (the claims proofs, the
+   citation figure, the ingest preview) and had no rule anywhere in this file.
+   It has been rendering as unstyled inline text this whole time.
+
+   It is the most product-specific object on the page (every extracted fact
+   carries one), so it gets a real definition: mono, tabular, boxed in the same
+   hairline as everything else, accent ink, zero radius. */
+.mk-cite {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 7px;
+  border: 1px solid var(--mk-rule);
+  background: var(--mk-paper-2);
+  color: var(--mk-ink-2);
+  font: 500 11px/1.35 var(--mk-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ── Ingest preview ───────────────────────────────────────────────────────
+   Replaces four shimmer bars. See product-preview.tsx for why. */
+.mk-preview-ingest-file {
+  font: 500 12px/1.4 var(--mk-mono);
+  color: var(--mk-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mk-preview-ingest-rule {
+  height: 2px;
+  background: var(--mk-rule);
+  overflow: hidden;
+}
+.mk-preview-ingest-rule > span {
+  display: block;
+  block-size: 100%;
+  background: var(--mk-accent);
+}
+
+.mk-preview-ingest-fields {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+.mk-preview-ingest-fields li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--mk-rule);
+}
+.mk-preview-ingest-fields li:last-child {
+  border-bottom: 0;
+}
+/* A field still being read is stated as unresolved rather than animated. */
+.mk-preview-ingest-fields li[data-pending="true"] {
+  color: var(--mk-ink-3);
+}
+.mk-preview-ingest-label {
+  font: 400 13px/1.4 var(--mk-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mk-preview-ingest-value {
+  font: 500 12px/1.4 var(--mk-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-ink-2);
+}
+.mk-preview-ingest-fields li[data-pending="true"] .mk-preview-ingest-value {
+  color: var(--mk-ink-3);
+}
+.mk-preview-ingest-wait {
+  font: 500 12px/1.4 var(--mk-mono);
+  letter-spacing: 0.16em;
+  color: var(--mk-ink-3);
+}
+
+/* ── Stats, as ledger rows ────────────────────────────────────────────────
+   This component had picked up three separate definitions over successive
+   passes, each partially overriding the last: an auto-fit column grid, then a
+   full-bleed band, then a margin correction. The rules below replace all three
+   and are the only place .mk-stat* is defined from here on.
+
+   Shape: the numbers used to sit in equal side-by-side columns, which reads as
+   a stat strip on any SaaS page. They are now ruled rows, the figure sitting in
+   the same 132px margin the whole page uses, the claim beside it. A column of
+   figures read downward is how a chart is read, and it puts the three numbers
+   on the same axis instead of asking the eye to jump sideways.
+
+   It stays a full-bleed band, because it is the one piece of full-width
+   punctuation on a page of two-column entries, and it butts directly into the
+   pricing section below it. */
+.mk-stats {
+  width: 100%;
+  max-width: none;
+  display: block;
+  margin-top: clamp(28px, 3vw, 44px);
+  margin-bottom: 0;
+  border-top: 1px solid var(--mk-rule);
+  border-bottom: 0;
+  background: var(--mk-paper-2);
+}
+.mk-stat {
+  width: min(1240px, calc(100% - 48px));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  column-gap: clamp(28px, 4vw, 56px);
+  align-items: baseline;
+  padding: 20px 0;
+  border-left: 0;
+  border-bottom: 1px solid var(--mk-rule);
+}
+.mk-stat:last-child {
+  border-bottom: 0;
+}
+@media (max-width: 900px) {
+  .mk-stat {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .mk-stat {
+    width: calc(100% - 40px);
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4px;
+  }
+}
+/* Mono, not the display face. These are readings off a record, and the rail
+   above them is mono too, so the margin column stays one voice all the way
+   down the page. */
+.mk-stat-value {
+  font: 500 clamp(22px, 2.4vw, 30px) / 1 var(--mk-mono);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-accent);
+  margin-top: 0;
+}
+.mk-stat-label {
+  margin-top: 0;
+  max-width: 56ch;
+  color: var(--mk-ink-2);
+}
+
+/* ── Claims as ledger entries ─────────────────────────────────────────────
+   .mk-claim-row now carries .mk-ledger, which owns the width and the
+   rail/body columns. What is left here is the entry's own rhythm and the
+   two-column split *inside* the body column. */
+
+.mk-claims-title {
+  margin: 0;
+  max-width: 20ch;
+}
+
+.mk-claim-row {
+  padding-block: clamp(30px, 4vw, 52px);
+  align-items: start;
+}
+
+/* Inside the measure: argument left, proof right. Top-aligned, because a
+   short proof centred against a tall paragraph leaves a hole under it. */
+.mk-claim-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: start;
+}
+@media (max-width: 880px) {
+  .mk-claim-inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+}
+
+.mk-claim-row-title {
+  margin: 0;
+  color: var(--mk-ink);
+  text-wrap: balance;
+}
+.mk-claim-row-body {
+  margin: 12px 0 0;
+  max-width: 46ch;
+}
+.mk-claim-row-proof {
+  padding-top: 4px;
+}
+
+/* ── Proof objects ────────────────────────────────────────────────────────
+   These were inline style objects in the markup, including two raw colour
+   values. Rules now, tokens only. */
+
+/* A small ruled aside carrying one line of product truth. */
+.mk-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: var(--mk-paper);
+  border: 1px solid var(--mk-rule);
+}
+.mk-note-icon {
+  flex-shrink: 0;
+  color: var(--mk-accent);
+}
+.mk-note-text {
+  font: 400 12.5px/1.55 var(--mk-body);
+  color: var(--mk-ink-2);
+  text-wrap: pretty;
+}
+
+/* The transfer diagram: breeder to you to adopter. */
+.mk-xfer {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding-top: 4px;
+}
+.mk-xfer-stop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 74px;
+}
+.mk-xfer-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 44px;
+  block-size: 44px;
+  font: 500 15px var(--mk-mono);
+  background: var(--mk-paper-3);
+  color: var(--mk-ink-2);
+  border: 1px solid var(--mk-rule);
+}
+.mk-xfer-avatar[data-active="true"] {
+  background: var(--mk-accent);
+  border-color: var(--mk-accent);
+  color: var(--mk-accent-ink);
+}
+.mk-xfer-label {
+  font: 400 11.5px/1.4 var(--mk-body);
+  color: var(--mk-ink-3);
+  text-align: center;
+}
+.mk-xfer-link {
+  flex: 1;
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  padding-top: 21px;
+}
+.mk-xfer-line {
+  flex: 1;
+  block-size: 1px;
+  background: var(--mk-rule-strong);
+}
+.mk-xfer-chevron {
+  color: var(--mk-ink-3);
+  margin-left: -2px;
+  flex-shrink: 0;
+}
+
+/* A wrapped set of citation chips. */
+.mk-cite-set {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+/* The one chip that states a guarantee rather than a source reads in the
+   accent. It is still the same box; only the ink changes. */
+.mk-cite--affirm {
+  border-color: var(--mk-accent);
+  color: var(--mk-accent);
+}
+
+/* ── FAQ inside the ledger ────────────────────────────────────────────────
+   The three inline style objects on the heading, the lead and each answer are
+   rules now. */
+.mk-faq-title {
+  margin: 0;
+}
+.mk-faq-sub {
+  margin: 14px 0 0;
+}
+.mk-faq-answer {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* ── The close, left-aligned ──────────────────────────────────────────────
+   This section was centred: centred headline, centred lead, centred form. A
+   centred closing block under a page built on a left margin is the one place
+   the composition broke, and centred type is the default gesture of every
+   generated CTA. It now sits on the same measure as every entry above it, so
+   the last thing on the page lines up with the first.
+
+   The vertical padding also comes down. At clamp(88px, 12vw, 160px) the close
+   was nearly two screens of near-empty page after the FAQ. */
+.mk-final {
+  text-align: left;
+  padding-block: clamp(56px, 7vw, 96px);
+}
+.mk-final-title {
+  margin: 0;
+  max-width: 16ch;
+  text-align: left;
+}
+.mk-final-lead {
+  margin: 18px 0 0;
+  max-width: 44ch;
+  text-align: left;
+}
+.mk-final-cta {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 28px;
+}
+
+/* ── Pricing inside the ledger ────────────────────────────────────────────
+   PlanFit renders its own .mk-container internally for its full-width track.
+   Inside the ledger body that container would re-centre the block against the
+   viewport and pull it back out of the margin, so it is neutralised here. */
+.mk-ledger-body .mk-container {
+  width: 100%;
+  margin-inline: 0;
+}
+
+/* ── Section rhythm ───────────────────────────────────────────────────────
+   Entries are separated by their own rule now, so the old per-section bottom
+   borders would double up with it. */
+.mk-how {
+  border-bottom: 0;
+}
+
+/* The header offset for the sticky rail has to clear the sticky site header;
+   scroll-margin keeps in-page nav jumps from landing under it. */
+.mk [id] {
+  scroll-margin-top: 88px;
 }

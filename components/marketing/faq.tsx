@@ -50,12 +50,18 @@ export function Faq() {
       className="mk-section mk-faq"
       style={{ background: "var(--mk-paper-2)" }}
     >
-      <div className="mk-container">
+      <div className="mk-ledger">
+        <div className="mk-entry-rule" />
+        <div className="mk-margin">
+          <span className="mk-margin-n">&sect; 04</span>
+          <span className="mk-margin-label">Questions</span>
+        </div>
+        <div className="mk-ledger-body">
         <div className="mk-faq-head">
-          <h2 className="mk-h2" style={{ margin: 0 }}>
+          <h2 className="mk-h2 mk-faq-title">
             Fair questions, straight answers.
           </h2>
-          <p className="mk-lead" style={{ margin: "14px 0 0" }}>
+          <p className="mk-lead mk-faq-sub">
             The two we hear most: is my data safe, and does the AI make things
             up. Both answered below, plainly.
           </p>
@@ -74,12 +80,11 @@ export function Faq() {
                 </span>
               </summary>
               <div className="mk-faq-a">
-                <p className="mk-lead" style={{ margin: 0, fontSize: 15 }}>
-                  {f.a}
-                </p>
+                <p className="mk-lead mk-faq-answer">{f.a}</p>
               </div>
             </details>
           ))}
+        </div>
         </div>
       </div>
     </section>

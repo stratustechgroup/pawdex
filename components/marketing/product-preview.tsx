@@ -2,13 +2,12 @@ import type { CSSProperties } from "react";
 
 import { PawdexPetCard } from "@/components/pawdex/pet-card";
 import { StatusBadge } from "@/components/pawdex/status-badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { PetWithStatus } from "@/lib/db/pets";
 
 // Real product, not a drawing of it.
 //
 // Everything on this page that shows the product renders the SAME components
-// the signed-in app renders: PawdexPetCard, StatusBadge, Skeleton. The previous
+// the signed-in app renders: PawdexPetCard, StatusBadge. The previous
 // version of this page built lookalikes out of styled divs, which is the most
 // reliable tell that nobody has seen the actual product, and it rots the moment
 // the real UI moves.
@@ -94,22 +93,64 @@ export function StatusRowPreview() {
   );
 }
 
-// The genuine loading state. Pawdex reads a forwarded document with a model,
-// which takes real seconds, and the app shows the record's shape while it
-// works rather than a spinner over an empty page. Showing that here is both an
-// honest loading state and a demonstration of what the product does.
+// The genuine in-progress state. Pawdex reads a forwarded document with a
+// model, which takes real seconds.
+//
+// This used to render four shimmering Skeleton bars. Two things were wrong
+// with that. A shimmer block is a drawing of loading rather than a report of
+// it, and it tells a visitor nothing about what the product is doing; and a
+// marketing page is server-rendered with the data already in hand, so the
+// shimmer was animating over content that was never going to arrive.
+//
+// What replaces it is the extraction itself, mid-flight: the fields that have
+// resolved carry their value and their page citation, the ones still being
+// read say so, and the progress is a determinate count of pages rather than an
+// indefinite pulse. It is an honest state and a demonstration at the same
+// time.
+const INGEST_FIELDS = [
+  { label: "Rabies, 3 year", value: "2024-03-11", cite: "p. 2" },
+  { label: "Weight", value: "28.4 kg", cite: "p. 2" },
+  { label: "Apoquel 16mg", value: "reading", cite: null },
+  { label: "T4 panel", value: "reading", cite: null },
+];
+
 export function IngestingPreview() {
+  const read = 27;
+  const total = 41;
   return (
     <Frame caption="While a forwarded document is being read.">
       <div className="mk-preview-ingest">
         <div className="mk-preview-ingest-head">
-          <Skeleton className="h-4 w-40" />
-          <span className="mk-preview-ingest-status">Reading 41 pages</span>
+          <span className="mk-preview-ingest-file">Maple_annual_2024.pdf</span>
+          <span className="mk-preview-ingest-status">
+            {read} of {total} pages
+          </span>
         </div>
-        <Skeleton className="h-3 w-full" />
-        <Skeleton className="h-3 w-[82%]" />
-        <Skeleton className="h-3 w-[64%]" />
-        <Skeleton className="h-3 w-[91%]" />
+        <div
+          className="mk-preview-ingest-rule"
+          role="progressbar"
+          aria-label="Pages read"
+          aria-valuenow={read}
+          aria-valuemin={0}
+          aria-valuemax={total}
+        >
+          <span style={{ inlineSize: `${(read / total) * 100}%` }} />
+        </div>
+        <ul className="mk-preview-ingest-fields">
+          {INGEST_FIELDS.map((f) => (
+            <li key={f.label} data-pending={f.cite ? undefined : "true"}>
+              <span className="mk-preview-ingest-label">{f.label}</span>
+              <span className="mk-preview-ingest-value">{f.value}</span>
+              {f.cite ? (
+                <span className="mk-cite">{f.cite}</span>
+              ) : (
+                <span className="mk-preview-ingest-wait" aria-hidden="true">
+                  ...
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
       </div>
     </Frame>
   );

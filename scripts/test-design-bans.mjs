@@ -159,6 +159,162 @@ scan("transition on transform (hover motion)", /transition:[^;]*transform/, {
   );
 }
 
+// ════════════════════════════════════════════════════════════════════════
+// Second wave. Every rule below is a named item from the standing design
+// ban list, turned into something a machine can fail on.
+//
+// The first wave was written when the surface was cut from eighteen screens
+// to five. These were added with the records-ledger redesign, because a ban
+// that only lives in a conversation is a ban that lasts until the next one.
+// ════════════════════════════════════════════════════════════════════════
+
+// Colour gradients. mask-image gradients are alpha ramps, not colour, and are
+// how the ticker fades at its edges; those stay. A gradient that paints colour
+// is the thing being banned.
+{
+  const hits = [];
+  for (const [f, t] of css) {
+    const body = code(t, true);
+    for (const line of body.split("\n")) {
+      if (!/linear-gradient|conic-gradient/.test(line)) continue;
+      if (/mask-image|mask:/.test(line)) continue;
+      hits.push(`${f}: ${line.trim().slice(0, 60)}`);
+    }
+    // Multi-line declarations: catch `background: linear-gradient(` blocks
+    // whose property sits on the line above the gradient call.
+    const multi = body.match(
+      /(?:background|background-image)\s*:\s*(?:linear|conic)-gradient/g,
+    );
+    if (multi) hits.push(`${f}: ${multi.length} gradient background(s)`);
+  }
+  check(hits.length === 0, `colour gradient -> ${[...new Set(hits)].slice(0, 4).join(" | ")}`);
+}
+
+// Banned typefaces. These three are the house style of generated marketing
+// pages; the surface carries Archivo instead.
+scan("Inter / Geist / Space Grotesk on the marketing surface", /\b(Inter|Geist|Space_Grotesk|Space Grotesk)\b/);
+
+// Skeleton loaders. A marketing page renders server-side with the data already
+// in hand; a shimmer block there is a drawing of loading, not loading.
+scan("skeleton loader", /[Ss]keleton/);
+
+// Sparkle / star "AI" iconography, and the animated arrow.
+scan("sparkle or star iconography", /["'{]\s*(sparkle|sparkles|star|wand|magic)\s*["'}]|name="sparkle/i);
+{
+  const cssText = css.map(([, t]) => code(t, true)).join("\n");
+  const hits = [...cssText.matchAll(/\.[a-z-]*arrow[a-z-]*\s*\{[^}]*\}/g)]
+    .filter((m) => /animation|transition/.test(m[0]))
+    .map((m) => m[0].slice(0, 50));
+  check(hits.length === 0, `animated arrow -> ${hits.slice(0, 3).join(" | ")}`);
+}
+
+// Motifs.
+scan("terminal / code-window chrome", /terminal|traffic-light|window-dots|titlebar/i);
+scan("testimonials (there are no customers yet, so any quote is invented)", /testimonial|quote-card|customer-quote/i);
+scan("bento grid", /bento/i);
+
+// Three across. The three-equal-column feature row is the single most
+// recognisable generated layout; the pricing check already covers .pf-track,
+// this covers every other track on the surface.
+{
+  const hits = [];
+  for (const [f, t] of css) {
+    for (const m of code(t, true).matchAll(
+      /([.#][a-z0-9-]+)\s*\{[^}]*grid-template-columns\s*:\s*repeat\(3,/g,
+    )) {
+      hits.push(`${f}: ${m[1]}`);
+    }
+    for (const m of code(t, true).matchAll(
+      /([.#][a-z0-9-]+)\s*\{[^}]*grid-template-columns\s*:\s*(?:1fr\s+){2}1fr\s*;/g,
+    )) {
+      hits.push(`${f}: ${m[1]} (1fr 1fr 1fr)`);
+    }
+  }
+  check(hits.length === 0, `three equal columns -> ${[...new Set(hits)].slice(0, 4).join(" | ")}`);
+}
+
+// The coloured left stripe. A hairline rule in the neutral rule token is the
+// surface's own grid and is fine; a left border painted in the accent is the
+// callout-box cliche.
+{
+  const hits = [];
+  for (const [f, t] of css) {
+    for (const line of code(t, true).split("\n")) {
+      if (!/border-left\s*:/.test(line)) continue;
+      if (/var\(--(mk-rule|pw-border)/.test(line) || /:\s*0/.test(line)) continue;
+      hits.push(`${f}: ${line.trim().slice(0, 60)}`);
+    }
+  }
+  check(hits.length === 0, `coloured left stripe -> ${hits.slice(0, 3).join(" | ")}`);
+}
+
+// ── Palette bounds ──────────────────────────────────────────────────────
+// Purple, neon and nursery pastel are all ruled out. Rather than blocklisting
+// hex strings (which only ever catches the exact shade someone already used),
+// convert every declared token to HSL and reject whole regions of the space.
+{
+  function hsl(hex) {
+    let h = hex.replace("#", "");
+    if (h.length === 3) h = [...h].map((c) => c + c).join("");
+    const r = parseInt(h.slice(0, 2), 16) / 255;
+    const g = parseInt(h.slice(2, 4), 16) / 255;
+    const b = parseInt(h.slice(4, 6), 16) / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    let s = 0;
+    let hue = 0;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) hue = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+      else if (max === g) hue = ((b - r) / d + 2) * 60;
+      else hue = ((r - g) / d + 4) * 60;
+    }
+    return { h: hue, s: s * 100, l: l * 100 };
+  }
+
+  const purple = [];
+  const neon = [];
+  const pastel = [];
+  for (const [f, t] of css) {
+    for (const line of code(t, true).split("\n")) {
+      const m = line.match(/^\s*(--[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{3,6})\b/);
+      if (!m) continue;
+      const [, name, hex] = m;
+      const c = hsl(hex);
+      const where = `${f}: ${name} ${hex}`;
+      // Purple / violet / magenta with any real chroma in it.
+      if (c.h >= 255 && c.h <= 330 && c.s > 12) purple.push(where);
+      // Neon: screaming saturation at mid lightness.
+      if (c.s > 85 && c.l >= 40 && c.l <= 75) neon.push(where);
+      // Nursery pastel: tinted and washed out at once.
+      if (c.l > 82 && c.s > 22) pastel.push(where);
+    }
+  }
+  check(purple.length === 0, `purple in the palette -> ${purple.slice(0, 3).join(" | ")}`);
+  check(neon.length === 0, `neon in the palette -> ${neon.slice(0, 3).join(" | ")}`);
+  check(pastel.length === 0, `pastel in the palette -> ${pastel.slice(0, 3).join(" | ")}`);
+}
+
+// ── Positive rules ──────────────────────────────────────────────────────
+// "No real product demos" is on the ban list as a sin, not a permission: the
+// home page must render actual product components, not a drawing of them.
+{
+  const home = code(readFileSync("app/(marketing)/home/page.tsx", "utf8"), false);
+  const imported = [...home.matchAll(/from "@\/components\/marketing\/([a-z-]+)"/g)].map(
+    (m) => `components/marketing/${m[1]}.tsx`,
+  );
+  const tree = imported
+    .filter((f) => src.has(f))
+    .map((f) => src.get(f))
+    .join("\n");
+  check(
+    /ProductSurface|@\/components\/pawdex\//.test(tree),
+    "home page renders real product components rather than a mock",
+  );
+}
+
 console.log(`\ndesign bans: ${passed} passed, ${failed} failed`);
 if (failed) {
   console.error("\n" + failures.map((f) => "  - " + f).join("\n"));

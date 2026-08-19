@@ -39,22 +39,43 @@ export default function MarketingHome() {
         <HowItWorks />
         <Claims />
 
+        {/* No .mk-section here: PlanFit's own .pf brings its vertical padding,
+            and stacking both left roughly a screen of empty page under the
+            tier rows. */}
         <section id="pricing">
-          <PlanFit disclosure="" cta="waitlist" />
+          <div className="mk-ledger">
+            <div className="mk-entry-rule" />
+            <div className="mk-margin">
+              <span className="mk-margin-n">&sect; 03</span>
+              <span className="mk-margin-label">What it costs</span>
+            </div>
+            <div className="mk-ledger-body">
+              <PlanFit disclosure="" cta="waitlist" />
+            </div>
+          </div>
         </section>
 
         <Faq />
 
+        {/* The closing entry. The rail stops here: the last thing on the page
+            is an ask, and an ask does not need a margin note. */}
         <section id="waitlist" className="mk-final">
-          <div className="mk-container">
-            <h2 className="mk-display mk-final-title">
-              One timeline. <em>For life.</em>
-            </h2>
-            <p className="mk-lead mk-final-lead">
-              Join the waitlist and be first in when we open the doors.
-            </p>
-            <div className="mk-final-cta">
-              <WaitlistForm source="footer-cta" center />
+          <div className="mk-ledger">
+            <div className="mk-entry-rule" />
+            <div className="mk-margin">
+              <span className="mk-margin-n">&sect; 05</span>
+              <span className="mk-margin-label">Early access</span>
+            </div>
+            <div className="mk-ledger-body">
+              <h2 className="mk-display mk-final-title">
+                One timeline. <em>For life.</em>
+              </h2>
+              <p className="mk-lead mk-final-lead">
+                Join the waitlist and be first in when we open the doors.
+              </p>
+              <div className="mk-final-cta">
+                <WaitlistForm source="footer-cta" />
+              </div>
             </div>
           </div>
         </section>
