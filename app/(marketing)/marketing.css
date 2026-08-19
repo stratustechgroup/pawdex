@@ -676,11 +676,20 @@
   color: var(--pw-text);
   padding: 0 18px;
   font: 400 14.5px var(--mk-body);
-  outline: none;
   transition: border-color 0.15s ease;
 }
 .mk-wl input[type="email"]:focus {
   border-color: var(--pw-border-focus);
+}
+/* This field had `outline: none` with only a border-colour change to mark
+   focus, which is a one-pixel hue shift on the page's primary conversion
+   control and is not a visible focus indicator for a keyboard user. The
+   outline is restored, offset so it reads as a ring rather than thickening the
+   border, and squared off to match the surface's zero radius. focus-visible so
+   it does not fire on click. */
+.mk-wl input[type="email"]:focus-visible {
+  outline: 2px solid var(--mk-accent);
+  outline-offset: 2px;
 }
 .mk-wl--center {
   margin-inline: auto;
@@ -2715,22 +2724,28 @@
    the last thing on the page lines up with the first.
 
    The vertical padding also comes down. At clamp(88px, 12vw, 160px) the close
-   was nearly two screens of near-empty page after the FAQ. */
-.mk-final {
+   was nearly two screens of near-empty page after the FAQ.
+
+   Scoped to .mk-final--ledger, NOT to .mk-final. /about closes with the same
+   .mk-final section but its own inner markup, so an unscoped rule left-aligned
+   that page's eyebrow while its lead and button stayed centred, which is worse
+   than either alignment on its own. The bare class keeps its centred
+   behaviour; only the home page's closing entry opts in. */
+.mk-final--ledger {
   text-align: left;
   padding-block: clamp(56px, 7vw, 96px);
 }
-.mk-final-title {
+.mk-final--ledger .mk-final-title {
   margin: 0;
   max-width: 16ch;
   text-align: left;
 }
-.mk-final-lead {
+.mk-final--ledger .mk-final-lead {
   margin: 18px 0 0;
   max-width: 44ch;
   text-align: left;
 }
-.mk-final-cta {
+.mk-final--ledger .mk-final-cta {
   display: flex;
   justify-content: flex-start;
   margin-top: 28px;

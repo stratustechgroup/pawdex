@@ -106,6 +106,9 @@ export function WaitlistForm({
           placeholder="you@example.com"
           disabled={pending}
           aria-label="Email address"
+          /* An address is not prose. Red squiggles under a correctly typed
+             email read as an error on the one field this page needs right. */
+          spellCheck={false}
         />
         <button type="submit" disabled={pending} className="mk-btn" style={{ opacity: pending ? 0.7 : 1 }}>
           {pending ? "Joining…" : "Join the waitlist"}

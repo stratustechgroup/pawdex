@@ -145,7 +145,7 @@ export function IngestingPreview() {
                 <span className="mk-cite">{f.cite}</span>
               ) : (
                 <span className="mk-preview-ingest-wait" aria-hidden="true">
-                  ...
+                  &hellip;
                 </span>
               )}
             </li>

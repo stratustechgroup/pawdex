@@ -59,7 +59,7 @@ export default function MarketingHome() {
 
         {/* The closing entry. The rail stops here: the last thing on the page
             is an ask, and an ask does not need a margin note. */}
-        <section id="waitlist" className="mk-final">
+        <section id="waitlist" className="mk-final mk-final--ledger">
           <div className="mk-ledger">
             <div className="mk-entry-rule" />
             <div className="mk-margin">
