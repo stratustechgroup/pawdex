@@ -105,14 +105,14 @@ async function key(cdp, name, code, vk) {
 }
 
 const STATE = `(() => {
-  const cards = [...document.querySelectorAll('.pf-card')];
+  const rows = [...document.querySelectorAll('.pf-row')];
   const result = document.querySelector('.pf-result');
   const ranges = [...document.querySelectorAll('.pf input[type=range]')];
   return JSON.stringify({
-    cards: cards.length,
-    others: document.querySelectorAll('.pf-other').length,
-    fit: cards.findIndex((c) => c.dataset.fit === 'true'),
-    fitName: cards.find((c) => c.dataset.fit === 'true')?.querySelector('.pf-card-name')?.textContent ?? null,
+    rows: rows.length,
+    fits: rows.filter((r) => r.dataset.fit === 'true').length,
+    fit: rows.findIndex((r) => r.dataset.fit === 'true'),
+    fitName: rows.find((r) => r.dataset.fit === 'true')?.querySelector('.pf-row-name')?.textContent ?? null,
     live: result ? result.getAttribute('aria-live') : null,
     resultText: result ? result.textContent.trim().slice(0, 90) : null,
     ranges: ranges.length,
@@ -143,7 +143,7 @@ async function main() {
     }
   });
 
-  // ── the home page must not download GSAP before you scroll ────────
+  // ── GSAP was removed with the card layout; nothing may reintroduce it ──
   await cdp.send("Page.navigate", { url: ORIGIN + "/" });
   await sleep(3000);
   const eager = scripts.filter((u) => /gsap|Draggable|Inertia/i.test(u));
@@ -157,16 +157,12 @@ async function main() {
   await sleep(2500);
 
   let s = await evalJson(cdp, STATE);
-  // One recommended plan rendered large, the rest as rows. Three equal tier
-  // columns is the layout this design deliberately does not use, so the check
-  // is that all three plans are REPRESENTED, not that there are three cards.
+  // Three ledger rows in fixed order, always all visible; the recommendation
+  // is a highlight that moves between them, never a layout change.
+  check(s.rows === 3, `expected three plan rows, found ${s.rows}`);
   check(
-    s.cards === 1,
-    `expected exactly one recommended plan card, found ${s.cards}`,
-  );
-  check(
-    s.cards + s.others === 3,
-    `all three plans must be represented, found ${s.cards + s.others}`,
+    s.fits === 1,
+    `exactly one row must be marked as the fit, found ${s.fits}`,
   );
   check(s.ranges === 2, `expected 2 range inputs, found ${s.ranges}`);
   check(
@@ -175,7 +171,7 @@ async function main() {
   );
   check(
     s.fit >= 0,
-    "exactly one card must be marked as the fit at all times, found none",
+    "one row must be marked as the fit at all times, found none",
   );
   console.log(`  default fit: ${s.fitName} (${s.resultText})`);
 

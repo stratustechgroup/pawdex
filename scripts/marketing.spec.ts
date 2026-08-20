@@ -75,7 +75,7 @@ for (const vp of VIEWPORTS) {
           const rounded = await page.evaluate(() => {
             const bad: string[] = [];
             for (const el of document.querySelectorAll<HTMLElement>(
-              ".mk-btn, .mk-card, .pf-card, .mk-preview-stage",
+              ".mk-btn, .mk-card, .pf-row, .mk-preview-stage",
             )) {
               const r = getComputedStyle(el).borderTopLeftRadius;
               if (r !== "0px") bad.push(`${el.className}:${r}`);

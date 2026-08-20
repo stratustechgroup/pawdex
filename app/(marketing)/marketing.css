@@ -902,12 +902,15 @@
 }
 
 /* ─── Plan fit finder ─────────────────────────────────────────────────────
-   Three cards, always all three on screen at desktop. Hiding two tiers behind
-   a drag interaction on the page people came to compare prices on would be
-   making them work to see the thing they came for.
+   A rate card. The three plans are rows in one bordered ledger, in fixed
+   order; nothing reorders and nothing hides. Every row always shows its name,
+   tagline, price and button, so the comparison is available without touching
+   a slider. The recommendation is [data-fit], set by the sliders, and all it
+   does is mark a row and open that row's detail drawer.
 
-   Every visual state keys off [data-fit], which is set by the recommendation.
-   That gives the optional GSAP layer exactly one thing to react to. */
+   Plain CSS transitions throughout. A grid-template-rows tween restarts
+   cleanly from the current value when the target changes mid-drag, so the
+   GSAP layer the old card layout carried is gone with the layout. */
 .pf {
   padding-block: clamp(64px, 9vw, 120px);
 }
@@ -922,16 +925,18 @@
   line-height: 1.14;
 }
 
+/* One bordered instrument: controls on top, the meter as its bottom strip. */
+.pf-instrument {
+  margin-top: clamp(28px, 4vw, 44px);
+  background: var(--mk-paper-2);
+  border: 1px solid var(--mk-rule);
+}
 .pf-controls {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: clamp(18px, 3vw, 36px);
   align-items: end;
-  margin-top: clamp(28px, 4vw, 44px);
   padding: 22px 24px;
-  background: var(--mk-paper-2);
-  border: 1px solid var(--mk-rule);
-  border-radius: 0;
 }
 .pf-control {
   display: grid;
@@ -972,6 +977,26 @@
   accent-color: var(--mk-accent);
 }
 
+/* The one real meter in the product. */
+.pf-meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 24px;
+  border-top: 1px solid var(--mk-rule);
+  font: 400 13px/1.5 var(--mk-body);
+  color: var(--mk-ink-2);
+}
+.pf-meter-count {
+  font: 600 17px var(--mk-mono);
+  color: var(--mk-ink);
+}
+.pf-meter[data-over="true"] .pf-meter-count {
+  color: var(--mk-accent);
+}
+
 .pf-result {
   margin: 20px 0 0;
   font: 400 15px/1.6 var(--mk-body);
@@ -1007,41 +1032,56 @@
   color: var(--mk-accent);
 }
 
-.pf-viewport {
+/* ── The ledger ── */
+.pf-ledger {
   margin-top: clamp(26px, 4vw, 40px);
+  border: 1px solid var(--mk-rule);
+  background: var(--mk-paper);
 }
-/* The mobile carousel is gone with the three-card layout it existed for. One
-   recommended plan and two rows stack on their own; a swipeable track carrying
-   a single card is machinery with nothing to carry. */
+.pf-row {
+  position: relative;
+  border-bottom: 1px solid var(--mk-rule);
+  transition: background-color 0.3s ease;
+}
+.pf-row:last-child {
+  border-bottom: 0;
+}
+/* The accent rule. A 3px entry mark down the recommended row, the same
+   gesture as the ledger rules elsewhere on the page. Opacity, not transform:
+   the design bans transform transitions wholesale. */
+.pf-row::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 3px;
+  background: var(--mk-accent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.pf-row[data-fit="true"] {
+  background: var(--mk-paper-2);
+}
+.pf-row[data-fit="true"]::before {
+  opacity: 1;
+}
 
-.pf-card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 24px 22px;
-  transition:
-    opacity 0.35s cubic-bezier(0.2, 0.6, 0.2, 1),
-    opacity 0.35s ease,
-    border-color 0.35s ease;
+.pf-row-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px clamp(18px, 3vw, 36px);
+  padding: 20px clamp(18px, 2.5vw, 28px);
 }
-.pf-card[data-fit="true"] {
-  border-color: var(--mk-accent);
-  transform: translateY(-8px) scale(1.02);
+.pf-row-id {
+  display: grid;
+  gap: 5px;
 }
-.pf-card[data-fit="false"] {
-  /* De-emphasis by scale and border only, never opacity. Fading a card to 62%
-     drags its body text below the 4.5:1 contrast floor, and on a pricing page
-     the two cards you did NOT recommend are exactly the ones a visitor wants
-     to read in order to disagree with you. */
-  transform: scale(0.985);
-  border-color: var(--mk-rule);
-}
-
-.pf-card-name {
+.pf-row-name {
   display: flex;
   align-items: center;
   gap: 10px;
-  font: 600 17px var(--mk-body);
+  font: 650 17px var(--mk-display);
   color: var(--mk-ink);
 }
 .pf-badge {
@@ -1050,13 +1090,19 @@
   text-transform: uppercase;
   padding: 5px 8px;
   border-radius: 0;
-  background: var(--mk-paper-2);
+  background: var(--mk-paper);
   color: var(--mk-accent);
+  border: 1px solid var(--mk-rule);
 }
-.pf-tagline {
-  margin: 0;
-  font: 400 13.5px/1.55 var(--mk-body);
+.pf-row-tagline {
+  font: 400 13.5px/1.5 var(--mk-body);
   color: var(--mk-ink-3);
+}
+.pf-row-price {
+  display: grid;
+  gap: 3px;
+  justify-items: end;
+  text-align: right;
 }
 .pf-price {
   display: flex;
@@ -1064,131 +1110,84 @@
   gap: 4px;
 }
 .pf-amount {
-  font: 600 34px var(--mk-mono);
-  letter-spacing: -0.03em;
+  font: 600 22px var(--mk-mono);
+  letter-spacing: -0.02em;
   color: var(--mk-ink);
 }
 .pf-per {
-  font: 500 14px var(--mk-mono);
+  font: 500 13px var(--mk-mono);
   color: var(--mk-ink-3);
 }
 .pf-price-note {
-  margin-top: 4px;
-  font: 400 12px var(--mk-body);
+  font: 400 11.5px var(--mk-body);
   color: var(--mk-ink-3);
 }
-
-.pf-meter {
-  padding: 12px 14px;
-  border-radius: 0;
-  background: var(--mk-paper-2);
-  border: 1px solid var(--mk-rule);
-}
-.pf-meter[data-over="true"] {
-  border-color: var(--mk-accent);
-  background: var(--mk-paper-2);
-}
-.pf-meter-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font: 500 11.5px var(--mk-body);
-  color: var(--mk-ink-2);
-}
-.pf-meter[data-over="true"] .pf-meter-head {
-  color: var(--mk-ink);
-}
-.pf-meter-count {
-  font-family: var(--mk-mono);
-}
-.pf-meter-track {
-  margin-top: 8px;
-  height: 5px;
-  border-radius: 0;
-  background: var(--mk-paper-3);
-  overflow: hidden;
-}
-.pf-meter-fill {
-  height: 100%;
-  border-radius: 0;
-  background: var(--mk-accent);
-  transition: width 0.25s ease;
-}
-.pf-meter[data-over="true"] .pf-meter-fill {
-  background: var(--mk-accent);
-}
-.pf-meter-over {
-  margin: 8px 0 0;
-  font: 500 11.5px var(--mk-body);
-  color: var(--mk-ink);
+.pf-row-cta {
+  justify-self: end;
 }
 
-.pf-cta {
-  align-self: start;
-}
-.pf-features {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* The detail drawer. 0fr -> 1fr is the whole animation; padding rides along
+   so the closed state collapses to exactly nothing. */
+.pf-row-detail {
   display: grid;
-  gap: 9px;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.2, 0.6, 0.2, 1);
 }
-.pf-feature {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  font: 400 13.5px/1.5 var(--mk-body);
+.pf-row[data-fit="true"] .pf-row-detail {
+  grid-template-rows: 1fr;
+}
+.pf-row-detail-inner {
+  overflow: hidden;
+  min-height: 0;
+  display: grid;
+  gap: 10px;
+  padding: 0 clamp(18px, 2.5vw, 28px);
+  transition: padding-bottom 0.35s cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+.pf-row[data-fit="true"] .pf-row-detail-inner {
+  padding-bottom: 20px;
+}
+.pf-row-features {
+  margin: 0;
+  font: 400 13.5px/1.6 var(--mk-body);
   color: var(--mk-ink-2);
+  max-width: 72ch;
 }
-.pf-feature .pf-check {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--mk-accent);
-}
-.pf-feature--off {
+.pf-excluded {
+  margin: 0;
+  font: 400 12.5px/1.55 var(--mk-body);
   color: var(--mk-ink-3);
 }
-.pf-feature--off .pf-check {
+.pf-excluded-head {
+  display: block;
+  font: 600 10.5px/1 var(--mk-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--mk-ink-3);
+  margin-bottom: 5px;
 }
-
 .pf-softcap,
 .pf-disclosure {
   margin: 0;
   font: 400 11.5px/1.5 var(--mk-body);
   color: var(--mk-ink-3);
 }
-.pf-waitlist {
-  display: flex;
-  justify-content: center;
-  margin-top: clamp(28px, 4vw, 44px);
-}
 
-/* Once GSAP has loaded it owns transform and opacity on the cards. Leaving the
-   CSS transitions on would mean two systems animating the same properties. */
-.pf--gsap .pf-card {
-  transition: border-color 0.35s ease;
-}
-.pf--gsap .pf-card[data-fit="true"] {
-  transform: none;
-}
-
-/* Draggable replaces the native scroll rather than layering on top of it. */
-.pf--drag .pf-viewport {
-  overflow: hidden;
-  scroll-snap-type: none;
-}
-.pf--drag .pf-track {
-  width: max-content;
-  cursor: grab;
-}
-.pf--drag .pf-track:active {
-  cursor: grabbing;
+@media (max-width: 720px) {
+  .pf-row-main {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .pf-row-cta {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pf-card,
-  .pf-meter-fill {
+  .pf-row,
+  .pf-row::before,
+  .pf-row-detail,
+  .pf-row-detail-inner {
     transition: none;
   }
 }
@@ -1714,95 +1713,6 @@
   color: var(--mk-accent);
 }
 
-/* ─── Pricing: the plans that were not recommended ────────────────────────
-   Rows, not a third and fourth column. The sliders already did the comparison;
-   these exist so the visitor can disagree with the answer, and a row is enough
-   for that. */
-.pf-others {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-left: 1px solid var(--mk-rule);
-  background: var(--mk-paper-2);
-}
-@media (max-width: 900px) {
-  .pf-others {
-    border-left: 0;
-    border-top: 1px solid var(--mk-rule);
-  }
-}
-.pf-other {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 4px 12px;
-  padding: 22px 24px;
-  border-bottom: 1px solid var(--mk-rule);
-}
-.pf-other:last-child {
-  border-bottom: 0;
-}
-.pf-other-name {
-  font: 650 15px var(--mk-display);
-  color: var(--mk-ink);
-}
-.pf-other-price {
-  font: 500 14px var(--mk-mono);
-  color: var(--mk-ink);
-  text-align: right;
-}
-.pf-other-note {
-  grid-column: 1 / -1;
-  font: 400 12.5px/1.5 var(--mk-body);
-  color: var(--mk-ink-3);
-}
-
-/* The meter, without a track. */
-.pf-meter {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px;
-  margin: 0;
-  padding: 12px 0;
-  border-top: 1px solid var(--mk-rule);
-  border-bottom: 1px solid var(--mk-rule);
-  font: 400 13px/1.5 var(--mk-body);
-  color: var(--mk-ink-2);
-}
-.pf-meter-count {
-  font: 600 17px var(--mk-mono);
-  color: var(--mk-ink);
-}
-.pf-meter[data-over="true"] .pf-meter-count {
-  color: var(--mk-accent);
-}
-
-/* Feature list: plain text, no glyph column. */
-.pf-features {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-.pf-feature {
-  font: 400 13.5px/1.5 var(--mk-body);
-  color: var(--mk-ink-2);
-}
-.pf-excluded {
-  margin: 0;
-  font: 400 12.5px/1.55 var(--mk-body);
-  color: var(--mk-ink-3);
-}
-.pf-excluded-head {
-  display: block;
-  font: 600 10.5px/1 var(--mk-mono);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--mk-ink-3);
-  margin-bottom: 5px;
-}
-
 /* ─── Life scene: ages as figures, not eyebrows ───────────────────────────
    These were small uppercase mono labels sitting above every headline, which is
    exactly the templated rhythm this redesign is removing. They are real content
@@ -1924,38 +1834,6 @@
 /* ─── Polish pass ─────────────────────────────────────────────────────────
    Written after reading the page one section at a time. Each rule below fixes
    something specific that was visibly wrong, not a preference. */
-
-/* The recommended plan filled the left sixth of a full-width box and left the
-   rest empty. It is now two columns: the decision on the left, what you get on
-   the right. */
-.pf-card {
-  display: grid;
-  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
-  grid-template-areas:
-    "head    feat"
-    "price   feat"
-    "cta     feat";
-  align-content: start;
-  column-gap: clamp(24px, 4vw, 56px);
-  row-gap: 14px;
-  padding: 30px 28px;
-}
-.pf-card-name { grid-area: head; }
-.pf-card > div:has(.pf-price) { grid-area: price; }
-.pf-cta { grid-area: cta; justify-self: start; }
-.pf-features { grid-area: feat; align-content: start; }
-.pf-tagline,
-.pf-excluded,
-.pf-softcap,
-.pf-disclosure {
-  grid-column: 1 / -1;
-}
-@media (max-width: 760px) {
-  .pf-card {
-    grid-template-columns: 1fr;
-    grid-template-areas: "head" "price" "cta" "feat";
-  }
-}
 
 /* Sections were sized for a page three times this long. */
 .pf {
